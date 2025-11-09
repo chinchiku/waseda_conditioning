@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>練習日誌アプリ (v26)</title>
+    <title>練習日誌アプリ (v27)</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -68,7 +68,7 @@
 
     <div class="min-h-screen flex flex-col md:flex-row">
 
-        <!-- サイド ナビゲーションバー (v25と同じ) -->
+        <!-- サイド ナビゲーションバー (v26と同じ) -->
         <nav class="bg-white shadow-lg md:w-64 flex-shrink-0">
             <!-- ヘッダー (モバイル用) -->
             <div class="flex justify-between items-center p-4 md:hidden">
@@ -81,7 +81,7 @@
             <!-- ナビゲーション (PC用 / モバイル用メニュー) -->
             <div id="nav-content" class="hidden md:block md:mt-8">
                 <h1 class="hidden md:block text-3xl font-bold text-blue-600 px-6 mb-10">練習日誌</h1>
-                <!-- v25と同じ順序 -->
+                <!-- v26と同じ順序 -->
                 <ul class="space-y-2 px-4">
                     <li>
                         <a href="#" class="nav-link flex items-center px-4 py-3 text-gray-700 rounded-lg hover:bg-blue-50 hover:text-blue-600" data-page="page-settings">
@@ -110,7 +110,7 @@
         <!-- メインコンテンツ -->
         <main class="flex-grow p-6 md:p-10 overflow-auto">
             
-            <!-- 1. ダッシュボード ページ (★ v26: HTML更新) -->
+            <!-- 1. ダッシュボード ページ (★ v27: HTML更新) -->
             <div id="page-dashboard" class="page-content">
                 <h2 class="text-3xl font-semibold mb-6">ダッシュボード</h2>
                 
@@ -124,7 +124,7 @@
                     <span class="block sm:inline" id="dashboard-error-message"></span>
                 </div>
 
-                <!-- ★ v26: grid-cols を xl:grid-cols-5 に対応 -->
+                <!-- ★ v27: 最新データ -->
                 <div id="dashboard-summary" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
                     <!-- 走行距離カード -->
                     <div class="bg-white p-6 rounded-2xl shadow-lg">
@@ -142,7 +142,7 @@
                             <span>–</span> (<span>–</span>)
                         </div>
                     </div>
-                    <!-- ★ v26: 夜体重カード -->
+                    <!-- 夜体重カード -->
                     <div class="bg-white p-6 rounded-2xl shadow-lg">
                         <h3 class="text-lg font-semibold text-gray-600 mb-2">最新の夜体重</h3>
                         <p id="summary-evening-weight" class="text-4xl font-bold text-emerald-600">– <span class="text-lg font-medium text-gray-500">kg</span></p>
@@ -150,7 +150,7 @@
                             <span>–</span> (<span>–</span>)
                         </div>
                     </div>
-                    <!-- ★ v26: 起床時脈拍カード -->
+                    <!-- 起床時脈拍カード -->
                     <div class="bg-white p-6 rounded-2xl shadow-lg">
                         <h3 class="text-lg font-semibold text-gray-600 mb-2">最新の起床時脈拍</h3>
                         <p id="summary-waking-hr" class="text-4xl font-bold text-red-600">– <span class="text-lg font-medium text-gray-500">bpm</span></p>
@@ -167,13 +167,48 @@
                         </div>
                     </div>
                 </div>
+                
+                <!-- ★ v27: 週平均データ -->
+                <h3 class="text-2xl font-semibold mb-6 mt-12">直近7日間平均</h3>
+                <div id="dashboard-weekly-average" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+                    <!-- 平均走行距離カード -->
+                    <div class="bg-white p-6 rounded-2xl shadow-lg">
+                        <h3 class="text-lg font-semibold text-gray-600 mb-2">平均走行距離</h3>
+                        <p id="avg-distance" class="text-3xl font-bold text-blue-600">– <span class="text-lg font-medium text-gray-500">km/日</span></p>
+                        <p class="text-xs text-gray-400 mt-2 h-4"> (10km未満除外)</p>
+                    </div>
+                    <!-- 平均朝体重カード -->
+                    <div class="bg-white p-6 rounded-2xl shadow-lg">
+                        <h3 class="text-lg font-semibold text-gray-600 mb-2">平均朝体重</h3>
+                        <p id="avg-morning-weight" class="text-3xl font-bold text-green-600">– <span class="text-lg font-medium text-gray-500">kg</span></p>
+                        <p class="text-xs text-gray-400 mt-2 h-4">&nbsp;</p>
+                    </div>
+                    <!-- 平均夜体重カード -->
+                    <div class="bg-white p-6 rounded-2xl shadow-lg">
+                        <h3 class="text-lg font-semibold text-gray-600 mb-2">平均夜体重</h3>
+                        <p id="avg-evening-weight" class="text-3xl font-bold text-emerald-600">– <span class="text-lg font-medium text-gray-500">kg</span></p>
+                        <p class="text-xs text-gray-400 mt-2 h-4">&nbsp;</p>
+                    </div>
+                    <!-- 平均起床時脈拍カード -->
+                    <div class="bg-white p-6 rounded-2xl shadow-lg">
+                        <h3 class="text-lg font-semibold text-gray-600 mb-2">平均起床時脈拍</h3>
+                        <p id="avg-waking-hr" class="text-3xl font-bold text-red-600">– <span class="text-lg font-medium text-gray-500">bpm</span></p>
+                        <p class="text-xs text-gray-400 mt-2 h-4">&nbsp;</p>
+                    </div>
+                    <!-- 平均睡眠時間カード -->
+                    <div class="bg-white p-6 rounded-2xl shadow-lg">
+                        <h3 class="text-lg font-semibold text-gray-600 mb-2">平均睡眠時間</h3>
+                        <p id="avg-sleep" class="text-3xl font-bold text-purple-600">– <span class="text-lg font-medium text-gray-500">時間</span></p>
+                        <p class="text-xs text-gray-400 mt-2 h-4">&nbsp;</p>
+                    </div>
+                </div>
             </div>
 
-            <!-- 2. コンディション記録 ページ (★ v26: HTML更新) -->
+            <!-- 2. コンディション記録 ページ (★ v27: HTML更新) -->
             <div id="page-condition" class="page-content">
                 <h2 class="text-3xl font-semibold mb-6">コンディション記録</h2>
                 
-                <!-- ★ v26: グラフ表示切り替え -->
+                <!-- グラフ表示切り替え (v26と同じ) -->
                 <div id="chart-controls" class="bg-white p-4 rounded-2xl shadow-lg mb-6 flex flex-wrap gap-4 items-center">
                     <h4 class="text-lg font-semibold text-gray-700 mr-4">表示項目:</h4>
                     <label class="flex items-center space-x-2 cursor-pointer">
@@ -194,6 +229,14 @@
                     </label>
                 </div>
                 
+                <!-- ★ v27: 週平均表示エリア -->
+                <div id="chart-averages" class="bg-white p-4 rounded-2xl shadow-lg mb-6">
+                    <h4 class="text-lg font-semibold text-gray-700 mb-2">直近7日間平均</h4>
+                    <div id="chart-averages-content" class="flex flex-wrap gap-x-6 gap-y-2 text-gray-600">
+                        <p>（グラフの表示項目を選択してください）</p>
+                    </div>
+                </div>
+                
                 <div class="bg-white p-6 rounded-2xl shadow-lg">
                     <h3 class="text-xl font-semibold mb-4">コンディションの推移</h3>
                     <div class="w-full" style="height: 400px;">
@@ -202,12 +245,12 @@
                 </div>
             </div>
 
-            <!-- 3. テーパリング計画 ページ (v25と同じ) -->
+            <!-- 3. テーパリング計画 ページ (v26と同じ) -->
             <div id="page-tapering" class="page-content">
                 <h2 class="text-3xl font-semibold mb-6">テーパリング計画</h2>
                 <div class="bg-white p-6 rounded-2xl shadow-lg">
                     
-                    <!-- テーパリングの原則 (v25と同じ) -->
+                    <!-- テーパリングの原則 (v26と同じ) -->
                     <div class="mb-8 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded-lg">
                         <h3 class="text-lg font-semibold text-yellow-800 mb-3">テーパリングの原則</h3>
                         <div class="space-y-2 text-gray-700">
@@ -227,14 +270,14 @@
                         </div>
                     </div>
 
-                    <!-- 新規計画ボタン (v25と同じ) -->
+                    <!-- 新規計画ボタン (v26と同じ) -->
                     <div class="mb-6">
                          <button id="new-plan-button" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 w-full md:w-auto">
                             新規テーパリング計画を作成
                         </button>
                     </div>
 
-                    <!-- 新規計画フォーム (v25と同じ) -->
+                    <!-- 新規計画フォーム (v26と同じ) -->
                     <div id="plan-form-container" class="hidden mb-8 p-6 bg-gray-50 rounded-lg border border-gray-200">
                         <h3 class="text-xl font-semibold text-gray-800 mb-6">新規計画</h3>
                         
@@ -271,7 +314,7 @@
                             </div>
                         </div>
                         
-                        <!-- 計算ボタン (v25と同じ) -->
+                        <!-- 計算ボタン (v26と同じ) -->
                         <div class="mt-8">
                             <button id="calculate-plan-button" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-5 rounded-lg shadow-md transition duration-300">
                                 計画を計算
@@ -287,7 +330,7 @@
                 </div>
             </div>
 
-            <!-- 4. 設定 ページ (v25と同じ) -->
+            <!-- 4. 設定 ページ (v26と同じ) -->
             <div id="page-settings" class="page-content">
                 <h2 class="text-3xl font-semibold mb-6">設定</h2>
                 
@@ -335,7 +378,7 @@
                     </div>
                 </div>
 
-                <!-- 4. 列マッピング (v25と同じ) -->
+                <!-- 4. 列マッピング (v26と同じ) -->
                 <div class="bg-white p-6 rounded-2xl shadow-lg mb-8">
                     <h3 class="text-xl font-semibold mb-4">4. 列設定 (CSV連携のみ)</h3>
                     <p class="text-gray-700 mb-6 text-sm">
@@ -396,7 +439,7 @@
 
     <script>
         // ----------------------------------------
-        // グローバル変数 (v25と同じ)
+        // グローバル変数 (v26と同じ)
         // ----------------------------------------
         let conditionChart = null;
         let appData = [];
@@ -404,7 +447,7 @@
         const MANUAL_DATA_STORAGE_KEY = 'practiceLogManualData';
 
         // ----------------------------------------
-        // 列アルファベット <-> 数字 変換 (v25と同じ)
+        // 列アルファベット <-> 数字 変換 (v26と同じ)
         // ----------------------------------------
         function columnToLetter(colNum) {
             if (colNum === null || colNum === undefined || colNum === "" || colNum < 1) {
@@ -433,7 +476,7 @@
         }
 
         // ----------------------------------------
-        // 日付パーサー (v25と同じ)
+        // 日付パーサー (v26と同じ)
         // ----------------------------------------
         
         // 「ソート用」
@@ -524,7 +567,7 @@
         }
 
         // ----------------------------------------
-        // ページ切り替えロジック (v25と同じ)
+        // ページ切り替えロジック (v26と同じ)
         // ----------------------------------------
         const navLinks = document.querySelectorAll('.nav-link');
         const pages = document.querySelectorAll('.page-content');
@@ -564,7 +607,7 @@
         });
 
         // ----------------------------------------
-        // 設定 (v25と同じ)
+        // 設定 (v26と同じ)
         // ----------------------------------------
         const csvUrlsInput = document.getElementById('csv-urls');
         const manualDataInput = document.getElementById('manual-data-input');
@@ -681,7 +724,7 @@
         }
 
         // ----------------------------------------
-        // データ取得・解析処理 (v25と同じ)
+        // データ取得・解析処理 (v26と同じ)
         // ----------------------------------------
         
         function fetchWithTimeout(url, timeout = 10000) { // 10秒タイムアウト
@@ -802,15 +845,18 @@
         async function loadAndDisplayData() {
             const loadingEl = document.getElementById('dashboard-loading');
             const summaryEl = document.getElementById('dashboard-summary');
+            // ★ v27: 平均セクションも取得
+            const avgSummaryEl = document.getElementById('dashboard-weekly-average');
             const errorEl = document.getElementById('dashboard-error');
             
-            if (!loadingEl || !summaryEl || !errorEl) {
+            if (!loadingEl || !summaryEl || !errorEl || !avgSummaryEl) {
                 console.error("Dashboard UI elements not found.");
                 return;
             }
 
             loadingEl.style.display = 'flex';
             summaryEl.style.display = 'none';
+            avgSummaryEl.style.display = 'none'; // ★ v27: 平均も非表示
             errorEl.style.display = 'none';
 
             try {
@@ -877,6 +923,7 @@
 
                 loadingEl.style.display = 'none';
                 summaryEl.style.display = 'grid';
+                avgSummaryEl.style.display = 'grid'; // ★ v27: 平均も表示
 
             } catch (error) {
                 console.error("Failed to load and display data:", error);
@@ -888,18 +935,21 @@
             const loadingEl = document.getElementById('dashboard-loading');
             const errorEl = document.getElementById('dashboard-error');
             const errorMsgEl = document.getElementById('dashboard-error-message');
+            // ★ v27: 平均セクションも取得
+            const avgSummaryEl = document.getElementById('dashboard-weekly-average');
 
             if (loadingEl) loadingEl.style.display = 'none';
+            if (avgSummaryEl) avgSummaryEl.style.display = 'none'; // ★ v27: 平均も非表示
             if (errorEl) errorEl.style.display = 'block';
             if (errorMsgEl) errorMsgEl.textContent = message;
         }
 
 
         // ----------------------------------------
-        // ★ v26: ダッシュボードの更新 (v25をベースに5項目へ拡張)
+        // ★ v27: ダッシュボードの更新 (週平均を追加)
         // ----------------------------------------
         
-        // v25と同じヘルパー関数
+        // v26と同じヘルパー関数
         function findChangeData(data, key) {
             if (!data || data.length === 0) return null;
             
@@ -942,82 +992,138 @@
             
             return result;
         }
-
-        // v25をベースに5項目へ拡張
-        function updateDashboard(data) {
-            // 要素を取得
-            const distEl = document.getElementById('summary-distance');
-            const distChangeEl = document.getElementById('summary-distance-change');
-            const weightEl = document.getElementById('summary-morning-weight');
-            const weightChangeEl = document.getElementById('summary-morning-weight-change');
-            const sleepEl = document.getElementById('summary-sleep');
-            const sleepChangeEl = document.getElementById('summary-sleep-change');
-            
-            // ★ v26: 新しい要素を取得
-            const eveningWeightEl = document.getElementById('summary-evening-weight');
-            const eveningWeightChangeEl = document.getElementById('summary-evening-weight-change');
-            const wakingHrEl = document.getElementById('summary-waking-hr');
-            const wakingHrChangeEl = document.getElementById('summary-waking-hr-change');
-            
-            if (!distEl || !weightEl || !sleepEl || !eveningWeightEl || !wakingHrEl) {
-                console.warn("Dashboard summary elements not found.");
-                return;
+        
+        /**
+         * ★ v27: 直近7日間の平均を計算するヘルパー関数
+         * @param {Array} data - ソート済みのappData
+         * @param {string} key - 'distance', 'morningWeight', 'sleep' など
+         * @returns {number | null} - 平均値 (計算不能なら null)
+         */
+        function calculateWeeklyAverage(data, key) {
+            if (!data || data.length === 0) {
+                return null;
             }
 
-            // データセットを定義 (★ v26: 5項目に)
-            const metrics = [
-                { key: 'distance', el: distEl, changeEl: distChangeEl, unit: 'km', color: 'text-blue-600' },
-                { key: 'morningWeight', el: weightEl, changeEl: weightChangeEl, unit: 'kg', color: 'text-green-600' },
-                { key: 'eveningWeight', el: eveningWeightEl, changeEl: eveningWeightChangeEl, unit: 'kg', color: 'text-emerald-600' },
-                { key: 'wakingHr', el: wakingHrEl, changeEl: wakingHrChangeEl, unit: 'bpm', color: 'text-red-600' },
-                { key: 'sleep', el: sleepEl, changeEl: sleepChangeEl, unit: '時間', color: 'text-purple-600' },
+            const latestDate = new Date(); // 「今日」
+            latestDate.setHours(0, 0, 0, 0); 
+
+            const startDate = new Date(latestDate.getTime());
+            startDate.setDate(startDate.getDate() - 6); // 7日間 (今日を含む)
+
+            const recentData = data.filter(day => {
+                const d = parseDateToReal(day.date); // 実日付に変換
+                return d && d >= startDate && d <= latestDate;
+            });
+            
+            if (recentData.length === 0) {
+                return null; // この7日間にデータなし
+            }
+
+            let includedDays = 0;
+            const totalValue = recentData.reduce((sum, day) => {
+                const value = day[key];
+                // 値が有効かチェック (null, undefined, NaN を除外)
+                if (value !== null && value !== undefined && !isNaN(parseFloat(value))) {
+                    const numValue = parseFloat(value);
+                    
+                    // 走行距離の場合のみ外れ値ルールを適用
+                    if (key === 'distance') {
+                        if (numValue >= 10) { 
+                            includedDays++;
+                            return sum + numValue;
+                        }
+                    } else {
+                        // 他のは0でも含める (例: 脈拍や体重)
+                        includedDays++;
+                        return sum + numValue;
+                    }
+                }
+                return sum;
+            }, 0);
+            
+            if (includedDays > 0) {
+                return totalValue / includedDays;
+            } else {
+                return null; // 有効なデータがなかった
+            }
+        }
+
+
+        // v26をベースに週平均ロジックを追加
+        function updateDashboard(data) {
+            // --- 1. 最新データの表示 (v26と同じ) ---
+            const latestMetrics = [
+                { key: 'distance', el: document.getElementById('summary-distance'), changeEl: document.getElementById('summary-distance-change'), unit: 'km' },
+                { key: 'morningWeight', el: document.getElementById('summary-morning-weight'), changeEl: document.getElementById('summary-morning-weight-change'), unit: 'kg' },
+                { key: 'eveningWeight', el: document.getElementById('summary-evening-weight'), changeEl: document.getElementById('summary-evening-weight-change'), unit: 'kg' },
+                { key: 'wakingHr', el: document.getElementById('summary-waking-hr'), changeEl: document.getElementById('summary-waking-hr-change'), unit: 'bpm' },
+                { key: 'sleep', el: document.getElementById('summary-sleep'), changeEl: document.getElementById('summary-sleep-change'), unit: '時間' },
+            ];
+            
+            if (!data || data.length === 0) {
+                latestMetrics.forEach(m => {
+                    if (m.el) m.el.innerHTML = `– <span class="text-lg font-medium text-gray-500">${m.unit}</span>`;
+                    if (m.changeEl) m.changeEl.innerHTML = `<span>–</span> (<span>–</span>)`;
+                });
+            } else {
+                latestMetrics.forEach(m => {
+                    if (!m.el || !m.changeEl) {
+                        console.warn(`Dashboard elements for ${m.key} not found.`);
+                        return;
+                    }
+                    const changeData = findChangeData(data, m.key);
+                    
+                    if (changeData && changeData.latest !== null) {
+                        m.el.innerHTML = `${changeData.latest.toFixed(1)} <span class="text-lg font-medium text-gray-500">${m.unit}</span>`;
+                    } else {
+                        m.el.innerHTML = `– <span class="text-lg font-medium text-gray-500">${m.unit}</span>`;
+                    }
+                    
+                    if (changeData && changeData.diff !== null) {
+                        const diff = changeData.diff;
+                        const percent = changeData.percent;
+                        const isGoodWhenDown = m.key.includes('Weight') || m.key.includes('Hr');
+                        const defaultColor = diff > 0 ? 'text-green-600' : (diff < 0 ? 'text-red-600' : 'text-gray-500');
+                        const goodWhenDownColor = diff < 0 ? 'text-green-600' : (diff > 0 ? 'text-red-600' : 'text-gray-500');
+                        const color = isGoodWhenDown ? goodWhenDownColor : defaultColor;
+                        const sign = diff > 0 ? '+' : '';
+                        
+                        m.changeEl.innerHTML = `
+                            <span class="${color} font-semibold">${sign}${diff.toFixed(1)}</span>
+                            <span class="text-gray-500">(${sign}${percent.toFixed(1)}%)</span>
+                        `;
+                    } else {
+                        m.changeEl.innerHTML = `<span>–</span> (<span>–</span>)`;
+                    }
+                });
+            }
+            
+            // --- 2. ★ v27: 週平均の表示 ---
+            const avgMetrics = [
+                { key: 'distance', el: document.getElementById('avg-distance'), unit: 'km/日' },
+                { key: 'morningWeight', el: document.getElementById('avg-morning-weight'), unit: 'kg' },
+                { key: 'eveningWeight', el: document.getElementById('avg-evening-weight'), unit: 'kg' },
+                { key: 'wakingHr', el: document.getElementById('avg-waking-hr'), unit: 'bpm' },
+                { key: 'sleep', el: document.getElementById('avg-sleep'), unit: '時間' },
             ];
 
-            if (!data || data.length === 0) {
-                metrics.forEach(m => {
-                    m.el.innerHTML = `– <span class="text-lg font-medium text-gray-500">${m.unit}</span>`;
-                    m.changeEl.innerHTML = `<span>–</span> (<span>–</span>)`;
-                });
-                return;
-            }
-
-            // 各メトリクスを更新
-            metrics.forEach(m => {
-                const changeData = findChangeData(data, m.key);
-                
-                // 1. 最新の値を更新 (★ v26: nullの時は '–')
-                if (changeData && changeData.latest !== null) {
-                    m.el.innerHTML = `${changeData.latest.toFixed(1)} <span class="text-lg font-medium text-gray-500">${m.unit}</span>`;
-                } else {
-                    m.el.innerHTML = `– <span class="text-lg font-medium text-gray-500">${m.unit}</span>`;
+            avgMetrics.forEach(m => {
+                if (!m.el) {
+                    console.warn(`Dashboard average element for ${m.key} not found.`);
+                    return;
                 }
-                
-                // 2. 前日比を更新 (★ v26: nullの時は '–')
-                if (changeData && changeData.diff !== null) {
-                    const diff = changeData.diff;
-                    const percent = changeData.percent;
-                    
-                    // 体重と脈拍は「減ったら緑」
-                    const isGoodWhenDown = m.key.includes('Weight') || m.key.includes('Hr');
-                    const defaultColor = diff > 0 ? 'text-green-600' : (diff < 0 ? 'text-red-600' : 'text-gray-500');
-                    const goodWhenDownColor = diff < 0 ? 'text-green-600' : (diff > 0 ? 'text-red-600' : 'text-gray-500');
-                    
-                    const color = isGoodWhenDown ? goodWhenDownColor : defaultColor;
-                    const sign = diff > 0 ? '+' : '';
-                    
-                    m.changeEl.innerHTML = `
-                        <span class="${color} font-semibold">${sign}${diff.toFixed(1)}</span>
-                        <span class="text-gray-500">(${sign}${percent.toFixed(1)}%)</span>
-                    `;
+                const avgValue = calculateWeeklyAverage(data, m.key);
+                if (avgValue !== null) {
+                    m.el.innerHTML = `${avgValue.toFixed(1)} <span class="text-lg font-medium text-gray-500">${m.unit}</span>`;
                 } else {
-                    m.changeEl.innerHTML = `<span>–</span> (<span>–</span>)`;
+                    m.el.innerHTML = `– <span class="text-lg font-medium text-gray-500">${m.unit}</span>`;
                 }
             });
         }
 
 
         // ----------------------------------------
-        // Chart.js (★ v26: スケール調整と動的表示)
+        // Chart.js (★ v27: スケール調整と平均表示)
         // ----------------------------------------
         function initializeChart() {
             try {
@@ -1032,14 +1138,13 @@
                     data: {
                         labels: [], 
                         datasets: [
-                            // ★ v26: 走行距離を追加 (dataset index 0)
                             { 
                                 label: '走行距離 (km)', 
                                 data: [], 
                                 borderColor: 'rgb(59, 130, 246)', // blue-600
                                 yAxisID: 'yDistance', 
                                 spanGaps: true,
-                                hidden: true // ★ デフォルト非表示
+                                hidden: true 
                             },
                             { 
                                 label: '朝体重 (kg)', 
@@ -1047,7 +1152,7 @@
                                 borderColor: 'rgb(34, 197, 94)', // green-500
                                 yAxisID: 'yWeight', 
                                 spanGaps: true,
-                                hidden: false // ★ デフォルト表示
+                                hidden: false 
                             },
                             { 
                                 label: '夕体重 (kg)', 
@@ -1055,7 +1160,7 @@
                                 borderColor: 'rgb(5, 150, 105)', // emerald-600
                                 yAxisID: 'yWeight', 
                                 spanGaps: true,
-                                hidden: true // ★ デフォルト非表示
+                                hidden: true 
                             },
                             { 
                                 label: '起床時脈拍', 
@@ -1063,7 +1168,7 @@
                                 borderColor: 'rgb(239, 68, 68)', // red-500
                                 yAxisID: 'yHR', 
                                 spanGaps: true,
-                                hidden: false // ★ デフォルト表示
+                                hidden: false 
                             }
                         ]
                     },
@@ -1075,14 +1180,13 @@
                                 title: { display: true, text: '日付' },
                                 ticks: { autoSkip: true, maxTicksLimit: 20 }
                             },
-                            // ★ v26: 3軸定義
                             yWeight: { 
                                 type: 'linear', 
                                 position: 'left', 
                                 title: { display: true, text: '体重 (kg)' },
                                 // ★ v26: スケール調整
-                                suggestedMin: 50,
-                                suggestedMax: 70
+                                ticks: { stepSize: 1 }, // 1kg単位
+                                grace: '10%' // 上下に10%の余裕を持たせる
                             },
                             yHR: { 
                                 type: 'linear', 
@@ -1090,15 +1194,16 @@
                                 title: { display: true, text: '脈拍 (bpm)' }, 
                                 grid: { drawOnChartArea: false },
                                 // ★ v26: スケール調整
-                                suggestedMin: 40,
-                                suggestedMax: 80
+                                ticks: { stepSize: 5 }, // 5bpm単位
+                                grace: '10%'
                             },
                             yDistance: {
                                 type: 'linear',
-                                position: 'left', // 体重と同じ左側
+                                position: 'left', 
                                 title: { display: true, text: '距離 (km)' },
-                                grid: { drawOnChartArea: false }, // 軸を重ねるためグリッド非表示
-                                display: false // ★ デフォルト非表示
+                                grid: { drawOnChartArea: false },
+                                display: false,
+                                grace: '10%'
                             }
                         },
                         plugins: { tooltip: { mode: 'index', intersect: false } }
@@ -1109,19 +1214,26 @@
             }
         }
 
-        // ★ v26: チェックボックスと連動するように更新
+        // ★ v27: チェックボックスと平均表示を連動
         function updateConditionChart(data) {
             if (!conditionChart) return;
             
-            // データがまだ読み込まれていない場合は何もしない (appDataを使うため)
-            if (!data || data.length === 0) return;
+            const avgContentEl = document.getElementById('chart-averages-content');
+            
+            // データがまだ読み込まれていない場合は何もしない
+            if (!data || data.length === 0) {
+                 if(avgContentEl) avgContentEl.innerHTML = `<p class="text-gray-500">（データを読み込み中...）</p>`;
+                return;
+            }
 
             try {
                 // チェックボックスの状態を読み取る
-                const showDistance = document.getElementById('toggle-distance').checked;
-                const showMorningWeight = document.getElementById('toggle-morning-weight').checked;
-                const showEveningWeight = document.getElementById('toggle-evening-weight').checked;
-                const showWakingHr = document.getElementById('toggle-waking-hr').checked;
+                const toggles = {
+                    distance: document.getElementById('toggle-distance').checked,
+                    morningWeight: document.getElementById('toggle-morning-weight').checked,
+                    eveningWeight: document.getElementById('toggle-evening-weight').checked,
+                    wakingHr: document.getElementById('toggle-waking-hr').checked,
+                };
                 
                 // データをセット
                 const labels = data.map(d => d.date);
@@ -1129,24 +1241,24 @@
                 
                 // データセットの表示/非表示を切り替え
                 conditionChart.data.datasets[0].data = data.map(d => d.distance);
-                conditionChart.data.datasets[0].hidden = !showDistance;
+                conditionChart.data.datasets[0].hidden = !toggles.distance;
                 
                 conditionChart.data.datasets[1].data = data.map(d => d.morningWeight);
-                conditionChart.data.datasets[1].hidden = !showMorningWeight;
+                conditionChart.data.datasets[1].hidden = !toggles.morningWeight;
                 
                 conditionChart.data.datasets[2].data = data.map(d => d.eveningWeight);
-                conditionChart.data.datasets[2].hidden = !showEveningWeight;
+                conditionChart.data.datasets[2].hidden = !toggles.eveningWeight;
                 
                 conditionChart.data.datasets[3].data = data.map(d => d.wakingHr);
-                conditionChart.data.datasets[3].hidden = !showWakingHr;
+                conditionChart.data.datasets[3].hidden = !toggles.wakingHr;
 
                 // Y軸の表示/非表示を切り替え
-                conditionChart.options.scales.yDistance.display = showDistance;
-                conditionChart.options.scales.yWeight.display = showMorningWeight || showEveningWeight;
-                conditionChart.options.scales.yHR.display = showWakingHr;
+                conditionChart.options.scales.yDistance.display = toggles.distance;
+                conditionChart.options.scales.yWeight.display = toggles.morningWeight || toggles.eveningWeight;
+                conditionChart.options.scales.yHR.display = toggles.wakingHr;
                 
                 // 軸が重なった場合（走行距離と体重を同時表示）のオフセット調整
-                if (showDistance && (showMorningWeight || showEveningWeight)) {
+                if (toggles.distance && (toggles.morningWeight || toggles.eveningWeight)) {
                     conditionChart.options.scales.yDistance.position = 'left';
                     conditionChart.options.scales.yWeight.position = 'left';
                     conditionChart.options.scales.yWeight.offset = true; // 重ならないようにオフセット
@@ -1155,6 +1267,28 @@
                     conditionChart.options.scales.yDistance.position = 'left';
                     conditionChart.options.scales.yWeight.position = 'left';
                 }
+                
+                // ★ v27: 平均値を計算して表示
+                let avgHtml = '';
+                const avgMetrics = [
+                    { key: 'distance', label: '走行距離', unit: 'km/日', shown: toggles.distance, color: 'text-blue-600' },
+                    { key: 'morningWeight', label: '朝体重', unit: 'kg', shown: toggles.morningWeight, color: 'text-green-600' },
+                    { key: 'eveningWeight', label: '夕体重', unit: 'kg', shown: toggles.eveningWeight, color: 'text-emerald-600' },
+                    { key: 'wakingHr', label: '起床時脈拍', unit: 'bpm', shown: toggles.wakingHr, color: 'text-red-600' },
+                ];
+                
+                avgMetrics.forEach(m => {
+                    if (m.shown) {
+                        const avg = calculateWeeklyAverage(data, m.key);
+                        const avgText = (avg !== null) ? `${avg.toFixed(1)} ${m.unit}` : '–';
+                        avgHtml += `<p><strong class="${m.color}">${m.label}:</strong> ${avgText}</p>`;
+                    }
+                });
+                
+                if (avgHtml === '') {
+                    avgHtml = '<p class="text-gray-500">（グラフの表示項目を選択してください）</p>';
+                }
+                avgContentEl.innerHTML = avgHtml;
 
                 conditionChart.update();
             } catch (error) {
@@ -1163,7 +1297,7 @@
         }
         
         // ----------------------------------------
-        // テーパリング計画 機能 (v25と同じ)
+        // テーパリング計画 機能 (v26と同じ)
         // ----------------------------------------
         const newPlanButton = document.getElementById('new-plan-button');
         const planFormContainer = document.getElementById('plan-form-container');
