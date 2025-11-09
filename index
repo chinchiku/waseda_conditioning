@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>練習日誌アプリ (v5)</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts (Inter + Noto Sans JP) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Chart.js (グラフ描画ライブラリ) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'Noto Sans JP', 'sans-serif'],
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        body {
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        .page-content { display: none; }
+        .form-input {
+            @apply w-full p-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm;
+        }
+        .form-label {
+            @apply block text-sm font-medium text-gray-700 mb-1;
+        }
+        /* ローディングスピナー */
+        .loader {
+            border: 4px solid #f3f3f3; /* Light grey */
+            border-top: 4px solid #3498db; /* Blue */
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-900 font-sans">
+
+    <div class="min-h-screen flex flex-col md:flex-row">
+
+        <!-- サイド ナビゲーションバー -->
+        <nav class="bg-white shadow-lg md:w-64 flex-shrink-0">
+            <!-- ヘッダー (モバイル用) -->
+            <div class="flex justify-between items-center p-4 md:hidden">
+                <h1 class="text-2xl font-bold text-blue-600">練習日誌</h1>
+                <button id="mobile-menu-button" class="text-gray-600 focus:outline-none">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                </button>
+            </div>
+            
+            <!-- ナビゲーション (PC用 / モバイル用メニュー) -->
+            <div id="nav-content" class="hidden md:block md:mt-8">
+                <h1 class="hidden md:block text-3xl font-bold text-blue-600 px-6 mb-10">練習日誌</h1>
+                <ul class="space-y-2 px-4">
+                    <li>
+                        <a href="#" class="nav-link flex items-center px-4 py-3 text-gray-700 rounded-lg hover:bg-blue-50 hover:text-blue-600" data-page="page-dashboard">
+                            <span class="mr-3">📊</span> ダッシュボード
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="nav-link flex items-center px-4 py-3 text-gray-700 rounded-lg hover:bg-blue-50 hover:text-blue-600" data-page="page-condition">
+                            <span class="mr-3">📈</span> コンディション
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="nav-link flex items-center px-4 py-3 text-gray-700 rounded-lg hover:bg-blue-50 hover:text-blue-600" data-page="page-tapering">
+                            <span class="mr-3">🗓️</span> テーパリング
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="nav-link flex items-center px-4 py-3 text-gray-700 rounded-lg hover:bg-blue-50 hover:text-blue-600" data-page="page-settings">
+                            <span class="mr-3">⚙️</span> 設定
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <!-- メインコンテンツ -->
+        <main class="flex-grow p-6 md:p-10 overflow-auto">
+            
+            <!-- 1. ダッシュボード ページ -->
+            <div id="page-dashboard" class="page-content">
+                <h2 class="text-3xl font-semibold mb-6">ダッシュボード</h2>
+                
+                <!-- データ読み込み中のスピナー -->
+                <div id="dashboard-loading" class="flex flex-col items-center justify-center h-64">
+                    <div class="loader"></div>
+                    <p class="mt-4 text-gray-600">スプレッドシートからデータを読み込み中...</p>
+                </div>
+
+                <!-- 読み込みエラーメッセージ -->
+                <div id="dashboard-error" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg relative" role="alert">
+                    <strong class="font-bold">データ取得エラー</strong>
+                    <span class="block sm:inline" id="dashboard-error-message"></span>
+                </div>
+
+                <!-- サマリーカード (読み込み完了後に表示) -->
+                <div id="dashboard-summary" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="bg-white p-6 rounded-2xl shadow-lg">
+                        <h3 class="text-lg font-semibold text-gray-600 mb-2">最新の走行距離</h3>
+                        <p id="summary-distance" class="text-4xl font-bold text-blue-600">-- <span class="text-lg font-medium text-gray-500">km</span></p>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-lg">
+                        <h3 class="text-lg font-semibold text-gray-600 mb-2">最新の朝体重</h3>
+                        <p id="summary-morning-weight" class="text-4xl font-bold text-green-600">-- <span class="text-lg font-medium text-gray-500">kg</span></p>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-lg">
+                        <h3 class="text-lg font-semibold text-gray-600 mb-2">最新の睡眠時間</h3>
+                        <p id="summary-sleep" class="text-4xl font-bold text-purple-600">-- <span class="text-lg font-medium text-gray-500">時間</span></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. コンディション記録 ページ -->
+            <div id="page-condition" class="page-content">
+                <h2 class="text-3xl font-semibold mb-6">コンディション記録</h2>
+                <div class="bg-white p-6 rounded-2xl shadow-lg">
+                    <h3 class="text-xl font-semibold mb-4">コンディションの推移</h3>
+                    <div class="w-full" style="height: 400px;">
+                        <canvas id="conditionChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. テーパリング計画 ページ -->
+            <div id="page-tapering" class="page-content">
+                <h2 class="text-3xl font-semibold mb-6">テーパリング計画</h2>
+                <div class="bg-white p-6 rounded-2xl shadow-lg">
+                    <div class="mb-6">
+                        <label for="competition-date" class="block text-lg font-medium text-gray-700 mb-2">試合日:</label>
+                        <input type="date" id="competition-date" class="form-input md:w-1/2">
+                    </div>
+                    <h3 class="text-xl font-semibold mb-4">計画メモ</h3>
+                    <textarea class="form-input w-full" rows="10" placeholder="例: &#10;- 14日前: 最後の高強度トレーニング&#10;- 7日前: 練習量を50%に&#10;- 3日前: 短い刺激入れのみ"></textarea>
+                </div>
+            </div>
+
+            <!-- 4. 設定 ページ -->
+            <div id="page-settings" class="page-content">
+                <h2 class="text-3xl font-semibold mb-6">設定</h2>
+                
+                <!-- 1. 公開URL設定 -->
+                <div class="bg-white p-6 rounded-2xl shadow-lg mb-8">
+                    <h3 class="text-xl font-semibold mb-4">1. スプレッドシート連携 (必須)</h3>
+                    <p class="text-gray-700 mb-6 text-sm">
+                        各月のシートを「ファイル > 共有 > ウェブに公開」で <strong class="text-red-600">CSV形式</strong> で公開し、
+                        発行されたURLを <strong class="text-blue-600">1行に1つずつ</strong>、すべて貼り付けてください。
+                    </p>
+                    <div>
+                        <label for="csv-urls" class="form-label font-bold">公開CSVのURL一覧 (1行に1URL)</label>
+                        <textarea id="csv-urls" class="form-input font-mono" rows="8" placeholder="https://docs.google.com/spreadsheets/d/.../pub?output=csv (11月シートのURL)&#10;https://docs.google.com/spreadsheets/d/.../pub?output=csv (12月シートのURL)&#10;..."></textarea>
+                    </div>
+                </div>
+
+                <!-- 2. 列マッピング -->
+                <div class="bg-white p-6 rounded-2xl shadow-lg mb-8">
+                    <h3 class="text-xl font-semibold mb-4">2. 列設定 (必須)</h3>
+                    <p class="text-gray-700 mb-6 text-sm">
+                        シートの「何列目」にどのデータが入っているか設定してください。<br>
+                        (例: A列 → 1, B列 → 2, G列 → 7)
+                    </p>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div>
+                            <label for="col-date" class="form-label font-bold">日付</label>
+                            <input type="number" id="col-date" min="1" class="form-input" placeholder="例: 2">
+                        </div>
+                        <div>
+                            <label for="col-distance" class="form-label">走行距離</label>
+                            <input type="number" id="col-distance" min="1" class="form-input" placeholder="例: 10">
+                        </div>
+                        <div>
+                            <label for="col-morning-weight" class="form-label">朝体重</label>
+                            <input type="number" id="col-morning-weight" min="1" class="form-input" placeholder="例: 12">
+                        </div>
+                        <div>
+                            <label for="col-evening-weight" class="form-label">夕体重</label>
+                            <input type="number" id="col-evening-weight" min="1" class="form-input">
+                        </div>
+                        <div>
+                            <label for="col-waking-hr" class="form-label">起床時脈拍</label>
+                            <input type="number" id="col-waking-hr" min="1" class="form-input" placeholder="例: 13">
+                        </div>
+                        <div>
+                            <label for="col-practice-hr" class="form-label">本練脈拍</label>
+                            <input type="number" id="col-practice-hr" min="1" class="form-input">
+                        </div>
+                        <div>
+                            <label for="col-sleep" class="form-label">睡眠時間</label>
+                            <input type="number" id="col-sleep" min="1" class="form-input" placeholder="例: 15">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 3. 保存ボタン -->
+                <div class="bg-white p-6 rounded-2xl shadow-lg">
+                    <h3 class="text-xl font-semibold mb-4">3. 設定の保存</h3>
+                    <button id="save-settings-button" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300">
+                        設定を保存
+                    </button>
+                    <span id="save-status" class="ml-4 text-green-600"></span>
+                    <p class="text-gray-700 mt-6 text-sm">
+                        保存後、ダッシュボードに戻るか、ページをリロードするとデータが自動で読み込まれます。
+                    </T>
+                </div>
+
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        // ----------------------------------------
+        // グローバル変数
+        // ----------------------------------------
+        let conditionChart = null; // Chart.jsのインスタンス
+        let appData = []; // アプリ全体のデータ
+        const SETTINGS_STORAGE_KEY = 'practiceLogSettingsV5'; // v5用にキーを変更
+
+        // ----------------------------------------
+        // ページ切り替えロジック
+        // ----------------------------------------
+        const navLinks = document.querySelectorAll('.nav-link');
+        const pages = document.querySelectorAll('.page-content');
+        const defaultPage = 'page-dashboard';
+
+        function showPage(pageId) {
+            pages.forEach(page => { page.style.display = 'none'; });
+            const targetPage = document.getElementById(pageId);
+            if (targetPage) { targetPage.style.display = 'block'; }
+            
+            navLinks.forEach(link => {
+                const isActive = link.dataset.page === pageId;
+                link.classList.toggle('bg-blue-50', isActive);
+                link.classList.toggle('text-blue-600', isActive);
+                link.classList.toggle('font-semibold', isActive);
+            });
+        }
+
+        navLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                showPage(link.dataset.page);
+                const navContent = document.getElementById('nav-content');
+                if (window.innerWidth < 768) { // md breakpoint
+                    navContent.classList.add('hidden');
+                }
+            });
+        });
+
+        document.getElementById('mobile-menu-button').addEventListener('click', () => {
+            document.getElementById('nav-content').classList.toggle('hidden');
+        });
+
+        // ----------------------------------------
+        // 設定 (v5: 複数URL対応)
+        // ----------------------------------------
+        const csvUrlsInput = document.getElementById('csv-urls'); // input -> textarea
+        const mappingInputs = {
+            date: document.getElementById('col-date'),
+            distance: document.getElementById('col-distance'),
+            morningWeight: document.getElementById('col-morning-weight'),
+            eveningWeight: document.getElementById('col-evening-weight'),
+            wakingHr: document.getElementById('col-waking-hr'),
+            practiceHr: document.getElementById('col-practice-hr'),
+            sleep: document.getElementById('col-sleep'),
+        };
+        const saveButton = document.getElementById('save-settings-button');
+        const saveStatus = document.getElementById('save-status');
+
+        function saveSettings() {
+            const settings = {
+                // csvUrlsをテキストエリアから読み込み、空行を除外して配列に
+                csvUrls: csvUrlsInput.value.split('\n').filter(url => url.trim() !== ''),
+                mapping: {}
+            };
+            for (const key in mappingInputs) {
+                settings.mapping[key] = mappingInputs[key].value;
+            }
+            
+            localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+            saveStatus.textContent = '保存しました！';
+            setTimeout(() => { saveStatus.textContent = ''; }, 2000);
+        }
+
+        function loadSettings() {
+            const savedSettings = localStorage.getItem(SETTINGS_STORAGE_KEY);
+            if (savedSettings) {
+                const settings = JSON.parse(savedSettings);
+                // 配列のURLを、改行区切りのテキストに戻す
+                csvUrlsInput.value = (settings.csvUrls || []).join('\n');
+                if (settings.mapping) {
+                    for (const key in settings.mapping) {
+                        if (mappingInputs[key]) {
+                            mappingInputs[key].value = settings.mapping[key];
+                        }
+                    }
+                }
+            }
+        }
+        
+        saveButton.addEventListener('click', saveSettings);
+
+        // ----------------------------------------
+        // データ取得・解析処理 (v5の核心)
+        // ----------------------------------------
+        
+        // 1. URLからCSVデータを非同期で取得する
+        async function fetchCSVData(url) {
+            // Google Sheetsのキャッシュは強力なので、キャッシュを回避する
+            const cacheBustUrl = `${url}&_=${new Date().getTime()}`;
+            try {
+                const response = await fetch(cacheBustUrl);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status} (URL: ${url})`);
+                }
+                return await response.text();
+            } catch (error) {
+                console.error("Fetch error:", error);
+                if (error.message.includes('Failed to fetch')) {
+                     throw new Error('データの取得に失敗しました。CORSポリシー違反、またはネットワークエラーの可能性があります。');
+                }
+                throw error;
+            }
+        }
+
+        // 2. CSVテキストを解析する (v5: ゴミ行スキップ機能)
+        function parseCSV(csvText, mapping) {
+            if (!mapping || !mapping.date) {
+                throw new Error("「日付」の列設定は必須です。");
+            }
+
+            const indices = {};
+            for (const key in mapping) {
+                if (mapping[key]) {
+                    indices[key] = parseInt(mapping[key], 10) - 1; // 1-based to 0-based
+                }
+            }
+            
+            // ★ v5の核心 ★
+            // 日付列が「11/1」や「2025/11/1」のような形式かチェックする簡易正規表現
+            // 形式: "1/1", "01/01", "12/31", "2025/1/1", "2025-1-1" など (前後の""や空白は許容)
+            const dateRegex = /^\s*"?\s*(\d{1,4}[-\/]\d{1,2}[-\/]\d{1,2}|\d{1,2}\/\d{1,2})\s*"?\s*$/i;
+
+
+            const lines = csvText.trim().split('\n');
+            const data = [];
+
+            for (const line of lines) {
+                // Google Sheets CSVは、列が空でもカンマは出力される
+                // 例: "11/1",,"text",,,,10
+                // このため、単純なsplit(',')でOK
+                const columns = line.split(',');
+                
+                const dateVal = columns[indices.date];
+
+                // 日付列が存在し、かつ正規表現にマッチする場合のみ、データ行として処理する
+                if (dateVal && dateRegex.test(dateVal)) {
+                    
+                    const cleanValue = (val) => {
+                        if (val === undefined || val === null) return null;
+                        const trimmedVal = val.trim().replace(/"/g, ''); // ダブルクォートを除去
+                        if (trimmedVal === "") return null;
+                        const num = parseFloat(trimmedVal);
+                        return isNaN(num) ? null : num;
+                    };
+                    
+                    // 日付の正規化 (例: "11/3" -> "2025/11/03" のようにしたいが、年の情報がない)
+                    // ここでは一旦、シートの生の値をそのまま使う
+                    // Chart.jsは "11/3", "11/4" のような日付文字列も賢くソートしてくれる
+                    const cleanDate = dateVal.trim().replace(/"/g, '');
+
+                    data.push({
+                        date: cleanDate,
+                        distance: cleanValue(columns[indices.distance]),
+                        morningWeight: cleanValue(columns[indices.morningWeight]),
+                        eveningWeight: cleanValue(columns[indices.eveningWeight]),
+                        wakingHr: cleanValue(columns[indices.wakingHr]),
+                        practiceHr: cleanValue(columns[indices.practiceHr]),
+                        sleep: cleanValue(columns[indices.sleep]),
+                    });
+                }
+                // else: 日付形式でない行は、ゴミデータ（ヘッダー、集計行、タイトル）とみなし、無視する
+            }
+            return data;
+        }
+
+        // 3. データをロードし、UIを更新するメインの関数 (v5: 複数URL対応)
+        async function loadAndDisplayData() {
+            // UIをローディング状態に
+            document.getElementById('dashboard-loading').style.display = 'flex';
+            document.getElementById('dashboard-summary').style.display = 'none';
+            document.getElementById('dashboard-error').style.display = 'none';
+
+            const savedSettings = localStorage.getItem(SETTINGS_STORAGE_KEY);
+            if (!savedSettings) {
+                showError('「設定」ページで、公開CSVのURLと列設定を保存してください。');
+                return;
+            }
+
+            const settings = JSON.parse(savedSettings);
+            if (!settings.csvUrls || settings.csvUrls.length === 0 || !s
