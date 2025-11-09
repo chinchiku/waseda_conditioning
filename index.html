@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>練習日誌アプリ (v12)</title>
+    <title>練習日誌アプリ (v13)</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -59,7 +59,7 @@
 
     <div class="min-h-screen flex flex-col md:flex-row">
 
-        <!-- サイド ナビゲーションバー -->
+        <!-- サイド ナビゲーションバー (v12と同じ) -->
         <nav class="bg-white shadow-lg md:w-64 flex-shrink-0">
             <!-- ヘッダー (モバイル用) -->
             <div class="flex justify-between items-center p-4 md:hidden">
@@ -100,7 +100,7 @@
         <!-- メインコンテンツ -->
         <main class="flex-grow p-6 md:p-10 overflow-auto">
             
-            <!-- 1. ダッシュボード ページ -->
+            <!-- 1. ダッシュボード ページ (v12と同じ) -->
             <div id="page-dashboard" class="page-content">
                 <h2 class="text-3xl font-semibold mb-6">ダッシュボード</h2>
                 
@@ -130,7 +130,7 @@
                 </div>
             </div>
 
-            <!-- 2. コンディション記録 ページ -->
+            <!-- 2. コンディション記録 ページ (v12と同じ) -->
             <div id="page-condition" class="page-content">
                 <h2 class="text-3xl font-semibold mb-6">コンディション記録</h2>
                 <div class="bg-white p-6 rounded-2xl shadow-lg">
@@ -141,7 +141,7 @@
                 </div>
             </div>
 
-            <!-- 3. テーパリング計画 ページ -->
+            <!-- 3. テーパリング計画 ページ (HTMLはv12と同じ) -->
             <div id="page-tapering" class="page-content">
                 <h2 class="text-3xl font-semibold mb-6">テーパリング計画</h2>
                 <div class="bg-white p-6 rounded-2xl shadow-lg">
@@ -206,7 +206,8 @@
                             <!-- 最終日の負荷 -->
                             <div>
                                 <label for="plan-final-load" class="form-label font-bold">最終日の負荷 (%)</label>
-                                <input type="number" id="plan-final-load" class="form-input" placeholder="例: 20" min="0" max="100">
+                                <!-- ★ v13: 0や100は計算できないため、1-99のバリデーションを追加 -->
+                                <input type="number" id="plan-final-load" class="form-input" placeholder="例: 20 (1〜99)" min="1" max="99">
                             </div>
                         </div>
                         
@@ -226,7 +227,7 @@
                 </div>
             </div>
 
-            <!-- 4. 設定 ページ -->
+            <!-- 4. 設定 ページ (v12と同じ) -->
             <div id="page-settings" class="page-content">
                 <h2 class="text-3xl font-semibold mb-6">設定</h2>
                 
@@ -301,14 +302,14 @@
 
     <script>
         // ----------------------------------------
-        // グローバル変数
+        // グローバル変数 (v12と同じ)
         // ----------------------------------------
         let conditionChart = null;
         let appData = [];
         const SETTINGS_STORAGE_KEY = 'practiceLogSettingsV5';
 
         // ----------------------------------------
-        // ページ切り替えロジック
+        // ページ切り替えロジック (v12と同じ)
         // ----------------------------------------
         const navLinks = document.querySelectorAll('.nav-link');
         const pages = document.querySelectorAll('.page-content');
@@ -348,7 +349,7 @@
         });
 
         // ----------------------------------------
-        // 設定
+        // 設定 (v12と同じ)
         // ----------------------------------------
         const csvUrlsInput = document.getElementById('csv-urls');
         const mappingInputs = {
@@ -412,7 +413,7 @@
         }
 
         // ----------------------------------------
-        // データ取得・解析処理
+        // データ取得・解析処理 (v12と同じ)
         // ----------------------------------------
         
         async function fetchCSVData(url) {
@@ -558,7 +559,7 @@
 
 
         // ----------------------------------------
-        // ダッシュボードの更新 (★ v10: NULLチェック追加)
+        // ダッシュボードの更新 (v12と同じ)
         // ----------------------------------------
         function updateDashboard(data) {
             // 要素を取得
@@ -592,7 +593,7 @@
         }
 
         // ----------------------------------------
-        // Chart.js (グラフの初期化と更新)
+        // Chart.js (グラフの初期化と更新) (v12と同じ)
         // ----------------------------------------
         function initializeChart() {
             try {
@@ -647,7 +648,7 @@
         }
         
         // ----------------------------------------
-        // テーパリング計画 機能
+        // テーパリング計画 機能 (★ v13: τ計算ロジック追加)
         // ----------------------------------------
         const newPlanButton = document.getElementById('new-plan-button');
         const planFormContainer = document.getElementById('plan-form-container');
@@ -670,49 +671,37 @@
             return `${month}/${day} (${weekday})`;
         }
 
-        // 直近3週間の平均走行距離を計算する
+        // 直近3週間の平均走行距離を計算する (v12と同じ)
         function calculateAverageDistance() {
             if (!appData || appData.length === 0) {
                 return 0;
             }
-            
-            // appDataは日付順ソート済みなので、末尾21件を取得
             const last21DaysData = appData.slice(-21);
-            
-            // 21日分の合計走行距離を計算 (nullは0として扱う)
             const totalDistance = last21DaysData.reduce((sum, day) => {
                 return sum + (day.distance || 0);
             }, 0);
-            
-            // 週平均を計算
             let weeklyAvg = 0;
             if (last21DaysData.length > 0) {
                 weeklyAvg = (totalDistance / last21DaysData.length) * 7;
             }
-
             return weeklyAvg.toFixed(1); // 小数点第1位まで
         }
 
-        // 「新規計画」ボタンが押された時の処理
+        // 「新規計画」ボタンが押された時の処理 (v12と同じ)
         function showNewPlanForm() {
-            // 1. 平均走行距離を計算して表示
             const avgDistance = calculateAverageDistance();
             if (planAvgDistanceSpan) {
                 planAvgDistanceSpan.textContent = avgDistance;
             }
-            
-            // 2. フォームを表示
             if (planFormContainer) {
                 planFormContainer.style.display = 'block';
             }
-            
-            // 3. 出力エリアを初期化
             if (planOutputContainer) {
                 planOutputContainer.innerHTML = '<p class="text-gray-500">フォームに入力して「計画を計算」ボタンを押してください。</p>';
             }
         }
         
-        // 「計画を計算」ボタンが押された時の処理
+        // 「計画を計算」ボタンが押された時の処理 (★ v13: 更新)
         function calculateTaperPlan() {
             if (!planRaceName || !planRaceDate || !planDuration || !planFinalLoad || !planOutputContainer || !planAvgDistanceSpan) {
                 console.error("Tapering plan calculation UI elements not found.");
@@ -722,13 +711,19 @@
             // 1. フォームから値を取得
             const raceName = planRaceName.value || "（名称未設定のレース）";
             const raceDateStr = planRaceDate.value;
-            const avgDistance = parseFloat(planAvgDistanceSpan.textContent);
-            const duration = parseInt(planDuration.value, 10);
-            const finalLoad = parseInt(planFinalLoad.value, 10);
+            const avgDistance = parseFloat(planAvgDistanceSpan.textContent); // 週平均
+            const duration = parseInt(planDuration.value, 10); // C2
+            const finalLoad = parseInt(planFinalLoad.value, 10); // C3
 
             // 2. バリデーション
             if (!raceDateStr || isNaN(duration) || isNaN(finalLoad)) {
                 planOutputContainer.innerHTML = `<p class="text-red-600">「レース日」「期間」「負荷」を正しく入力してください。</p>`;
+                return;
+            }
+            
+            // ★ v13: finalLoadが0または100以上だと計算できないため、1-99に制限
+            if (finalLoad <= 0 || finalLoad >= 100) {
+                 planOutputContainer.innerHTML = `<p class="text-red-600">「最終日の負荷」は 1% から 99% の間で入力してください。</p>`;
                 return;
             }
             
@@ -738,9 +733,14 @@
                 return;
             }
 
-            // 3. ★ プレースホルダー（仮のロジック） ★
-            // ご要望の通り、実際の計算関数は後で組み込みます。
-            // ここでは入力された値を表示するだけに留めます。
+            // 3. ★ v13: τ (タウ) の計算
+            // C2 = duration, C3 = finalLoad
+            // =-C2/LN(C3/100)
+            const tau = -duration / Math.log(finalLoad / 100);
+
+            
+            // 4. 出力HTML（プレースホルダー）を更新
+            // (次のステップで、ここに日毎の計算結果を追加します)
             
             let outputHtml = `
                 <h3 class="text-xl font-semibold text-gray-800 mb-4">${raceName} への計画</h3>
@@ -751,11 +751,13 @@
                     <p><strong>最終日の負荷:</strong> ${finalLoad} %</p>
                 </div>
                 <div class="mt-6 p-4 bg-gray-100 rounded-lg">
-                    <p class="font-semibold">計算ロジック（未実装）:</p>
+                    <p class="font-semibold">計算結果 (ステップ1):</p>
                     <p class="text-sm text-gray-600">
-                        ここに、${duration}日間の推奨走行距離が一覧表示されます。<br>
-                        （例: 10日前: 30km, 9日前: 25km, ...）<br>
-                        <strong>（次のステップで、計算関数をここに実装します）</strong>
+                        計算された減衰係数 <strong class="text-blue-600">τ (タウ)</strong> の値:
+                        <strong class="text-lg">${tau.toFixed(4)}</strong>
+                    </p>
+                    <p class="text-sm text-gray-600 mt-2">
+                        <strong>（次のステップで、このτを使って日毎の走行距離を計算します）</strong>
                     </p>
                 </div>
             `;
@@ -764,7 +766,7 @@
         }
 
 
-        // イベントリスナーの割り当て
+        // イベントリスナーの割り当て (v12と同じ)
         if (newPlanButton) {
             newPlanButton.addEventListener('click', showNewPlanForm);
         } else {
@@ -772,7 +774,6 @@
         }
         
         if (calculatePlanButton) {
-            // ★ v12: 構文エラーを修正 (抜けていた ')' を追加)
             calculatePlanButton.addEventListener('click', calculateTaperPlan);
         } else {
             console.error("Calculate plan button not found.");
@@ -780,7 +781,7 @@
 
 
         // ----------------------------------------
-        // 初期化処理
+        // 初期化処理 (v12と同じ)
         // ----------------------------------------
         document.addEventListener('DOMContentLoaded', () => {
             showPage(defaultPage);
