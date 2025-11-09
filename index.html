@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>練習日誌アプリ (v11)</title>
+    <title>練習日誌アプリ (v12)</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -121,18 +121,16 @@
                     </div>
                     <div class="bg-white p-6 rounded-2xl shadow-lg">
                         <h3 class="text-lg font-semibold text-gray-600 mb-2">最新の朝体重</h3>
-                        <!-- ★ v11: 以下の <p> と </div> がv10履歴で欠落していたのを修復 -->
                         <p id="summary-morning-weight" class="text-4xl font-bold text-green-600">-- <span class="text-lg font-medium text-gray-500">kg</span></p>
                     </div>
-                    <!-- ★ v11: 以下の「睡眠時間」カード全体がv10履歴で欠落していたのを修復 -->
                     <div class="bg-white p-6 rounded-2xl shadow-lg">
                         <h3 class="text-lg font-semibold text-gray-600 mb-2">最新の睡眠時間</h3>
                         <p id="summary-sleep" class="text-4xl font-bold text-purple-600">-- <span class="text-lg font-medium text-gray-500">時間</span></p>
                     </div>
-                </div> <!-- ★ v11: dashboard-summary の </div> を修復 -->
-            </div> <!-- ★ v11: page-dashboard の </div> を修復 -->
+                </div>
+            </div>
 
-            <!-- ★ v11: 「コンディション」ページ全体がv10履歴で欠落していたのを修復 -->
+            <!-- 2. コンディション記録 ページ -->
             <div id="page-condition" class="page-content">
                 <h2 class="text-3xl font-semibold mb-6">コンディション記録</h2>
                 <div class="bg-white p-6 rounded-2xl shadow-lg">
@@ -143,12 +141,12 @@
                 </div>
             </div>
 
-            <!-- 3. テーパリング計画 ページ (v9から変更なし) -->
+            <!-- 3. テーパリング計画 ページ -->
             <div id="page-tapering" class="page-content">
                 <h2 class="text-3xl font-semibold mb-6">テーパリング計画</h2>
                 <div class="bg-white p-6 rounded-2xl shadow-lg">
                     
-                    <!-- v8: テーパリングの原則 (変更なし) -->
+                    <!-- テーパリングの原則 -->
                     <div class="mb-8 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded-lg">
                         <h3 class="text-lg font-semibold text-yellow-800 mb-3">テーパリングの原則</h3>
                         <div class="space-y-2 text-gray-700">
@@ -168,14 +166,14 @@
                         </div>
                     </div>
 
-                    <!-- v9: 新規計画ボタン -->
+                    <!-- 新規計画ボタン -->
                     <div class="mb-6">
                          <button id="new-plan-button" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 w-full md:w-auto">
                             新規テーパリング計画を作成
                         </button>
                     </div>
 
-                    <!-- v9: 新規計画フォーム (デフォルト非表示) -->
+                    <!-- 新規計画フォーム (デフォルト非表示) -->
                     <div id="plan-form-container" class="hidden mb-8 p-6 bg-gray-50 rounded-lg border border-gray-200">
                         <h3 class="text-xl font-semibold text-gray-800 mb-6">新規計画</h3>
                         
@@ -220,7 +218,7 @@
                         </div>
                     </div>
 
-                    <!-- v9: 計画表示エリア -->
+                    <!-- 計画表示エリア -->
                     <div id="plan-output-container">
                         <p class="text-gray-500">「新規テーパリング計画を作成」ボタンを押して、計画を開始してください。</p>
                     </div>
@@ -228,7 +226,7 @@
                 </div>
             </div>
 
-            <!-- 4. 設定 ページ (v9から変更なし) -->
+            <!-- 4. 設定 ページ -->
             <div id="page-settings" class="page-content">
                 <h2 class="text-3xl font-semibold mb-6">設定</h2>
                 
@@ -774,7 +772,8 @@
         }
         
         if (calculatePlanButton) {
-            calculatePlanButton.addEventListener('click', calculateTaperPlan;
+            // ★ v12: 構文エラーを修正 (抜けていた ')' を追加)
+            calculatePlanButton.addEventListener('click', calculateTaperPlan);
         } else {
             console.error("Calculate plan button not found.");
         }
