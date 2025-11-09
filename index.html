@@ -3,16 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- ★ v28: タイトル変更 -->
-    <title>ワセダ_覇者への道のり (v28)</title>
+    <title>ワセダ_覇者への道のり (v29)</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Google Fonts (Inter + Noto Sans JP) -->
+    <!-- Google Fonts (Inter + Noto Sans JP + ★ v29: Noto Serif JP) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- ★ v29: Noto Serif JP (和風フォント) を追加 -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&family=Noto+Serif+JP:wght@600;700&display=swap" rel="stylesheet">
     
     <!-- Chart.js (グラフ描画ライブラリ) -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
@@ -23,8 +23,9 @@
                 extend: {
                     fontFamily: {
                         sans: ['Inter', 'Noto Sans JP', 'sans-serif'],
+                        // ★ v29: 和風フォントを 'serif' として定義
+                        serif: ['"Noto Serif JP"', 'serif'],
                     },
-                    // ★ v28: 臙脂色を定義 (早稲田カラーに近い)
                     colors: {
                         waseda: {
                             DEFAULT: '#990000', // 臙脂 (濃い)
@@ -44,8 +45,14 @@
             -moz-osx-font-smoothing: grayscale;
         }
         .page-content { display: none; }
-        #page-settings { display: block; }
+        /* ★ v29: デフォルト表示を「ダッシュボード」に変更 */
+        #page-dashboard { display: block; }
         
+        /* ★ v29: 見出しに和風フォントを適用 */
+        h1, h2, h3, h4, h5, h6 {
+            @apply font-serif;
+        }
+
         .form-input {
             @apply w-full p-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-red-800 text-sm;
         }
@@ -54,7 +61,6 @@
         }
         .loader {
             border: 4px solid #f3f3f3;
-            /* ★ v28: ローダーの色を赤系に */
             border-top: 4px solid #990000;
             border-radius: 50%;
             width: 40px;
@@ -74,18 +80,34 @@
         .plan-table td {
             @apply px-4 py-3 whitespace-nowLrap text-sm text-gray-700;
         }
+        
+        /* ★ v29: マニュアルのアコーディオン スタイル */
+        details > summary {
+            list-style: none; /* デフォルトの三角を消す */
+            cursor: pointer;
+        }
+        details > summary::-webkit-details-marker {
+            display: none; /* デフォルトの三角を消す (Chrome) */
+        }
+        details > summary::after {
+            content: '▼'; /* 閉じてる時のアイコン */
+            float: right;
+            transition: transform 0.2s;
+        }
+        details[open] > summary::after {
+            transform: rotate(180deg); /* 開いてる時のアイコン */
+        }
+
     </style>
 </head>
-<!-- ★ v28: 背景色をほんのり赤系に (waseda-bg) -->
 <body class="bg-gray-50 text-gray-900 font-sans">
 
     <div class="min-h-screen flex flex-col md:flex-row">
 
-        <!-- ★ v28: サイド ナビゲーションバー (色とタイトル変更) -->
+        <!-- サイド ナビゲーションバー (v28と同じ) -->
         <nav class="bg-white shadow-lg md:w-64 flex-shrink-0">
             <!-- ヘッダー (モバイル用) -->
             <div class="flex justify-between items-center p-4 md:hidden">
-                <!-- ★ v28: タイトルと色変更 -->
                 <h1 class="text-xl font-bold text-red-800">ワセダ_覇者への道のり</h1>
                 <button id="mobile-menu-button" class="text-gray-600 focus:outline-none">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
@@ -94,11 +116,9 @@
             
             <!-- ナビゲーション (PC用 / モバイル用メニュー) -->
             <div id="nav-content" class="hidden md:block md:mt-8">
-                <!-- ★ v28: タイトルと色変更 (PC) -->
                 <h1 class="hidden md:block text-2xl font-bold text-red-800 px-6 mb-10">ワセダ_覇者への道のり</h1>
                 
                 <ul class="space-y-2 px-4">
-                    <!-- ★ v28: ホバー色変更 -->
                     <li>
                         <a href="#" class="nav-link flex items-center px-4 py-3 text-gray-700 rounded-lg hover:bg-red-50 hover:text-red-800" data-page="page-settings">
                             <span class="mr-3">⚙️</span> 設定
@@ -126,9 +146,46 @@
         <!-- メインコンテンツ -->
         <main class="flex-grow p-6 md:p-10 overflow-auto">
             
-            <!-- 1. ダッシュボード ページ (★ v28: HTMLレイアウト変更) -->
+            <!-- 1. ダッシュボード ページ (★ v29: HTMLレイアウト変更、マニュアル追加) -->
             <div id="page-dashboard" class="page-content">
                 <h2 class="text-3xl font-semibold mb-6">ダッシュボード</h2>
+
+                <!-- ★ v29: 使い方マニュアル (アコーディオン) -->
+                <details class="bg-white p-6 rounded-2xl shadow-lg mb-8 border-l-4 border-red-800">
+                    <summary class="text-xl font-semibold text-gray-800">はじめに (使い方マニュアル)</summary>
+                    <div class="mt-4 pt-4 border-t border-gray-200 text-gray-700 space-y-3 text-sm">
+                        <p>このアプリは、日々の練習日誌データ（CSVまたは手動入力）を読み込み、コンディションやテーパリング計画を管理するためのツールです。</p>
+                        <ol class="list-decimal list-inside space-y-2">
+                            <li>
+                                <strong>[設定] ページ (最重要):</strong>
+                                <ul class="list-disc list-inside ml-4 mt-1">
+                                    <li>最初に、このページでデータ入力方法（CSV連携 or 手動）を選択します。</li>
+                                    <li>**CSV連携:** 「ウェブに公開」したCSVのURLを貼り付けます。CSV連携の場合は「列設定」でアルファベット（A, Bなど）の指定が**必須**です。</li>
+                                    <li>**手動入力:** 走行距離データを「日付,距離」の形式で貼り付けます。（この場合、列設定は不要です）</li>
+                                    <li>最後に必ず「設定を保存」ボタンを押してください。データは保存後にリロードすると反映されます。</li>
+                                </ul>
+                            </li>
+                            <li>
+                                <strong>[ダッシュボード] ページ:</strong>
+                                <ul class="list-disc list-inside ml-4 mt-1">
+                                    <li>読み込んだデータの「最新値」「前日比」「直近7日間平均」を一覧表示します。</li>
+                                </ul>
+                            </li>
+                            <li>
+                                <strong>[コンディション] ページ:</strong>
+                                <ul class="list-disc list-inside ml-4 mt-1">
+                                    <li>データの推移をグラフで視覚化します。チェックボックスで表示項目を切り替えられます。</li>
+                                </ul>
+                            </li>
+                            <li>
+                                <strong>[テーパリング] ページ:</strong>
+                                <ul class="list-disc list-inside ml-4 mt-1">
+                                    <li>レース日と期間から、推奨される走行距離の減衰計画を自動で計算します。</li>
+                                </ul>
+                            </li>
+                        </ol>
+                    </div>
+                </details>
                 
                 <div id="dashboard-loading" class="flex flex-col items-center justify-center h-64">
                     <div class="loader"></div>
@@ -140,16 +197,14 @@
                     <span class="block sm:inline" id="dashboard-error-message"></span>
                 </div>
 
-                <!-- ★ v28: レイアウト変更 (週平均を統合) -->
-                <div id="dashboard-summary" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+                <!-- ★ v29: レイアウト変更 (上段3つ) -->
+                <div id="dashboard-summary-top" class="hidden grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                     <!-- 走行距離カード -->
                     <div class="bg-white p-6 rounded-2xl shadow-lg">
                         <h3 class="text-lg font-semibold text-gray-600 mb-2">走行距離</h3>
-                        <!-- 最新値 -->
-                        <p id="summary-distance" class="text-4xl font-bold text-red-800">– <span class="text-lg font-medium text-gray-500">km</span></p>
-                        <!-- 週平均 -->
+                        <!-- ★ v29: 色を v27 に戻す -->
+                        <p id="summary-distance" class="text-4xl font-bold text-blue-600">– <span class="text-lg font-medium text-gray-500">km</span></p>
                         <p id="avg-distance" class="text-sm text-gray-500 mt-1">週平均: – km/日</p>
-                        <!-- 前日比 -->
                         <div id="summary-distance-change" class="mt-2 text-sm text-gray-500 h-5">
                             <span>–</span> (<span>–</span>)
                         </div>
@@ -157,7 +212,7 @@
                     <!-- 朝体重カード -->
                     <div class="bg-white p-6 rounded-2xl shadow-lg">
                         <h3 class="text-lg font-semibold text-gray-600 mb-2">朝体重</h3>
-                        <p id="summary-morning-weight" class="text-4xl font-bold text-red-800">– <span class="text-lg font-medium text-gray-500">kg</span></p>
+                        <p id="summary-morning-weight" class="text-4xl font-bold text-green-600">– <span class="text-lg font-medium text-gray-500">kg</span></p>
                         <p id="avg-morning-weight" class="text-sm text-gray-500 mt-1">週平均: – kg</p>
                         <div id="summary-morning-weight-change" class="mt-2 text-sm text-gray-500 h-5">
                             <span>–</span> (<span>–</span>)
@@ -166,16 +221,19 @@
                     <!-- 夜体重カード -->
                     <div class="bg-white p-6 rounded-2xl shadow-lg">
                         <h3 class="text-lg font-semibold text-gray-600 mb-2">夜体重</h3>
-                        <p id="summary-evening-weight" class="text-4xl font-bold text-red-800">– <span class="text-lg font-medium text-gray-500">kg</span></p>
+                        <p id="summary-evening-weight" class="text-4xl font-bold text-emerald-600">– <span class="text-lg font-medium text-gray-500">kg</span></p>
                         <p id="avg-evening-weight" class="text-sm text-gray-500 mt-1">週平均: – kg</p>
                         <div id="summary-evening-weight-change" class="mt-2 text-sm text-gray-500 h-5">
                             <span>–</span> (<span>–</span>)
                         </div>
                     </div>
-                    <!-- 起床時脈拍カード -->
+                </div>
+                <!-- ★ v29: レイアウト変更 (下段2つ) -->
+                <div id="dashboard-summary-bottom" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-6">
+                     <!-- 起床時脈拍カード -->
                     <div class="bg-white p-6 rounded-2xl shadow-lg">
                         <h3 class="text-lg font-semibold text-gray-600 mb-2">起床時脈拍</h3>
-                        <p id="summary-waking-hr" class="text-4xl font-bold text-red-800">– <span class="text-lg font-medium text-gray-500">bpm</span></p>
+                        <p id="summary-waking-hr" class="text-4xl font-bold text-red-600">– <span class="text-lg font-medium text-gray-500">bpm</span></p>
                         <p id="avg-waking-hr" class="text-sm text-gray-500 mt-1">週平均: – bpm</p>
                         <div id="summary-waking-hr-change" class="mt-2 text-sm text-gray-500 h-5">
                             <span>–</span> (<span>–</span>)
@@ -184,7 +242,7 @@
                     <!-- 睡眠時間カード -->
                     <div class="bg-white p-6 rounded-2xl shadow-lg">
                         <h3 class="text-lg font-semibold text-gray-600 mb-2">睡眠時間</h3>
-                        <p id="summary-sleep" class="text-4xl font-bold text-red-800">– <span class="text-lg font-medium text-gray-500">時間</span></p>
+                        <p id="summary-sleep" class="text-4xl font-bold text-purple-600">– <span class="text-lg font-medium text-gray-500">時間</span></p>
                         <p id="avg-sleep" class="text-sm text-gray-500 mt-1">週平均: – 時間</p>
                         <div id="summary-sleep-change" class="mt-2 text-sm text-gray-500 h-5">
                             <span>–</span> (<span>–</span>)
@@ -192,11 +250,9 @@
                     </div>
                 </div>
                 
-                <!-- ★ v28: 週平均のセクション (v27) を削除 -->
-                
             </div>
 
-            <!-- 2. コンディション記録 ページ (★ v28: チェックボックス色変更) -->
+            <!-- 2. コンディション記録 ページ (v28と同じ) -->
             <div id="page-condition" class="page-content">
                 <h2 class="text-3xl font-semibold mb-6">コンディション記録</h2>
                 
@@ -204,7 +260,6 @@
                 <div id="chart-controls" class="bg-white p-4 rounded-2xl shadow-lg mb-6 flex flex-wrap gap-4 items-center">
                     <h4 class="text-lg font-semibold text-gray-700 mr-4">表示項目:</h4>
                     <label class="flex items-center space-x-2 cursor-pointer">
-                        <!-- ★ v28: 色変更 -->
                         <input type="checkbox" id="toggle-distance" class="chart-toggle form-checkbox text-red-800 rounded focus:ring-red-700" data-dataset-index="0">
                         <span class="text-gray-700">走行距離</span>
                     </label>
@@ -222,7 +277,7 @@
                     </label>
                 </div>
                 
-                <!-- 週平均表示エリア (v27と同じ) -->
+                <!-- 週平均表示エリア (v28と同じ) -->
                 <div id="chart-averages" class="bg-white p-4 rounded-2xl shadow-lg mb-6">
                     <h4 class="text-lg font-semibold text-gray-700 mb-2">直近7日間平均</h4>
                     <div id="chart-averages-content" class="flex flex-wrap gap-x-6 gap-y-2 text-gray-600">
@@ -238,12 +293,12 @@
                 </div>
             </div>
 
-            <!-- 3. テーパリング計画 ページ (★ v28: ボタン色変更) -->
+            <!-- 3. テーパリング計画 ページ (v28と同じ) -->
             <div id="page-tapering" class="page-content">
                 <h2 class="text-3xl font-semibold mb-6">テーパリング計画</h2>
                 <div class="bg-white p-6 rounded-2xl shadow-lg">
                     
-                    <!-- テーパリングの原則 (v27と同じ) -->
+                    <!-- テーパリングの原則 (v28と同じ) -->
                     <div class="mb-8 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded-lg">
                         <h3 class="text-lg font-semibold text-yellow-800 mb-3">テーパリングの原則</h3>
                         <div class="space-y-2 text-gray-700">
@@ -263,14 +318,14 @@
                         </div>
                     </div>
 
-                    <!-- ★ v28: ボタン色変更 -->
+                    <!-- 新規計画ボタン (v28と同じ) -->
                     <div class="mb-6">
                          <button id="new-plan-button" class="bg-red-800 hover:bg-red-900 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 w-full md:w-auto">
                             新規テーパリング計画を作成
                         </button>
                     </div>
 
-                    <!-- 新規計画フォーム (v27と同じ) -->
+                    <!-- 新規計画フォーム (v28と同じ) -->
                     <div id="plan-form-container" class="hidden mb-8 p-6 bg-gray-50 rounded-lg border border-gray-200">
                         <h3 class="text-xl font-semibold text-gray-800 mb-6">新規計画</h3>
                         
@@ -307,7 +362,7 @@
                             </div>
                         </div>
                         
-                        <!-- ★ v28: ボタン色変更 -->
+                        <!-- 計算ボタン (v28と同じ) -->
                         <div class="mt-8">
                             <button id="calculate-plan-button" class="bg-red-700 hover:bg-red-800 text-white font-bold py-2 px-5 rounded-lg shadow-md transition duration-300">
                                 計画を計算
@@ -323,7 +378,7 @@
                 </div>
             </div>
 
-            <!-- 4. 設定 ページ (★ v28: ボタン・ラジオボタン色変更) -->
+            <!-- 4. 設定 ページ (v28と同じ) -->
             <div id="page-settings" class="page-content">
                 <h2 class="text-3xl font-semibold mb-6">設定</h2>
                 
@@ -335,7 +390,6 @@
                     </p>
                     <div class="flex space-x-6">
                         <label class="flex items-center">
-                            <!-- ★ v28: 色変更 -->
                             <input type="radio" id="data-source-csv" name="dataSource" value="csv" class="form-radio text-red-800 focus:ring-red-700" checked>
                             <span class="ml-2 text-gray-700">CSV自動連携</span>
                         </label>
@@ -372,7 +426,7 @@
                     </div>
                 </div>
 
-                <!-- 4. 列マッピング (v27と同じ) -->
+                <!-- 4. 列マッピング (v28と同じ) -->
                 <div class="bg-white p-6 rounded-2xl shadow-lg mb-8">
                     <h3 class="text-xl font-semibold mb-4">4. 列設定 (CSV連携のみ)</h3>
                     <p class="text-gray-700 mb-6 text-sm">
@@ -417,7 +471,6 @@
                     <p class="text-gray-700 mb-4 text-sm">
                         設定を変更したら、必ず保存ボタンを押してください。
                     </p>
-                    <!-- ★ v28: ボタン色変更 -->
                     <button id="save-settings-button" class="bg-red-800 hover:bg-red-900 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300">
                         設定を保存
                     </button>
@@ -434,7 +487,7 @@
 
     <script>
         // ----------------------------------------
-        // グローバル変数 (v27と同じ)
+        // グローバル変数 (v28と同じ)
         // ----------------------------------------
         let conditionChart = null;
         let appData = [];
@@ -442,7 +495,7 @@
         const MANUAL_DATA_STORAGE_KEY = 'practiceLogManualData';
 
         // ----------------------------------------
-        // 列アルファベット <-> 数字 変換 (v27と同じ)
+        // 列アルファベット <-> 数字 変換 (v28と同じ)
         // ----------------------------------------
         function columnToLetter(colNum) {
             if (colNum === null || colNum === undefined || colNum === "" || colNum < 1) {
@@ -471,7 +524,7 @@
         }
 
         // ----------------------------------------
-        // 日付パーサー (v27と同じ)
+        // 日付パーサー (v28と同じ)
         // ----------------------------------------
         
         // 「ソート用」
@@ -562,11 +615,12 @@
         }
 
         // ----------------------------------------
-        // ページ切り替えロジック (v27と同じ)
+        // ページ切り替えロジック (★ v29: デフォルトページ変更)
         // ----------------------------------------
         const navLinks = document.querySelectorAll('.nav-link');
         const pages = document.querySelectorAll('.page-content');
-        const defaultPage = 'page-settings'; 
+        // ★ v29: デフォルトを「ダッシュボード」に変更
+        const defaultPage = 'page-dashboard'; 
 
         function showPage(pageId) {
             pages.forEach(page => { page.style.display = 'none'; });
@@ -579,7 +633,7 @@
             
             navLinks.forEach(link => {
                 const isActive = link.dataset.page === pageId;
-                // ★ v28: 色変更
+                // ★ v29: 色変更
                 link.classList.toggle('bg-red-50', isActive);
                 link.classList.toggle('text-red-800', isActive);
                 link.classList.toggle('font-semibold', isActive);
@@ -603,7 +657,7 @@
         });
 
         // ----------------------------------------
-        // 設定 (v27と同じ)
+        // 設定 (v28と同じ)
         // ----------------------------------------
         const csvUrlsInput = document.getElementById('csv-urls');
         const manualDataInput = document.getElementById('manual-data-input');
@@ -720,7 +774,7 @@
         }
 
         // ----------------------------------------
-        // データ取得・解析処理 (v27と同じ)
+        // データ取得・解析処理 (v28と同じ)
         // ----------------------------------------
         
         function fetchWithTimeout(url, timeout = 10000) { // 10秒タイムアウト
@@ -837,20 +891,21 @@
         }
 
 
-        // データ読み込みのメインロジック
+        // データ読み込みのメインロジック (★ v29: レイアウト変更対応)
         async function loadAndDisplayData() {
             const loadingEl = document.getElementById('dashboard-loading');
-            const summaryEl = document.getElementById('dashboard-summary');
-            // ★ v28: 週平均セクションは削除されたので、取得しない
+            const summaryTopEl = document.getElementById('dashboard-summary-top');
+            const summaryBottomEl = document.getElementById('dashboard-summary-bottom');
             const errorEl = document.getElementById('dashboard-error');
             
-            if (!loadingEl || !summaryEl || !errorEl) {
-                console.error("Dashboard UI elements not found.");
+            if (!loadingEl || !summaryTopEl || !summaryBottomEl || !errorEl) {
+                console.error("Dashboard UI elements (top/bottom) not found.");
                 return;
             }
 
             loadingEl.style.display = 'flex';
-            summaryEl.style.display = 'none';
+            summaryTopEl.style.display = 'none'; // ★ v29
+            summaryBottomEl.style.display = 'none'; // ★ v29
             errorEl.style.display = 'none';
 
             try {
@@ -916,7 +971,8 @@
                 updateConditionChart(appData); 
 
                 loadingEl.style.display = 'none';
-                summaryEl.style.display = 'grid';
+                summaryTopEl.style.display = 'grid'; // ★ v29
+                summaryBottomEl.style.display = 'grid'; // ★ v29
 
             } catch (error) {
                 console.error("Failed to load and display data:", error);
@@ -928,18 +984,22 @@
             const loadingEl = document.getElementById('dashboard-loading');
             const errorEl = document.getElementById('dashboard-error');
             const errorMsgEl = document.getElementById('dashboard-error-message');
+            const summaryTopEl = document.getElementById('dashboard-summary-top');
+            const summaryBottomEl = document.getElementById('dashboard-summary-bottom');
 
             if (loadingEl) loadingEl.style.display = 'none';
+            if (summaryTopEl) summaryTopEl.style.display = 'none'; // ★ v29
+            if (summaryBottomEl) summaryBottomEl.style.display = 'none'; // ★ v29
             if (errorEl) errorEl.style.display = 'block';
             if (errorMsgEl) errorMsgEl.textContent = message;
         }
 
 
         // ----------------------------------------
-        // ★ v28: ダッシュボードの更新 (レイアウト統合)
+        // ★ v29: ダッシュボードの更新 (v28ロジック・色戻し)
         // ----------------------------------------
         
-        // v27と同じヘルパー関数
+        // v28と同じヘルパー関数
         function findChangeData(data, key) {
             if (!data || data.length === 0) return null;
             
@@ -983,7 +1043,7 @@
             return result;
         }
         
-        // v27と同じヘルパー関数
+        // v28と同じヘルパー関数
         function calculateWeeklyAverage(data, key) {
             if (!data || data.length === 0) {
                 return null;
@@ -1030,7 +1090,7 @@
         }
 
 
-        // ★ v28: レイアウト統合に合わせて更新
+        // v28のロジック + 色戻し
         function updateDashboard(data) {
             
             const metrics = [
@@ -1130,7 +1190,7 @@
 
 
         // ----------------------------------------
-        // Chart.js (★ v28: グラフ色変更)
+        // Chart.js (★ v29: グラフ色を v27 に戻す)
         // ----------------------------------------
         function initializeChart() {
             try {
@@ -1148,8 +1208,8 @@
                             { 
                                 label: '走行距離 (km)', 
                                 data: [], 
-                                // ★ v28: グラフ色変更
-                                borderColor: 'rgb(220, 38, 38)', // red-600
+                                // ★ v29: グラフ色を v27 に戻す
+                                borderColor: 'rgb(59, 130, 246)', // blue-600
                                 yAxisID: 'yDistance', 
                                 spanGaps: true,
                                 hidden: true 
@@ -1157,8 +1217,8 @@
                             { 
                                 label: '朝体重 (kg)', 
                                 data: [], 
-                                // ★ v28: グラフ色変更
-                                borderColor: 'rgb(244, 63, 94)', // rose-500
+                                // ★ v29: グラフ色を v27 に戻す
+                                borderColor: 'rgb(34, 197, 94)', // green-500
                                 yAxisID: 'yWeight', 
                                 spanGaps: true,
                                 hidden: false 
@@ -1166,8 +1226,8 @@
                             { 
                                 label: '夕体重 (kg)', 
                                 data: [], 
-                                // ★ v28: グラフ色変更
-                                borderColor: 'rgb(234, 88, 12)', // orange-600
+                                // ★ v29: グラフ色を v27 に戻す
+                                borderColor: 'rgb(5, 150, 105)', // emerald-600
                                 yAxisID: 'yWeight', 
                                 spanGaps: true,
                                 hidden: true 
@@ -1175,8 +1235,8 @@
                             { 
                                 label: '起床時脈拍', 
                                 data: [], 
-                                // ★ v28: グラフ色変更
-                                borderColor: 'rgb(153, 27, 27)', // red-800
+                                // ★ v29: グラフ色を v27 に戻す
+                                borderColor: 'rgb(239, 68, 68)', // red-500
                                 yAxisID: 'yHR', 
                                 spanGaps: true,
                                 hidden: false 
@@ -1223,7 +1283,7 @@
             }
         }
 
-        // ★ v28: 平均値のテキスト色を変更
+        // ★ v29: 平均値のテキスト色を v27 に戻す
         function updateConditionChart(data) {
             if (!conditionChart) return;
             
@@ -1276,13 +1336,13 @@
                     conditionChart.options.scales.yWeight.position = 'left';
                 }
                 
-                // ★ v28: 平均値を計算して表示 (色を赤系に)
+                // ★ v29: 平均値を計算して表示 (色を v27 に戻す)
                 let avgHtml = '';
                 const avgMetrics = [
-                    { key: 'distance', label: '走行距離', unit: 'km/日', shown: toggles.distance, color: 'text-red-600' }, // blue-600 -> red-600
-                    { key: 'morningWeight', label: '朝体重', unit: 'kg', shown: toggles.morningWeight, color: 'text-rose-500' }, // green-600 -> rose-500
-                    { key: 'eveningWeight', label: '夕体重', unit: 'kg', shown: toggles.eveningWeight, color: 'text-orange-600' }, // emerald-600 -> orange-600
-                    { key: 'wakingHr', label: '起床時脈拍', unit: 'bpm', shown: toggles.wakingHr, color: 'text-red-800' }, // red-600 -> red-800
+                    { key: 'distance', label: '走行距離', unit: 'km/日', shown: toggles.distance, color: 'text-blue-600' },
+                    { key: 'morningWeight', label: '朝体重', unit: 'kg', shown: toggles.morningWeight, color: 'text-green-600' },
+                    { key: 'eveningWeight', label: '夕体重', unit: 'kg', shown: toggles.eveningWeight, color: 'text-emerald-600' },
+                    { key: 'wakingHr', label: '起床時脈拍', unit: 'bpm', shown: toggles.wakingHr, color: 'text-red-600' },
                 ];
                 
                 avgMetrics.forEach(m => {
@@ -1305,7 +1365,7 @@
         }
         
         // ----------------------------------------
-        // テーパリング計画 機能 (v27と同じ)
+        // テーパリング計画 機能 (v28と同じ)
         // ----------------------------------------
         const newPlanButton = document.getElementById('new-plan-button');
         const planFormContainer = document.getElementById('plan-form-container');
@@ -1617,12 +1677,12 @@
         // 初期化処理
         // ----------------------------------------
         document.addEventListener('DOMContentLoaded', () => {
-            showPage(defaultPage);
+            // ★ v29: デフォルトページをダッシュボードに
+            showPage(defaultPage); 
             loadSettings();     
             initializeChart();  
             loadAndDisplayData(); 
             
-            // ★ v26: グラフのチェックボックスにイベントリスナーを追加
             const chartToggles = document.querySelectorAll('.chart-toggle');
             chartToggles.forEach(toggle => {
                 toggle.addEventListener('change', () => {
