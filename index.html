@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ワセダ_覇者への道のり (v32)</title>
+    <title>ワセダ_覇者への道のり (v33)</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Google Fonts (v30と同じ) -->
+    <!-- Google Fonts (v32と同じ) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Klee+One:wght@600&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
@@ -74,7 +74,6 @@
             @apply px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider;
         }
         .plan-table td {
-            /* ★ v32: CSSのタイプミス (nowLrap -> nowrap) を修正 */
             @apply px-4 py-3 whitespace-nowrap text-sm text-gray-700;
         }
         
@@ -106,7 +105,7 @@
 
     <div class="min-h-screen flex flex-col md:flex-row">
 
-        <!-- サイド ナビゲーションバー (v31と同じ) -->
+        <!-- サイド ナビゲーションバー (v32と同じ) -->
         <nav class="bg-white shadow-lg md:w-64 flex-shrink-0">
             <!-- ヘッダー (モバイル用) -->
             <div class="flex justify-between items-center p-4 md:hidden">
@@ -148,11 +147,11 @@
         <!-- メインコンテンツ -->
         <main class="flex-grow p-6 md:p-10 overflow-auto">
             
-            <!-- 1. ダッシュボード ページ (v31と同じ) -->
+            <!-- 1. ダッシュボード ページ (v32と同じ) -->
             <div id="page-dashboard" class="page-content">
                 <h2 class="text-3xl font-semibold mb-6">ダッシュボード</h2>
 
-                <!-- 使い方マニュアル (v31と同じ) -->
+                <!-- 使い方マニュアル (v32と同じ) -->
                 <details class="bg-white p-6 rounded-2xl shadow-lg mb-8 border-l-4 border-red-800">
                     <summary class="text-xl font-semibold text-gray-800">はじめに (使い方マニュアル)</summary>
                     <div class="mt-4 pt-4 border-t border-gray-200 text-gray-700 space-y-3 text-sm">
@@ -199,7 +198,7 @@
                     <span class="block sm:inline" id="dashboard-error-message"></span>
                 </div>
 
-                <!-- 上段3つ (v31と同じ) -->
+                <!-- 上段3つ (v32と同じ) -->
                 <div id="dashboard-summary-top" class="hidden grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                     <!-- 走行距離カード -->
                     <div class="bg-white p-6 rounded-2xl shadow-lg">
@@ -229,7 +228,7 @@
                         </div>
                     </div>
                 </div>
-                <!-- 下段2つ (v31と同じ) -->
+                <!-- 下段2つ (v32と同じ) -->
                 <div id="dashboard-summary-bottom" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-6">
                      <!-- 起床時脈拍カード -->
                     <div class="bg-white p-6 rounded-2xl shadow-lg">
@@ -253,7 +252,7 @@
                 
             </div>
 
-            <!-- 2. コンディション記録 ページ (v31と同じ) -->
+            <!-- 2. コンディション記録 ページ (v32と同じ) -->
             <div id="page-condition" class="page-content">
                 <h2 class="text-3xl font-semibold mb-6">コンディション記録</h2>
                 
@@ -278,7 +277,7 @@
                     </label>
                 </div>
                 
-                <!-- 週平均表示エリア (v31と同じ) -->
+                <!-- 週平均表示エリア (v32と同じ) -->
                 <div id="chart-averages" class="bg-white p-4 rounded-2xl shadow-lg mb-6">
                     <h4 class="text-lg font-semibold text-gray-700 mb-2">直近7日間平均</h4>
                     <div id="chart-averages-content" class="flex flex-wrap gap-x-6 gap-y-2 text-gray-600">
@@ -294,12 +293,12 @@
                 </div>
             </div>
 
-            <!-- 3. テーパリング計画 ページ (★ v32: フォームにエラー表示エリア追加) -->
+            <!-- 3. テーパリング計画 ページ (★ v33: プレースホルダー変更) -->
             <div id="page-tapering" class="page-content">
                 <h2 class="text-3xl font-semibold mb-6">テーパリング計画</h2>
                 <div class="bg-white p-6 rounded-2xl shadow-lg">
                     
-                    <!-- テーパリングの原則 (v31と同じ) -->
+                    <!-- テーパリングの原則 (v32と同じ) -->
                     <div class="mb-8 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded-lg">
                         <h3 class="text-lg font-semibold text-yellow-800 mb-3">テーパリングの原則</h3>
                         <div class="space-y-2 text-gray-700">
@@ -319,34 +318,35 @@
                         </div>
                     </div>
                     
-                    <!-- 「保存された計画」セクション (v31と同じ) -->
+                    <!-- 「保存された計画」セクション (v32と同じ) -->
                     <h3 class="text-xl font-semibold text-gray-800 mb-4">保存された計画</h3>
                     <div id="saved-plans-list" class="space-y-3 mb-6">
                         <!-- JSによって計画がここに追加されます -->
                         <p class="text-gray-500 text-sm">保存された計画はまだありません。</p>
                     </div>
 
-                    <!-- 新規計画ボタン (v31と同じ) -->
+                    <!-- 新規計画ボタン (v32と同じ) -->
                     <div class="mb-6">
                          <button id="new-plan-button" class="bg-red-800 hover:bg-red-900 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 w-full md:w-auto">
                             新規テーパリング計画を作成
                         </button>
                     </div>
 
-                    <!-- 新規/編集フォーム (★ v32: エラー表示エリア追加) -->
+                    <!-- 新規/編集フォーム (★ v33: プレースホルダー変更) -->
                     <div id="plan-form-container" class="hidden mb-8 p-6 bg-gray-50 rounded-lg border border-gray-200">
                         <h3 id="plan-form-title" class="text-xl font-semibold text-gray-800 mb-6">新規計画</h3>
                         
                         <input type="hidden" id="plan-edit-id" value="">
                         
-                        <!-- ★ v32: エラーメッセージ表示エリア -->
+                        <!-- (v32と同じ) -->
                         <div id="plan-form-error" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-4" role="alert"></div>
                         
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <!-- レース名 -->
                             <div>
                                 <label for="plan-race-name" class="form-label font-bold">レース名</label>
-                                <input type="text" id="plan-race-name" class="form-input" placeholder="例: ○○マラソン">
+                                <!-- ★ v33: プレースホルダー変更 -->
+                                <input type="text" id="plan-race-name" class="form-input" placeholder="例: ○○駅伝">
                             </div>
                             <!-- レース日 -->
                             <div>
@@ -366,16 +366,18 @@
                             <!-- テーパリング期間 -->
                             <div>
                                 <label for="plan-duration" class="form-label font-bold">テーパリング期間 (日数)</label>
-                                <input type="number" id="plan-duration" class="form-input" placeholder="例: 8 (8日前から減衰開始)" min="1">
+                                <!-- ★ v33: プレースホルダー変更 -->
+                                <input type="number" id="plan-duration" class="form-input" placeholder="例: 10 (10日前から調整開始)" min="1">
                             </div>
                             <!-- 最終日の負荷 -->
                             <div>
                                 <label for="plan-final-load" class="form-label font-bold">最終日の負荷 (%)</label>
-                                <input type="number" id="plan-final-load" class="form-input" placeholder="例: 20 (1〜99)" min="1" max="99">
+                                <!-- ★ v33: プレースホルダー変更 -->
+                                <input type="number" id="plan-final-load" class="form-input" placeholder="例: 50 (1〜99)" min="1" max="99">
                             </div>
                         </div>
                         
-                        <!-- ボタン (v31と同じ) -->
+                        <!-- ボタン (v32と同じ) -->
                         <div class="mt-8 flex space-x-4">
                             <button id="save-plan-button" class="bg-red-700 hover:bg-red-800 text-white font-bold py-2 px-5 rounded-lg shadow-md transition duration-300">
                                 計画を保存
@@ -386,7 +388,7 @@
                         </div>
                     </div>
 
-                    <!-- 計画表示エリア (v31と同じ) -->
+                    <!-- 計画表示エリア (v32と同じ) -->
                     <div id="plan-output-container">
                         <!-- JSによって計算結果がここに追加されます -->
                     </div>
@@ -394,7 +396,7 @@
                 </div>
             </div>
 
-            <!-- 4. 設定 ページ (★ v32: HTMLタイプミス修正) -->
+            <!-- 4. 設定 ページ (v32と同じ) -->
             <div id="page-settings" class="page-content">
                 <h2 class="text-3xl font-semibold mb-6">設定</h2>
                 
@@ -442,7 +444,7 @@
                     </div>
                 </div>
 
-                <!-- 4. 列マッピング (v31と同じ) -->
+                <!-- 4. 列マッピング (v32と同じ) -->
                 <div class="bg-white p-6 rounded-2xl shadow-lg mb-8">
                     <h3 class="text-xl font-semibold mb-4">4. 列設定 (CSV連携のみ)</h3>
                     <p class="text-gray-700 mb-6 text-sm">
@@ -491,7 +493,7 @@
                         設定を保存
                     </button>
                     <span id="save-status" class="ml-4 text-green-600"></span>
-                    <!-- ★ v32: HTMLタグのタイプミス </T> -> </p> を修正 -->
+                    <!-- (v32と同じ) -->
                     <p class="text-gray-700 mt-6 text-sm">
                         保存後、ダッシュボードに戻るか、ページをリロードするとデータが自動で読み込まれます。
                     </p>
@@ -504,7 +506,7 @@
 
     <script>
         // ----------------------------------------
-        // グローバル変数 (v31と同じ)
+        // グローバル変数 (v32と同じ)
         // ----------------------------------------
         let conditionChart = null;
         let appData = [];
@@ -514,7 +516,7 @@
         const TAPER_PLANS_STORAGE_KEY = 'taperPlansV1';
 
         // ----------------------------------------
-        // 列アルファベット <-> 数字 変換 (v31と同じ)
+        // 列アルファベット <-> 数字 変換 (v32と同じ)
         // ----------------------------------------
         function columnToLetter(colNum) {
             if (colNum === null || colNum === undefined || colNum === "" || colNum < 1) {
@@ -543,7 +545,7 @@
         }
 
         // ----------------------------------------
-        // 日付パーサー (v31と同じ)
+        // 日付パーサー (v32と同じ)
         // ----------------------------------------
         
         // 「ソート用」
@@ -634,7 +636,7 @@
         }
 
         // ----------------------------------------
-        // ページ切り替えロジック (v31と同じ)
+        // ページ切り替えロジック (v32と同じ)
         // ----------------------------------------
         const navLinks = document.querySelectorAll('.nav-link');
         const pages = document.querySelectorAll('.page-content');
@@ -674,7 +676,7 @@
         });
 
         // ----------------------------------------
-        // 設定 (v31と同じ)
+        // 設定 (v32と同じ)
         // ----------------------------------------
         const csvUrlsInput = document.getElementById('csv-urls');
         const manualDataInput = document.getElementById('manual-data-input');
@@ -796,7 +798,7 @@
         }
 
         // ----------------------------------------
-        // データ取得・解析処理 (v31と同じ)
+        // データ取得・解析処理 (v32と同じ)
         // ----------------------------------------
         
         function fetchWithTimeout(url, timeout = 10000) { // 10秒タイムアウト
@@ -913,7 +915,7 @@
         }
 
 
-        // データ読み込みのメインロジック (v31と同じ)
+        // データ読み込みのメインロジック (v32と同じ)
         async function loadAndDisplayData() {
             const loadingEl = document.getElementById('dashboard-loading');
             const summaryTopEl = document.getElementById('dashboard-summary-top');
@@ -1018,10 +1020,10 @@
 
 
         // ----------------------------------------
-        // ダッシュボードの更新 (v31と同じ)
+        // ダッシュボードの更新 (v32と同じ)
         // ----------------------------------------
         
-        // v31と同じヘルパー関数
+        // v32と同じヘルパー関数
         function findChangeData(data, key) {
             if (!data || data.length === 0) return null;
             
@@ -1065,7 +1067,7 @@
             return result;
         }
         
-        // v31と同じヘルパー関数
+        // v32と同じヘルパー関数
         function calculateWeeklyAverage(data, key) {
             if (!data || data.length === 0) {
                 return null;
@@ -1112,7 +1114,7 @@
         }
 
 
-        // v31と同じ
+        // v32と同じ
         function updateDashboard(data) {
             
             const metrics = [
@@ -1212,7 +1214,7 @@
 
 
         // ----------------------------------------
-        // Chart.js (v31と同じ)
+        // Chart.js (v32と同じ)
         // ----------------------------------------
         function initializeChart() {
             try {
@@ -1301,7 +1303,7 @@
             }
         }
 
-        // v31と同じ
+        // v32と同じ
         function updateConditionChart(data) {
             if (!conditionChart) return;
             
@@ -1354,7 +1356,7 @@
                     conditionChart.options.scales.yWeight.position = 'left';
                 }
                 
-                // 平均値を計算して表示 (v31と同じ)
+                // 平均値を計算して表示 (v32と同じ)
                 let avgHtml = '';
                 const avgMetrics = [
                     { key: 'distance', label: '走行距離', unit: 'km/日', shown: toggles.distance, color: 'text-blue-600' },
@@ -1383,7 +1385,7 @@
         }
         
         // ----------------------------------------
-        // テーパリング計画 機能 (★ v32: alert() を修正)
+        // テーパリング計画 機能 (★ v33: 保存ロジック修正)
         // ----------------------------------------
         const newPlanButton = document.getElementById('new-plan-button');
         const planFormContainer = document.getElementById('plan-form-container');
@@ -1411,7 +1413,7 @@
             return `${month}/${day} (${weekday})`;
         }
 
-        // 「日平均」走行距離の計算ロジック (「今日」基準) - v31と同じ
+        // 「日平均」走行距離の計算ロジック (「今日」基準) - v32と同じ
         function calculateAverageDistance() {
             if (!appData || appData.length === 0) {
                 console.warn("[calcAvg] appData is empty. Returning 0.0");
@@ -1460,7 +1462,7 @@
             return dailyAvg.toFixed(1);
         }
         
-        // レース日と期間を基準に平均を計算する (フォーム変更時) - v31と同じ
+        // レース日と期間を基準に平均を計算する (フォーム変更時) - v32と同じ
         function calculateAverageDistanceOnFormChange(raceDateStr, durationStr) {
             if (!appData || appData.length === 0) {
                 console.warn("[calcAvgForm] appData is empty. Returning 0.0");
@@ -1523,12 +1525,11 @@
             return dailyAvg.toFixed(1);
         }
 
-        // ★ v32: フォームの表示/非表示 (エラークリア追加)
+        // v32と同じ
         function showPlanForm(show = true) {
             if (planFormContainer) {
                 planFormContainer.style.display = show ? 'block' : 'none';
             }
-            // ★ v32: フォームを閉じるときにエラーをクリア
             if (!show) {
                 const planFormError = document.getElementById('plan-form-error');
                 if (planFormError) {
@@ -1538,11 +1539,10 @@
             }
         }
 
-        // 「新規計画」ボタンが押された時の処理 (★ v32: エラークリア追加)
+        // v32と同じ
         function showNewPlanForm() {
             if (!planFormContainer) return;
             
-            // ★ v32: エラーをクリア
             const planFormError = document.getElementById('plan-form-error');
             if (planFormError) {
                 planFormError.textContent = '';
@@ -1550,13 +1550,13 @@
             }
             
             planFormTitle.textContent = "新規計画";
-            planEditId.value = ""; // 編集IDをクリア
+            planEditId.value = ""; 
             planRaceName.value = "";
             planRaceDate.value = "";
             planDuration.value = "";
             planFinalLoad.value = "";
             
-            const avgDistance = calculateAverageDistance(); // 「今日」基準の平均
+            const avgDistance = calculateAverageDistance(); 
             if (planAvgDistanceSpan) {
                 planAvgDistanceSpan.textContent = avgDistance; 
             }
@@ -1564,7 +1564,7 @@
             planOutputContainer.innerHTML = ''; // 出力エリアをクリア
         }
         
-        // フォーム入力が変更された時の処理 (v31と同じ)
+        // v32と同じ
         function handleFormChange() {
             const raceDateStr = planRaceDate.value;
             const durationStr = planDuration.value;
@@ -1581,14 +1581,13 @@
             }
         }
         
-        // ★ v32: 「計画を保存」ボタン (alert() を修正)
+        // ★ v33: 「計画を保存」ボタン (v32 + 保存後表示ロジック)
         function saveTaperPlan() {
             if (!planRaceName || !planRaceDate || !planDuration || !planFinalLoad || !planOutputContainer || !planAvgDistanceSpan) {
                 console.error("Tapering plan calculation UI elements not found.");
                 return;
             }
             
-            // ★ v32: エラー要素を取得
             const planFormError = document.getElementById('plan-form-error');
             planFormError.textContent = '';
             planFormError.style.display = 'none';
@@ -1599,24 +1598,21 @@
             const dailyAvgDistance = parseFloat(planAvgDistanceSpan.textContent); 
             const duration = parseInt(planDuration.value, 10); 
             const finalLoad = parseInt(planFinalLoad.value, 10); 
-            const editId = planEditId.value; // 編集中のIDを取得
+            const editId = planEditId.value; 
 
             // 2. バリデーション
             if (!raceDateStr || isNaN(duration) || isNaN(dailyAvgDistance) || dailyAvgDistance <= 0 || isNaN(finalLoad)) {
-                // ★ v32: alert() を エラーdiv に変更
                 planFormError.textContent = '「レース日」「期間」「負荷」を正しく入力してください。（平均距離が "0.0" または "--" の場合はデータ不足か計算できません）';
                 planFormError.style.display = 'block';
                 return;
             }
             if (finalLoad <= 0 || finalLoad >= 100) {
-                 // ★ v32: alert() を エラーdiv に変更
                  planFormError.textContent = '「最終日の負荷」は 1% から 99% の間で入力してください。';
                  planFormError.style.display = 'block';
                 return;
             }
             const raceDate = new Date(raceDateStr);
             if (isNaN(raceDate.getTime())) {
-                // ★ v32: alert() を エラーdiv に変更
                 planFormError.textContent = '有効なレース日を選択してください。';
                 planFormError.style.display = 'block';
                 return;
@@ -1627,9 +1623,9 @@
 
             // 4. 保存するプランオブジェクトを作成
             const planData = {
-                id: editId || Date.now().toString(), // 編集IDがあればそれを使い、なければ新規作成
+                id: editId || Date.now().toString(), 
                 raceName: raceName,
-                raceDate: raceDateStr, // "YYYY-MM-DD" 形式で保存
+                raceDate: raceDateStr, 
                 duration: duration,
                 finalLoad: finalLoad,
                 dailyAvgDistance: dailyAvgDistance,
@@ -1638,13 +1634,11 @@
 
             // 5. savedTaperPlans 配列を更新
             if (editId) {
-                // 編集モード: 既存のプランを置き換える
                 const index = savedTaperPlans.findIndex(p => p.id === editId);
                 if (index !== -1) {
                     savedTaperPlans[index] = planData;
                 }
             } else {
-                // 新規モード: 配列に追加
                 savedTaperPlans.push(planData);
             }
             
@@ -1652,14 +1646,15 @@
             saveTaperPlansToStorage();
             renderTaperPlanList();
             showPlanForm(false);
-            planOutputContainer.innerHTML = ''; // 出力エリアをクリア
+            
+            // ★ v33: 保存した計画を即時表示する
+            displaySavedPlan(planData.id);
         }
         
-        // ★ v32: キャンセルボタンの処理 (エラークリア追加)
+        // v32と同じ
         function cancelPlanForm() {
             showPlanForm(false);
             planOutputContainer.innerHTML = ''; // 出力エリアをクリア
-            // ★ v32: エラーをクリア
             const planFormError = document.getElementById('plan-form-error');
             if (planFormError) {
                 planFormError.textContent = '';
@@ -1667,12 +1662,12 @@
             }
         }
 
-        // ★ v31: 計画を localStorage に保存
+        // v32と同じ
         function saveTaperPlansToStorage() {
             localStorage.setItem(TAPER_PLANS_STORAGE_KEY, JSON.stringify(savedTaperPlans));
         }
 
-        // ★ v31: localStorage から計画を読み込む
+        // v32と同じ
         function loadTaperPlans() {
             const savedData = localStorage.getItem(TAPER_PLANS_STORAGE_KEY);
             if (savedData) {
@@ -1686,7 +1681,7 @@
             }
         }
         
-        // ★ v31: 保存された計画リストをHTMLに描画
+        // v32と同じ
         function renderTaperPlanList() {
             if (!savedPlansList) return;
             
@@ -1695,7 +1690,6 @@
                 return;
             }
 
-            // 日付が新しい順にソートして表示
             savedTaperPlans.sort((a, b) => new Date(b.raceDate) - new Date(a.raceDate));
             
             savedPlansList.innerHTML = savedTaperPlans.map(plan => {
@@ -1717,7 +1711,7 @@
             addPlanListEventListeners();
         }
         
-        // ★ v31: 計画リストのボタンにイベントを割り当て
+        // v32と同じ
         function addPlanListEventListeners() {
             document.querySelectorAll('.view-plan-button').forEach(btn => {
                 btn.addEventListener('click', (e) => {
@@ -1739,7 +1733,7 @@
             });
         }
         
-        // ★ v31: 保存された計画のテーブルを生成する (v30のロジックを分離)
+        // v32と同じ
         function generatePlanHtml(plan) {
             const raceDate = new Date(plan.raceDate);
             let outputHtml = `
@@ -1820,7 +1814,7 @@
             return outputHtml;
         }
 
-        // ★ v31: 保存された計画を「表示」
+        // v32と同じ
         function displaySavedPlan(id) {
             const plan = savedTaperPlans.find(p => p.id === id);
             if (plan) {
@@ -1829,11 +1823,10 @@
             }
         }
         
-        // ★ v31: 計画を「編集」
+        // v32と同じ
         function editPlan(id) {
             const plan = savedTaperPlans.find(p => p.id === id);
             if (plan) {
-                // ★ v32: エラーをクリア
                 const planFormError = document.getElementById('plan-form-error');
                 if (planFormError) {
                     planFormError.textContent = '';
@@ -1841,9 +1834,9 @@
                 }
 
                 planFormTitle.textContent = "計画を編集";
-                planEditId.value = plan.id; // 編集IDをセット
+                planEditId.value = plan.id; 
                 planRaceName.value = plan.raceName;
-                planRaceDate.value = plan.raceDate; // "YYYY-MM-DD"
+                planRaceDate.value = plan.raceDate; 
                 planDuration.value = plan.duration;
                 planFinalLoad.value = plan.finalLoad;
                 planAvgDistanceSpan.textContent = plan.dailyAvgDistance;
@@ -1853,7 +1846,7 @@
             }
         }
         
-        // ★ v31: 計画を「削除」
+        // v32と同じ
         function deletePlan(id) {
             // ご要望により、確認ダイアログは省略
             savedTaperPlans = savedTaperPlans.filter(p => p.id !== id);
@@ -1862,20 +1855,20 @@
             planOutputContainer.innerHTML = ''; // 表示されていた計画をクリア
         }
 
-        // イベントリスナーの割り当て (v31と同じ)
+        // イベントリスナーの割り当て (v32と同じ)
         if (newPlanButton) {
             newPlanButton.addEventListener('click', showNewPlanForm);
         } else {
             console.error("New plan button not found.");
         }
         
-        if (savePlanButton) { // v31: ID変更
+        if (savePlanButton) { 
             savePlanButton.addEventListener('click', saveTaperPlan);
         } else {
             console.error("Save plan button not found.");
         }
         
-        if (cancelPlanButton) { // v31: 追加
+        if (cancelPlanButton) { 
             cancelPlanButton.addEventListener('click', cancelPlanForm);
         } else {
             console.error("Cancel plan button not found.");
@@ -1897,7 +1890,7 @@
             loadSettings();     
             initializeChart();  
             loadAndDisplayData(); 
-            loadTaperPlans(); // ★ v31: 保存された計画を読み込む
+            loadTaperPlans(); 
             
             const chartToggles = document.querySelectorAll('.chart-toggle');
             chartToggles.forEach(toggle => {
