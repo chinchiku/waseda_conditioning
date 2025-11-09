@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>練習日誌アプリ (v24)</title>
+    <title>練習日誌アプリ (v25)</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -33,7 +33,6 @@
             -moz-osx-font-smoothing: grayscale;
         }
         .page-content { display: none; }
-        /* ★ v24: デフォルト表示を「設定」ページに変更 */
         #page-settings { display: block; }
         
         .form-input {
@@ -69,7 +68,7 @@
 
     <div class="min-h-screen flex flex-col md:flex-row">
 
-        <!-- ★ v24: サイド ナビゲーションバー (順序変更) -->
+        <!-- サイド ナビゲーションバー (v24と同じ) -->
         <nav class="bg-white shadow-lg md:w-64 flex-shrink-0">
             <!-- ヘッダー (モバイル用) -->
             <div class="flex justify-between items-center p-4 md:hidden">
@@ -82,7 +81,7 @@
             <!-- ナビゲーション (PC用 / モバイル用メニュー) -->
             <div id="nav-content" class="hidden md:block md:mt-8">
                 <h1 class="hidden md:block text-3xl font-bold text-blue-600 px-6 mb-10">練習日誌</h1>
-                <!-- ★ v24: 順序変更 -->
+                <!-- v24と同じ順序 -->
                 <ul class="space-y-2 px-4">
                     <li>
                         <a href="#" class="nav-link flex items-center px-4 py-3 text-gray-700 rounded-lg hover:bg-blue-50 hover:text-blue-600" data-page="page-settings">
@@ -111,7 +110,7 @@
         <!-- メインコンテンツ -->
         <main class="flex-grow p-6 md:p-10 overflow-auto">
             
-            <!-- 1. ダッシュボード ページ (v23と同じ) -->
+            <!-- 1. ダッシュボード ページ (★ v25: HTML更新) -->
             <div id="page-dashboard" class="page-content">
                 <h2 class="text-3xl font-semibold mb-6">ダッシュボード</h2>
                 
@@ -126,22 +125,37 @@
                 </div>
 
                 <div id="dashboard-summary" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- 走行距離カード -->
                     <div class="bg-white p-6 rounded-2xl shadow-lg">
                         <h3 class="text-lg font-semibold text-gray-600 mb-2">最新の走行距離</h3>
                         <p id="summary-distance" class="text-4xl font-bold text-blue-600">-- <span class="text-lg font-medium text-gray-500">km</span></p>
+                        <!-- ★ v25: 前日比 -->
+                        <div id="summary-distance-change" class="mt-2 text-sm text-gray-500 h-5">
+                            <span>--</span> (<span>--</span>)
+                        </div>
                     </div>
+                    <!-- 朝体重カード -->
                     <div class="bg-white p-6 rounded-2xl shadow-lg">
                         <h3 class="text-lg font-semibold text-gray-600 mb-2">最新の朝体重</h3>
                         <p id="summary-morning-weight" class="text-4xl font-bold text-green-600">-- <span class="text-lg font-medium text-gray-500">kg</span></p>
+                        <!-- ★ v25: 前日比 -->
+                        <div id="summary-morning-weight-change" class="mt-2 text-sm text-gray-500 h-5">
+                            <span>--</span> (<span>--</span>)
+                        </div>
                     </div>
+                    <!-- 睡眠時間カード -->
                     <div class="bg-white p-6 rounded-2xl shadow-lg">
                         <h3 class="text-lg font-semibold text-gray-600 mb-2">最新の睡眠時間</h3>
                         <p id="summary-sleep" class="text-4xl font-bold text-purple-600">-- <span class="text-lg font-medium text-gray-500">時間</span></p>
+                        <!-- ★ v25: 前日比 -->
+                        <div id="summary-sleep-change" class="mt-2 text-sm text-gray-500 h-5">
+                            <span>--</span> (<span>--</span>)
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- 2. コンディション記録 ページ (v23と同じ) -->
+            <!-- 2. コンディション記録 ページ (v24と同じ) -->
             <div id="page-condition" class="page-content">
                 <h2 class="text-3xl font-semibold mb-6">コンディション記録</h2>
                 <div class="bg-white p-6 rounded-2xl shadow-lg">
@@ -152,12 +166,12 @@
                 </div>
             </div>
 
-            <!-- 3. テーパリング計画 ページ (v23と同じ) -->
+            <!-- 3. テーパリング計画 ページ (v24と同じ) -->
             <div id="page-tapering" class="page-content">
                 <h2 class="text-3xl font-semibold mb-6">テーパリング計画</h2>
                 <div class="bg-white p-6 rounded-2xl shadow-lg">
                     
-                    <!-- テーパリングの原則 (v23と同じ) -->
+                    <!-- テーパリングの原則 (v24と同じ) -->
                     <div class="mb-8 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded-lg">
                         <h3 class="text-lg font-semibold text-yellow-800 mb-3">テーパリングの原則</h3>
                         <div class="space-y-2 text-gray-700">
@@ -177,14 +191,14 @@
                         </div>
                     </div>
 
-                    <!-- 新規計画ボタン (v23と同じ) -->
+                    <!-- 新規計画ボタン (v24と同じ) -->
                     <div class="mb-6">
                          <button id="new-plan-button" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 w-full md:w-auto">
                             新規テーパリング計画を作成
                         </button>
                     </div>
 
-                    <!-- 新規計画フォーム (v23と同じ) -->
+                    <!-- 新規計画フォーム (v24と同じ) -->
                     <div id="plan-form-container" class="hidden mb-8 p-6 bg-gray-50 rounded-lg border border-gray-200">
                         <h3 class="text-xl font-semibold text-gray-800 mb-6">新規計画</h3>
                         
@@ -221,7 +235,7 @@
                             </div>
                         </div>
                         
-                        <!-- 計算ボタン (v23と同じ) -->
+                        <!-- 計算ボタン (v24と同じ) -->
                         <div class="mt-8">
                             <button id="calculate-plan-button" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-5 rounded-lg shadow-md transition duration-300">
                                 計画を計算
@@ -237,7 +251,7 @@
                 </div>
             </div>
 
-            <!-- 4. 設定 ページ (★ v24: 全面改修) -->
+            <!-- 4. 設定 ページ (★ v25: 注釈とプレースホルダー修正) -->
             <div id="page-settings" class="page-content">
                 <h2 class="text-3xl font-semibold mb-6">設定</h2>
                 
@@ -275,27 +289,28 @@
                 <!-- 3. 手動データ入力 (デフォルト非表示) -->
                 <div id="settings-manual-container" class="hidden bg-white p-6 rounded-2xl shadow-lg mb-8">
                     <h3 class="text-xl font-semibold mb-4">3. 手動データ入力</h3>
+                    <!-- ★ v25: 注釈を修正 -->
                     <p class="text-gray-700 mb-6 text-sm">
                         CSV連携を使わない場合、ここに走行距離データを貼り付けてください。<br>
-                        形式: <code class="text-xs bg-gray-200 p-1 rounded">日付(MM/DD), 走行距離</code> (カンマ区切り、1行に1日分)
+                        形式: <code class="text-xs bg-gray-200 p-1 rounded">日付,走行距離</code> (半角カンマ区切り、<strong class="text-red-600">スペースなし</strong>、1行に1日分)
                     </p>
                     <div>
                         <label for="manual-data-input" class="form-label font-bold">日付と走行距離データ</label>
-                        <textarea id="manual-data-input" class="form-input font-mono" rows="15" placeholder="11/1, 15.2&#10;11/2, 10.0&#10;11/3, 0&#10;11/4, 12.5&#10;..."></textarea>
+                        <!-- ★ v25: プレースホルダーを修正 -->
+                        <textarea id="manual-data-input" class="form-input font-mono" rows="15" placeholder="11/1,15.2&#10;11/2,10.0&#10;11/3,0&#10;11/4,12.5&#10;..."></textarea>
                     </div>
                 </div>
 
-                <!-- 4. 列マッピング (★ v24: アルファベット入力に対応) -->
+                <!-- 4. 列マッピング (v24と同じ) -->
                 <div class="bg-white p-6 rounded-2xl shadow-lg mb-8">
-                    <h3 class="text-xl font-semibold mb-4">4. 列設定 (CSV連携・手動入力 共通)</h3>
+                    <h3 class="text-xl font-semibold mb-4">4. 列設定 (CSV連携のみ)</h3>
                     <p class="text-gray-700 mb-6 text-sm">
-                        シートの「何列目」にどのデータが入っているか <strong class="text-blue-600">アルファベット (A, B, G など)</strong> で設定してください。<br>
-                        <strong class="text-red-600">※ 手動入力の場合も、CSV連携時と同じ列設定（日付、走行距離）が必要です。</strong>
+                        <strong class="text-blue-600">CSV自動連携</strong> を使う場合、シートの「何列目」にどのデータが入っているか <strong class="text-blue-600">アルファベット (A, B, G など)</strong> で設定してください。<br>
+                        <span class="text-gray-500">※ 手動入力の場合は、この列設定は無視されます。</span>
                     </p>
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                         <div>
                             <label for="col-date" class="form-label font-bold">日付</label>
-                            <!-- ★ v24: type="text", placeholder="例: B" -->
                             <input type="text" id="col-date" class="form-input uppercase" placeholder="例: B">
                         </div>
                         <div>
@@ -347,22 +362,16 @@
 
     <script>
         // ----------------------------------------
-        // グローバル変数
+        // グローバル変数 (v24と同じ)
         // ----------------------------------------
         let conditionChart = null;
         let appData = [];
         const SETTINGS_STORAGE_KEY = 'practiceLogSettingsV5';
-        // ★ v24: 手動データ保存用キー
         const MANUAL_DATA_STORAGE_KEY = 'practiceLogManualData';
 
         // ----------------------------------------
-        // ★ v24: 列アルファベット <-> 数字 変換ヘルパー
+        // 列アルファベット <-> 数字 変換 (v24と同じ)
         // ----------------------------------------
-        /**
-         * 列番号 (1-based) をアルファベットに変換 (1 -> A, 27 -> AA)
-         * @param {number} colNum - 列番号 (1-based)
-         * @returns {string} 列アルファベット
-         */
         function columnToLetter(colNum) {
             if (colNum === null || colNum === undefined || colNum === "" || colNum < 1) {
                 return "";
@@ -377,11 +386,6 @@
             return letter;
         }
 
-        /**
-         * 列アルファベットを列番号 (1-based) に変換 (A -> 1, AA -> 27)
-         * @param {string} letter - 列アルファベット
-         * @returns {number | null} 列番号 (1-based)
-         */
         function letterToColumn(letter) {
             if (!letter || typeof letter !== 'string') {
                 return null;
@@ -395,7 +399,7 @@
         }
 
         // ----------------------------------------
-        // 日付パーサー (v23と同じ)
+        // 日付パーサー (v24と同じ)
         // ----------------------------------------
         
         // 「ソート用」
@@ -486,11 +490,10 @@
         }
 
         // ----------------------------------------
-        // ページ切り替えロジック (★ v24: デフォルトページ変更)
+        // ページ切り替えロジック (v24と同じ)
         // ----------------------------------------
         const navLinks = document.querySelectorAll('.nav-link');
         const pages = document.querySelectorAll('.page-content');
-        // ★ v24: デフォルトを「設定」に変更
         const defaultPage = 'page-settings'; 
 
         function showPage(pageId) {
@@ -527,7 +530,7 @@
         });
 
         // ----------------------------------------
-        // 設定 (★ v24: 全面改修)
+        // 設定 (v24と同じ)
         // ----------------------------------------
         const csvUrlsInput = document.getElementById('csv-urls');
         const manualDataInput = document.getElementById('manual-data-input');
@@ -545,7 +548,6 @@
         const saveButton = document.getElementById('save-settings-button');
         const saveStatus = document.getElementById('save-status');
         
-        // データソース切り替え
         const dataSourceCsv = document.getElementById('data-source-csv');
         const dataSourceManual = document.getElementById('data-source-manual');
         const settingsCsvContainer = document.getElementById('settings-csv-container');
@@ -564,7 +566,6 @@
         dataSourceCsv.addEventListener('change', () => toggleDataSourceView('csv'));
         dataSourceManual.addEventListener('change', () => toggleDataSourceView('manual'));
         
-        // 設定の保存 (CSV設定 + 列設定 + データソース選択)
         function saveSettings() {
             try {
                 const settings = {
@@ -573,7 +574,6 @@
                     mapping: {}
                 };
                 
-                // ★ v24: アルファベットを数値に変換して保存
                 for (const key in mappingInputs) {
                     if (mappingInputs[key]) {
                         const letter = mappingInputs[key].value;
@@ -581,17 +581,14 @@
                     }
                 }
                 
-                // ★ v24: 手動データも保存
                 const manualData = manualDataInput.value;
                 localStorage.setItem(MANUAL_DATA_STORAGE_KEY, manualData);
                 
-                // 設定を保存
                 localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
                 
                 saveStatus.textContent = '保存しました！リロードしてデータを反映します。';
                 setTimeout(() => { 
                     saveStatus.textContent = ''; 
-                    // ★ v24: 保存したらリロードして再読み込みを促す
                     location.reload();
                 }, 1500);
                 
@@ -601,7 +598,6 @@
             }
         }
 
-        // 設定の読み込み (フォームに値を復元)
         function loadSettings() {
             try {
                 const savedSettings = localStorage.getItem(SETTINGS_STORAGE_KEY);
@@ -614,7 +610,6 @@
                 if (savedSettings) {
                     const settings = JSON.parse(savedSettings);
                     
-                    // データソースの復元
                     if (settings.dataSource === 'manual') {
                         dataSourceManual.checked = true;
                         toggleDataSourceView('manual');
@@ -623,12 +618,10 @@
                         toggleDataSourceView('csv');
                     }
                     
-                    // CSV URLの復元
                     if (settings.csvUrls && csvUrlsInput) {
                         csvUrlsInput.value = (settings.csvUrls || []).join('\n');
                     }
                     
-                    // ★ v24: 列設定の復元 (数値をアルファベットに)
                     if (settings.mapping) {
                         for (const key in settings.mapping) {
                             if (mappingInputs[key]) {
@@ -638,7 +631,6 @@
                         }
                     }
                 } else {
-                    // デフォルトはCSV
                     toggleDataSourceView('csv');
                 }
             } catch (error) {
@@ -655,7 +647,7 @@
         }
 
         // ----------------------------------------
-        // データ取得・解析処理 (★ v24: データソース分岐)
+        // データ取得・解析処理 (v24と同じ)
         // ----------------------------------------
         
         function fetchWithTimeout(url, timeout = 10000) { // 10秒タイムアウト
@@ -733,14 +725,14 @@
             return data;
         }
 
-        // ★ v24: 手動入力データ用のパーサー
+        // 手動入力データ用のパーサー
         function parseManualData(manualText, mapping) {
-            if (!mapping || !mapping.date || !mapping.distance) {
-                throw new Error("手動入力には「日付」と「走行距離」の列設定が必須です。");
-            }
+            // ★ v25: 手動入力は列マッピング不要と判断し、バリデーションを削除
+            // if (!mapping || !mapping.date || !mapping.distance) {
+            //     throw new Error("手動入力には「日付」と「走行距離」の列設定が必須です。");
+            // }
             
-            // 手動入力は「日付, 走行距離」の2列のみと仮定し、列設定は無視する
-            // 代わりに、手動パーサーは「日付, 距離」の固定フォーマットを期待する
+            // 手動パーサーは「日付, 距離」の固定フォーマットを期待する
             const dateRegex = /^\s*"?\s*(\d{4}[-\/]\d{1,2}[-\/]\d{1,2}|\d{1,2}\/\d{1,2})\s*"?\s*$/i;
             const lines = manualText.trim().split('\n');
             const data = [];
@@ -778,7 +770,7 @@
         }
 
 
-        // ★ v24: データ読み込みのメインロジックを分岐
+        // データ読み込みのメインロジック
         async function loadAndDisplayData() {
             const loadingEl = document.getElementById('dashboard-loading');
             const summaryEl = document.getElementById('dashboard-summary');
@@ -802,7 +794,7 @@
 
                 const settings = JSON.parse(savedSettings);
                 
-                // ★ v24: データソースによって処理を分岐
+                // データソースによって処理を分岐
                 if (settings.dataSource === 'manual') {
                     // --- 手動データの場合 ---
                     console.log("Loading data from: Manual Input");
@@ -811,7 +803,6 @@
                         showError('「設定」ページで、手動入力データを貼り付けて保存してください。');
                         return;
                     }
-                    // 手動データはCSVの列マッピングとは無関係にパースする
                     appData = parseManualData(manualData, settings.mapping);
                     
                 } else {
@@ -877,36 +868,129 @@
 
 
         // ----------------------------------------
-        // ダッシュボードの更新 (v23と同じ)
+        // ★ v25: ダッシュボードの更新 (前日比)
         // ----------------------------------------
-        function updateDashboard(data) {
-            const distEl = document.getElementById('summary-distance');
-            const weightEl = document.getElementById('summary-morning-weight');
-            const sleepEl = document.getElementById('summary-sleep');
+        
+        /**
+         * ★ v25: 最新データと直前データを検索するヘルパー関数
+         * @param {Array} data - ソート済みのappData
+         * @param {string} key - 'distance', 'morningWeight', 'sleep' など
+         * @returns {Object | null} - { latest, previous, diff, percent }
+         */
+        function findChangeData(data, key) {
+            if (!data || data.length === 0) return null;
             
-            if (!distEl || !weightEl || !sleepEl) {
+            let latestValue = null;
+            let latestIndex = -1;
+            
+            // 1. 最新の有効な値とインデックスを探す
+            for (let i = data.length - 1; i >= 0; i--) {
+                const value = data[i][key];
+                if (value !== null && value !== undefined && !isNaN(parseFloat(value))) {
+                    latestValue = parseFloat(value);
+                    latestIndex = i;
+                    break;
+                }
+            }
+
+            if (latestIndex === -1) return { latest: null, previous: null, diff: null, percent: null }; // データが全くない
+
+            let previousValue = null;
+            
+            // 2. 最新のインデックスより前から、直前の有効な値を探す
+            for (let i = latestIndex - 1; i >= 0; i--) {
+                const value = data[i][key];
+                if (value !== null && value !== undefined && !isNaN(parseFloat(value))) {
+                    previousValue = parseFloat(value);
+                    break;
+                }
+            }
+
+            const result = { latest: latestValue, previous: null, diff: null, percent: null };
+
+            if (previousValue !== null) {
+                const diff = latestValue - previousValue;
+                result.previous = previousValue;
+                result.diff = diff;
+                if (previousValue !== 0) {
+                    result.percent = (diff / previousValue) * 100;
+                } else {
+                    result.percent = (latestValue > 0) ? 100.0 : 0; // 0からの増加は+100%とみなす (Infinity回避)
+                }
+            }
+            
+            return result;
+        }
+
+        /**
+         * ★ v25: ダッシュボードのHTMLを更新するメイン関数
+         */
+        function updateDashboard(data) {
+            // 要素を取得
+            const distEl = document.getElementById('summary-distance');
+            const distChangeEl = document.getElementById('summary-distance-change');
+            const weightEl = document.getElementById('summary-morning-weight');
+            const weightChangeEl = document.getElementById('summary-morning-weight-change');
+            const sleepEl = document.getElementById('summary-sleep');
+            const sleepChangeEl = document.getElementById('summary-sleep-change');
+            
+            if (!distEl || !weightEl || !sleepEl || !distChangeEl || !weightChangeEl || !sleepChangeEl) {
                 console.warn("Dashboard summary elements not found.");
                 return;
             }
 
+            // データセットを定義
+            const metrics = [
+                { key: 'distance', el: distEl, changeEl: distChangeEl, unit: 'km', color: 'text-blue-600' },
+                { key: 'morningWeight', el: weightEl, changeEl: weightChangeEl, unit: 'kg', color: 'text-green-600' },
+                { key: 'sleep', el: sleepEl, changeEl: sleepChangeEl, unit: '時間', color: 'text-purple-600' },
+            ];
+
             if (!data || data.length === 0) {
-                distEl.innerHTML = `-- <span class="text-lg font-medium text-gray-500">km</span>`;
-                weightEl.innerHTML = `-- <span class="text-lg font-medium text-gray-500">kg</span>`;
-                sleepEl.innerHTML = `-- <span class="text-lg font-medium text-gray-500">時間</span>`;
+                metrics.forEach(m => {
+                    m.el.innerHTML = `-- <span class="text-lg font-medium text-gray-500">${m.unit}</span>`;
+                    m.changeEl.innerHTML = `<span>--</span> (<span>--</span>)`;
+                });
                 return;
             }
-            
-            const lastDistance = [...data].reverse().find(d => d.distance != null)?.distance ?? '--';
-            const lastMorningWeight = [...data].reverse().find(d => d.morningWeight != null)?.morningWeight ?? '--';
-            const lastSleep = [...data].reverse().find(d => d.sleep != null)?.sleep ?? '--';
 
-            distEl.innerHTML = `${lastDistance} <span class="text-lg font-medium text-gray-500">km</span>`;
-            weightEl.innerHTML = `${lastMorningWeight} <span class="text-lg font-medium text-gray-500">kg</span>`;
-            sleepEl.innerHTML = `${lastSleep} <span class="text-lg font-medium text-gray-500">時間</span>`;
+            // 各メトリクスを更新
+            metrics.forEach(m => {
+                const changeData = findChangeData(data, m.key);
+                
+                // 1. 最新の値を更新
+                if (changeData && changeData.latest !== null) {
+                    m.el.innerHTML = `${changeData.latest.toFixed(1)} <span class="text-lg font-medium text-gray-500">${m.unit}</span>`;
+                } else {
+                    m.el.innerHTML = `-- <span class="text-lg font-medium text-gray-500">${m.unit}</span>`;
+                }
+                
+                // 2. 前日比を更新
+                if (changeData && changeData.diff !== null) {
+                    const diff = changeData.diff;
+                    const percent = changeData.percent;
+                    
+                    // 体重は「減ったら緑」
+                    const isWeight = m.key.includes('Weight');
+                    const defaultColor = diff > 0 ? 'text-green-600' : (diff < 0 ? 'text-red-600' : 'text-gray-500');
+                    const weightColor = diff < 0 ? 'text-green-600' : (diff > 0 ? 'text-red-600' : 'text-gray-500');
+                    
+                    const color = isWeight ? weightColor : defaultColor;
+                    const sign = diff > 0 ? '+' : '';
+                    
+                    m.changeEl.innerHTML = `
+                        <span class="${color} font-semibold">${sign}${diff.toFixed(1)}</span>
+                        <span class="text-gray-500">(${sign}${percent.toFixed(1)}%)</span>
+                    `;
+                } else {
+                    m.changeEl.innerHTML = `<span>--</span> (<span>--</span>)`;
+                }
+            });
         }
 
+
         // ----------------------------------------
-        // Chart.js (グラフの初期化と更新) (v23と同じ)
+        // Chart.js (グラフの初期化と更新) (v24と同じ)
         // ----------------------------------------
         function initializeChart() {
             try {
@@ -961,7 +1045,7 @@
         }
         
         // ----------------------------------------
-        // テーパリング計画 機能 (v23と同じ)
+        // テーパリング計画 機能 (v24と同じ)
         // ----------------------------------------
         const newPlanButton = document.getElementById('new-plan-button');
         const planFormContainer = document.getElementById('plan-form-container');
@@ -1111,7 +1195,7 @@
             }
         }
         
-        // v23で失われていた handleFormChange 関数 (v22と同じ)
+        // v24で失われていた handleFormChange 関数 (v23と同じ)
         function handleFormChange() {
             const raceDateStr = planRaceDate.value;
             const durationStr = planDuration.value;
@@ -1129,7 +1213,7 @@
             }
         }
         
-        // 「計画を計算」ボタンが押された時の処理 (v23と同じ)
+        // 「計画を計算」ボタンが押された時の処理 (v24と同じ)
         function calculateTaperPlan() {
             if (!planRaceName || !planRaceDate || !planDuration || !planFinalLoad || !planOutputContainer || !planAvgDistanceSpan) {
                 console.error("Tapering plan calculation UI elements not found.");
@@ -1143,7 +1227,7 @@
             const duration = parseInt(planDuration.value, 10); 
             const finalLoad = parseInt(planFinalLoad.value, 10); 
 
-            // 2. バリデーション (v23と同じ)
+            // 2. バリデーション (v24と同じ)
             if (!raceDateStr || isNaN(duration) || isNaN(dailyAvgDistance) || dailyAvgDistance <= 0 || isNaN(finalLoad)) {
                 planOutputContainer.innerHTML = `<p class="text-red-600">「レース日」「期間」「負荷」を正しく入力してください。（平均距離が "0.0" または "--" の場合はデータ不足か計算できません）</p>`;
                 return;
@@ -1158,11 +1242,11 @@
                 return;
             }
 
-            // 3. τ (タウ) の計算 (v23と同じ)
+            // 3. τ (タウ) の計算 (v24と同じ)
             const tau = -duration / Math.log(finalLoad / 100);
 
             
-            // 4. 日毎の計画を生成し、テーブルHTMLを構築 (v23と同じ)
+            // 4. 日毎の計画を生成し、テーブルHTMLを構築 (v24と同じ)
             
             let outputHtml = `
                 <h3 class="text-xl font-semibold text-gray-800 mb-4">${raceName} への計画</h3>
@@ -1248,7 +1332,7 @@
         }
 
 
-        // イベントリスナーの割り当て (v23と同じ)
+        // イベントリスナーの割り当て (v24と同じ)
         if (newPlanButton) {
             newPlanButton.addEventListener('click', showNewPlanForm);
         } else {
@@ -1270,7 +1354,7 @@
 
 
         // ----------------------------------------
-        // 初期化処理 (v23と同じ)
+        // 初期化処理 (v24と同じ)
         // ----------------------------------------
         document.addEventListener('DOMContentLoaded', () => {
             showPage(defaultPage);
