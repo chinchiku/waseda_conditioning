@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>練習日誌アプリ (v10)</title>
+    <title>練習日誌アプリ (v11)</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -59,7 +59,7 @@
 
     <div class="min-h-screen flex flex-col md:flex-row">
 
-        <!-- サイド ナビゲーションバー (HTMLはv6と同じ) -->
+        <!-- サイド ナビゲーションバー -->
         <nav class="bg-white shadow-lg md:w-64 flex-shrink-0">
             <!-- ヘッダー (モバイル用) -->
             <div class="flex justify-between items-center p-4 md:hidden">
@@ -100,7 +100,7 @@
         <!-- メインコンテンツ -->
         <main class="flex-grow p-6 md:p-10 overflow-auto">
             
-            <!-- 1. ダッシュボード ページ (HTMLはv6と同じ) -->
+            <!-- 1. ダッシュボード ページ -->
             <div id="page-dashboard" class="page-content">
                 <h2 class="text-3xl font-semibold mb-6">ダッシュボード</h2>
                 
@@ -121,7 +121,29 @@
                     </div>
                     <div class="bg-white p-6 rounded-2xl shadow-lg">
                         <h3 class="text-lg font-semibold text-gray-600 mb-2">最新の朝体重</h3>
-            <!-- 3. テーパリング計画 ページ (★ v9: 大幅更新) -->
+                        <!-- ★ v11: 以下の <p> と </div> がv10履歴で欠落していたのを修復 -->
+                        <p id="summary-morning-weight" class="text-4xl font-bold text-green-600">-- <span class="text-lg font-medium text-gray-500">kg</span></p>
+                    </div>
+                    <!-- ★ v11: 以下の「睡眠時間」カード全体がv10履歴で欠落していたのを修復 -->
+                    <div class="bg-white p-6 rounded-2xl shadow-lg">
+                        <h3 class="text-lg font-semibold text-gray-600 mb-2">最新の睡眠時間</h3>
+                        <p id="summary-sleep" class="text-4xl font-bold text-purple-600">-- <span class="text-lg font-medium text-gray-500">時間</span></p>
+                    </div>
+                </div> <!-- ★ v11: dashboard-summary の </div> を修復 -->
+            </div> <!-- ★ v11: page-dashboard の </div> を修復 -->
+
+            <!-- ★ v11: 「コンディション」ページ全体がv10履歴で欠落していたのを修復 -->
+            <div id="page-condition" class="page-content">
+                <h2 class="text-3xl font-semibold mb-6">コンディション記録</h2>
+                <div class="bg-white p-6 rounded-2xl shadow-lg">
+                    <h3 class="text-xl font-semibold mb-4">コンディションの推移</h3>
+                    <div class="w-full" style="height: 400px;">
+                        <canvas id="conditionChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. テーパリング計画 ページ (v9から変更なし) -->
             <div id="page-tapering" class="page-content">
                 <h2 class="text-3xl font-semibold mb-6">テーパリング計画</h2>
                 <div class="bg-white p-6 rounded-2xl shadow-lg">
@@ -146,14 +168,14 @@
                         </div>
                     </div>
 
-                    <!-- ★ v9: 新規計画ボタン -->
+                    <!-- v9: 新規計画ボタン -->
                     <div class="mb-6">
                          <button id="new-plan-button" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 w-full md:w-auto">
                             新規テーパリング計画を作成
                         </button>
                     </div>
 
-                    <!-- ★ v9: 新規計画フォーム (デフォルト非表示) -->
+                    <!-- v9: 新規計画フォーム (デフォルト非表示) -->
                     <div id="plan-form-container" class="hidden mb-8 p-6 bg-gray-50 rounded-lg border border-gray-200">
                         <h3 class="text-xl font-semibold text-gray-800 mb-6">新規計画</h3>
                         
@@ -198,7 +220,7 @@
                         </div>
                     </div>
 
-                    <!-- ★ v9: 計画表示エリア -->
+                    <!-- v9: 計画表示エリア -->
                     <div id="plan-output-container">
                         <p class="text-gray-500">「新規テーパリング計画を作成」ボタンを押して、計画を開始してください。</p>
                     </div>
@@ -206,7 +228,7 @@
                 </div>
             </div>
 
-            <!-- 4. 設定 ページ (HTMLはv6と同じ) -->
+            <!-- 4. 設定 ページ (v9から変更なし) -->
             <div id="page-settings" class="page-content">
                 <h2 class="text-3xl font-semibold mb-6">設定</h2>
                 
@@ -281,41 +303,118 @@
 
     <script>
         // ----------------------------------------
-        // ダッシュボードの更新 (★ v10: NULLチェック追加)
+        // グローバル変数
         // ----------------------------------------
-        function updateDashboard(data) {
-            // 要素を取得
-            const distEl = document.getElementById('summary-distance');
-            const weightEl = document.getElementById('summary-morning-weight');
-            const sleepEl = document.getElementById('summary-sleep');
-            
-            // ★ 要素が存在するか必ず確認
-            if (!distEl || !weightEl || !sleepEl) {
-                console.warn("Dashboard summary elements (summary-distance, summary-morning-weight, or summary-sleep) not found. HTML might be incomplete.");
-                return; // 要素がなければ、エラーを出さずに処理を中断
-            }
+        let conditionChart = null;
+        let appData = [];
+        const SETTINGS_STORAGE_KEY = 'practiceLogSettingsV5';
 
-            if (!data || data.length === 0) {
-                // データがない場合の表示
-                distEl.innerHTML = `-- <span class="text-lg font-medium text-gray-500">km</span>`;
-                weightEl.innerHTML = `-- <span class="text-lg font-medium text-gray-500">kg</span>`;
-                sleepEl.innerHTML = `-- <span class="text-lg font-medium text-gray-500">時間</span>`;
-                return;
+        // ----------------------------------------
+        // ページ切り替えロジック
+        // ----------------------------------------
+        const navLinks = document.querySelectorAll('.nav-link');
+        const pages = document.querySelectorAll('.page-content');
+        const defaultPage = 'page-dashboard';
+
+        function showPage(pageId) {
+            pages.forEach(page => { page.style.display = 'none'; });
+            const targetPage = document.getElementById(pageId);
+            if (targetPage) { 
+                targetPage.style.display = 'block'; 
+            } else {
+                console.error(`Page with id ${pageId} not found.`);
             }
             
-            // nullを除外して最新のデータを取得 (v9と同じ)
-            const lastDistance = [...data].reverse().find(d => d.distance != null)?.distance ?? '--';
-            const lastMorningWeight = [...data].reverse().find(d => d.morningWeight != null)?.morningWeight ?? '--';
-            const lastSleep = [...data].reverse().find(d => d.sleep != null)?.sleep ?? '--';
+            navLinks.forEach(link => {
+                const isActive = link.dataset.page === pageId;
+                link.classList.toggle('bg-blue-50', isActive);
+                link.classList.toggle('text-blue-600', isActive);
+                link.classList.toggle('font-semibold', isActive);
+            });
+        }
 
-            // 要素の存在が確認済みなので、安全にinnerHTMLを設定
-            distEl.innerHTML = `${lastDistance} <span class="text-lg font-medium text-gray-500">km</span>`;
-            weightEl.innerHTML = `${lastMorningWeight} <span class="text-lg font-medium text-gray-500">kg</span>`;
-            sleepEl.innerHTML = `${lastSleep} <span class="text-lg font-medium text-gray-500">時間</span>`;
+        navLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const pageId = link.dataset.page;
+                showPage(pageId);
+                const navContent = document.getElementById('nav-content');
+                if (window.innerWidth < 768) {
+                    navContent.classList.add('hidden');
+                }
+            });
+        });
+
+        document.getElementById('mobile-menu-button').addEventListener('click', () => {
+            document.getElementById('nav-content').classList.toggle('hidden');
+        });
+
+        // ----------------------------------------
+        // 設定
+        // ----------------------------------------
+        const csvUrlsInput = document.getElementById('csv-urls');
+        const mappingInputs = {
+            date: document.getElementById('col-date'),
+            distance: document.getElementById('col-distance'),
+            morningWeight: document.getElementById('col-morning-weight'),
+            eveningWeight: document.getElementById('col-evening-weight'),
+            wakingHr: document.getElementById('col-waking-hr'),
+            practiceHr: document.getElementById('col-practice-hr'),
+            sleep: document.getElementById('col-sleep'),
+        };
+        const saveButton = document.getElementById('save-settings-button');
+        const saveStatus = document.getElementById('save-status');
+
+        function saveSettings() {
+            try {
+                const settings = {
+                    csvUrls: csvUrlsInput.value.split('\n').filter(url => url.trim() !== ''),
+                    mapping: {}
+                };
+                for (const key in mappingInputs) {
+                    if (mappingInputs[key]) {
+                        settings.mapping[key] = mappingInputs[key].value;
+                    }
+                }
+                localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+                saveStatus.textContent = '保存しました！';
+                setTimeout(() => { saveStatus.textContent = ''; }, 2000);
+            } catch (error) {
+                console.error("Failed to save settings:", error);
+                saveStatus.textContent = '保存に失敗しました。';
+            }
+        }
+
+        function loadSettings() {
+            try {
+                const savedSettings = localStorage.getItem(SETTINGS_STORAGE_KEY);
+                if (savedSettings) {
+                    const settings = JSON.parse(savedSettings);
+                    if (settings.csvUrls && csvUrlsInput) {
+                        csvUrlsInput.value = (settings.csvUrls || []).join('\n');
+                    }
+                    if (settings.mapping) {
+                        for (const key in settings.mapping) {
+                            if (mappingInputs[key]) {
+                                mappingInputs[key].value = settings.mapping[key];
+                            }
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error("Failed to load settings from localStorage:", error);
+                localStorage.removeItem(SETTINGS_STORAGE_KEY);
+            }
+        }
+        
+        if (saveButton) {
+            saveButton.addEventListener('click', saveSettings);
+        } else {
+            console.error("Save button not found.");
         }
 
         // ----------------------------------------
-        // データ取得・解析処理 (v6と同じ)
+        // データ取得・解析処理
         // ----------------------------------------
         
         async function fetchCSVData(url) {
@@ -411,15 +510,22 @@
                 appData = parseCSV(combinedCsvText, settings.mapping);
                 
                 appData.sort((a, b) => {
+                    // 日付文字列 (例: "11/3") をパース
                     const [monthA, dayA] = a.date.split('/').map(Number);
                     const [monthB, dayB] = b.date.split('/').map(Number);
-                    const yearOffsetA = (monthA < 4) ? 1 : 0;
+                    
+                    // 陸上シーズン（4月始まり）を考慮し、1-3月は翌年扱いとする
+                    const yearOffsetA = (monthA < 4) ? 1 : 0; 
                     const yearOffsetB = (monthB < 4) ? 1 : 0;
+                    
+                    // 比較可能なDateオブジェクトを作成 (年は仮で2000年基準)
                     const dateA = new Date(2000 + yearOffsetA, monthA - 1, dayA);
                     const dateB = new Date(2000 + yearOffsetB, monthB - 1, dayB);
+                    
                     return dateA - dateB;
                 });
                 
+                // 重複排除ロジック
                 const uniqueData = [];
                 const seenDates = new Set();
                 for (const item of appData) {
@@ -454,27 +560,41 @@
 
 
         // ----------------------------------------
-        // ダッシュボードの更新 (v6と同じ)
+        // ダッシュボードの更新 (★ v10: NULLチェック追加)
         // ----------------------------------------
         function updateDashboard(data) {
+            // 要素を取得
+            const distEl = document.getElementById('summary-distance');
+            const weightEl = document.getElementById('summary-morning-weight');
+            const sleepEl = document.getElementById('summary-sleep');
+            
+            // ★ 要素が存在するか必ず確認
+            if (!distEl || !weightEl || !sleepEl) {
+                console.warn("Dashboard summary elements (summary-distance, summary-morning-weight, or summary-sleep) not found. HTML might be incomplete.");
+                return; // 要素がなければ、エラーを出さずに処理を中断
+            }
+
             if (!data || data.length === 0) {
-                document.getElementById('summary-distance').innerHTML = `-- <span class="text-lg font-medium text-gray-500">km</span>`;
-                document.getElementById('summary-morning-weight').innerHTML = `-- <span class="text-lg font-medium text-gray-500">kg</span>`;
-                document.getElementById('summary-sleep').innerHTML = `-- <span class="text-lg font-medium text-gray-500">時間</span>`;
+                // データがない場合の表示
+                distEl.innerHTML = `-- <span class="text-lg font-medium text-gray-500">km</span>`;
+                weightEl.innerHTML = `-- <span class="text-lg font-medium text-gray-500">kg</span>`;
+                sleepEl.innerHTML = `-- <span class="text-lg font-medium text-gray-500">時間</span>`;
                 return;
             }
             
+            // nullを除外して最新のデータを取得
             const lastDistance = [...data].reverse().find(d => d.distance != null)?.distance ?? '--';
             const lastMorningWeight = [...data].reverse().find(d => d.morningWeight != null)?.morningWeight ?? '--';
             const lastSleep = [...data].reverse().find(d => d.sleep != null)?.sleep ?? '--';
 
-            document.getElementById('summary-distance').innerHTML = `${lastDistance} <span class="text-lg font-medium text-gray-500">km</span>`;
-            document.getElementById('summary-morning-weight').innerHTML = `${lastMorningWeight} <span class="text-lg font-medium text-gray-500">kg</span>`;
-            document.getElementById('summary-sleep').innerHTML = `${lastSleep} <span class="text-lg font-medium text-gray-500">時間</span>`;
+            // 要素の存在が確認済みなので、安全にinnerHTMLを設定
+            distEl.innerHTML = `${lastDistance} <span class="text-lg font-medium text-gray-500">km</span>`;
+            weightEl.innerHTML = `${lastMorningWeight} <span class="text-lg font-medium text-gray-500">kg</span>`;
+            sleepEl.innerHTML = `${lastSleep} <span class="text-lg font-medium text-gray-500">時間</span>`;
         }
 
         // ----------------------------------------
-        // Chart.js (グラフの初期化と更新) (v6と同じ)
+        // Chart.js (グラフの初期化と更新)
         // ----------------------------------------
         function initializeChart() {
             try {
@@ -529,7 +649,7 @@
         }
         
         // ----------------------------------------
-        // ★ v7 -> v9: テーパリング計画 機能
+        // テーパリング計画 機能
         // ----------------------------------------
         const newPlanButton = document.getElementById('new-plan-button');
         const planFormContainer = document.getElementById('plan-form-container');
@@ -544,7 +664,7 @@
         const planFinalLoad = document.getElementById('plan-final-load');
 
 
-        // 日付を "MM/DD (曜)" 形式にフォーマットするヘルパー関数 (v7から流用)
+        // 日付を "MM/DD (曜)" 形式にフォーマットするヘルパー関数
         function formatDate(date) {
             const month = date.getMonth() + 1;
             const day = date.getDate();
@@ -552,7 +672,7 @@
             return `${month}/${day} (${weekday})`;
         }
 
-        // ★ v9: 直近3週間の平均走行距離を計算する
+        // 直近3週間の平均走行距離を計算する
         function calculateAverageDistance() {
             if (!appData || appData.length === 0) {
                 return 0;
@@ -567,16 +687,15 @@
             }, 0);
             
             // 週平均を計算
-            let weeklyAvg = (totalDistance / last21DaysData.length) * 7;
-            
-            if (last21DaysData.length === 0) { // データがまだない場合
-                weeklyAvg = 0;
+            let weeklyAvg = 0;
+            if (last21DaysData.length > 0) {
+                weeklyAvg = (totalDistance / last21DaysData.length) * 7;
             }
 
             return weeklyAvg.toFixed(1); // 小数点第1位まで
         }
 
-        // ★ v9: 「新規計画」ボタンが押された時の処理
+        // 「新規計画」ボタンが押された時の処理
         function showNewPlanForm() {
             // 1. 平均走行距離を計算して表示
             const avgDistance = calculateAverageDistance();
@@ -595,7 +714,7 @@
             }
         }
         
-        // ★ v9: 「計画を計算」ボタンが押された時の処理
+        // 「計画を計算」ボタンが押された時の処理
         function calculateTaperPlan() {
             if (!planRaceName || !planRaceDate || !planDuration || !planFinalLoad || !planOutputContainer || !planAvgDistanceSpan) {
                 console.error("Tapering plan calculation UI elements not found.");
@@ -647,9 +766,7 @@
         }
 
 
-        // (v7の generateTaperPlan は削除)
-
-        // ★ v9: イベントリスナーの割り当て
+        // イベントリスナーの割り当て
         if (newPlanButton) {
             newPlanButton.addEventListener('click', showNewPlanForm);
         } else {
@@ -657,14 +774,14 @@
         }
         
         if (calculatePlanButton) {
-            calculatePlanButton.addEventListener('click', calculateTaperPlan);
+            calculatePlanButton.addEventListener('click', calculateTaperPlan;
         } else {
             console.error("Calculate plan button not found.");
         }
 
 
         // ----------------------------------------
-        // 初期化処理 (v6と同じ)
+        // 初期化処理
         // ----------------------------------------
         document.addEventListener('DOMContentLoaded', () => {
             showPage(defaultPage);
