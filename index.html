@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>練習日誌アプリ (v5)</title>
+    <title>練習日誌アプリ (v6)</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -32,7 +32,10 @@
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
         }
+        /* ★重要★ 最初はローディング画面のみ表示 */
         .page-content { display: none; }
+        #page-dashboard { display: block; } /* ダッシュボードだけは最初から表示 */
+        
         .form-input {
             @apply w-full p-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm;
         }
@@ -103,19 +106,19 @@
             <div id="page-dashboard" class="page-content">
                 <h2 class="text-3xl font-semibold mb-6">ダッシュボード</h2>
                 
-                <!-- データ読み込み中のスピナー -->
+                <!-- データ読み込み中のスピナー (最初から表示) -->
                 <div id="dashboard-loading" class="flex flex-col items-center justify-center h-64">
                     <div class="loader"></div>
                     <p class="mt-4 text-gray-600">スプレッドシートからデータを読み込み中...</p>
                 </div>
 
-                <!-- 読み込みエラーメッセージ -->
+                <!-- 読み込みエラーメッセージ (最初は非表示) -->
                 <div id="dashboard-error" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg relative" role="alert">
                     <strong class="font-bold">データ取得エラー</strong>
                     <span class="block sm:inline" id="dashboard-error-message"></span>
                 </div>
 
-                <!-- サマリーカード (読み込み完了後に表示) -->
+                <!-- サマリーカード (最初は非表示) -->
                 <div id="dashboard-summary" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <div class="bg-white p-6 rounded-2xl shadow-lg">
                         <h3 class="text-lg font-semibold text-gray-600 mb-2">最新の走行距離</h3>
@@ -149,7 +152,7 @@
                 <div class="bg-white p-6 rounded-2xl shadow-lg">
                     <div class="mb-6">
                         <label for="competition-date" class="block text-lg font-medium text-gray-700 mb-2">試合日:</label>
-                        <input type="date" id="competition-date" class="form-input md:w-1/2">
+                        <input type="date" id="competition-date" class="form-input md:w-1f2">
                     </div>
                     <h3 class="text-xl font-semibold mb-4">計画メモ</h3>
                     <textarea class="form-input w-full" rows="10" placeholder="例: &#10;- 14日前: 最後の高強度トレーニング&#10;- 7日前: 練習量を50%に&#10;- 3日前: 短い刺激入れのみ"></textarea>
@@ -235,7 +238,7 @@
         // ----------------------------------------
         let conditionChart = null; // Chart.jsのインスタンス
         let appData = []; // アプリ全体のデータ
-        const SETTINGS_STORAGE_KEY = 'practiceLogSettingsV5'; // v5用にキーを変更
+        const SETTINGS_STORAGE_KEY = 'practiceLogSettingsV5'; // (キーはv5のまま)
 
         // ----------------------------------------
         // ページ切り替えロジック
@@ -247,7 +250,11 @@
         function showPage(pageId) {
             pages.forEach(page => { page.style.display = 'none'; });
             const targetPage = document.getElementById(pageId);
-            if (targetPage) { targetPage.style.display = 'block'; }
+            if (targetPage) { 
+                targetPage.style.display = 'block'; 
+            } else {
+                console.error(`Page with id ${pageId} not found.`);
+            }
             
             navLinks.forEach(link => {
                 const isActive = link.dataset.page === pageId;
@@ -260,7 +267,8 @@
         navLinks.forEach(link => {
             link.addEventListener('click', (e) => {
                 e.preventDefault();
-                showPage(link.dataset.page);
+                const pageId = link.dataset.page;
+                showPage(pageId);
                 const navContent = document.getElementById('nav-content');
                 if (window.innerWidth < 768) { // md breakpoint
                     navContent.classList.add('hidden');
@@ -273,9 +281,9 @@
         });
 
         // ----------------------------------------
-        // 設定 (v5: 複数URL対応)
+        // 設定 (v6: エラー耐性強化)
         // ----------------------------------------
-        const csvUrlsInput = document.getElementById('csv-urls'); // input -> textarea
+        const csvUrlsInput = document.getElementById('csv-urls');
         const mappingInputs = {
             date: document.getElementById('col-date'),
             distance: document.getElementById('col-distance'),
@@ -289,45 +297,64 @@
         const saveStatus = document.getElementById('save-status');
 
         function saveSettings() {
-            const settings = {
-                // csvUrlsをテキストエリアから読み込み、空行を除外して配列に
-                csvUrls: csvUrlsInput.value.split('\n').filter(url => url.trim() !== ''),
-                mapping: {}
-            };
-            for (const key in mappingInputs) {
-                settings.mapping[key] = mappingInputs[key].value;
+            try {
+                const settings = {
+                    csvUrls: csvUrlsInput.value.split('\n').filter(url => url.trim() !== ''),
+                    mapping: {}
+                };
+                for (const key in mappingInputs) {
+                    if (mappingInputs[key]) { // ★ v6: 存在チェック
+                        settings.mapping[key] = mappingInputs[key].value;
+                    }
+                }
+                
+                localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+                saveStatus.textContent = '保存しました！';
+                setTimeout(() => { saveStatus.textContent = ''; }, 2000);
+            } catch (error) {
+                console.error("Failed to save settings:", error);
+                saveStatus.textContent = '保存に失敗しました。';
             }
-            
-            localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
-            saveStatus.textContent = '保存しました！';
-            setTimeout(() => { saveStatus.textContent = ''; }, 2000);
         }
 
         function loadSettings() {
-            const savedSettings = localStorage.getItem(SETTINGS_STORAGE_KEY);
-            if (savedSettings) {
-                const settings = JSON.parse(savedSettings);
-                // 配列のURLを、改行区切りのテキストに戻す
-                csvUrlsInput.value = (settings.csvUrls || []).join('\n');
-                if (settings.mapping) {
-                    for (const key in settings.mapping) {
-                        if (mappingInputs[key]) {
-                            mappingInputs[key].value = settings.mapping[key];
+            try { // ★ v6: エラーハンドリング追加
+                const savedSettings = localStorage.getItem(SETTINGS_STORAGE_KEY);
+                if (savedSettings) {
+                    const settings = JSON.parse(savedSettings);
+                    
+                    if (settings.csvUrls && csvUrlsInput) {
+                        csvUrlsInput.value = (settings.csvUrls || []).join('\n');
+                    }
+                    
+                    if (settings.mapping) {
+                        for (const key in settings.mapping) {
+                            if (mappingInputs[key]) {
+                                mappingInputs[key].value = settings.mapping[key];
+                            }
                         }
                     }
                 }
+            } catch (error) {
+                console.error("Failed to load settings from localStorage:", error);
+                // localStorageが壊れている可能性があるので、クリアを試みる
+                localStorage.removeItem(SETTINGS_STORAGE_KEY);
             }
         }
         
-        saveButton.addEventListener('click', saveSettings);
+        // saveButtonがnullでないことを確認
+        if (saveButton) {
+            saveButton.addEventListener('click', saveSettings);
+        } else {
+            console.error("Save button not found.");
+        }
+
 
         // ----------------------------------------
-        // データ取得・解析処理 (v5の核心)
+        // データ取得・解析処理 (v6: エラー耐性強化)
         // ----------------------------------------
         
-        // 1. URLからCSVデータを非同期で取得する
         async function fetchCSVData(url) {
-            // Google Sheetsのキャッシュは強力なので、キャッシュを回避する
             const cacheBustUrl = `${url}&_=${new Date().getTime()}`;
             try {
                 const response = await fetch(cacheBustUrl);
@@ -344,7 +371,6 @@
             }
         }
 
-        // 2. CSVテキストを解析する (v5: ゴミ行スキップ機能)
         function parseCSV(csvText, mapping) {
             if (!mapping || !mapping.date) {
                 throw new Error("「日付」の列設定は必須です。");
@@ -357,39 +383,23 @@
                 }
             }
             
-            // ★ v5の核心 ★
-            // 日付列が「11/1」や「2025/11/1」のような形式かチェックする簡易正規表現
-            // 形式: "1/1", "01/01", "12/31", "2025/1/1", "2025-1-1" など (前後の""や空白は許容)
             const dateRegex = /^\s*"?\s*(\d{1,4}[-\/]\d{1,2}[-\/]\d{1,2}|\d{1,2}\/\d{1,2})\s*"?\s*$/i;
-
-
             const lines = csvText.trim().split('\n');
             const data = [];
 
             for (const line of lines) {
-                // Google Sheets CSVは、列が空でもカンマは出力される
-                // 例: "11/1",,"text",,,,10
-                // このため、単純なsplit(',')でOK
                 const columns = line.split(',');
-                
                 const dateVal = columns[indices.date];
 
-                // 日付列が存在し、かつ正規表現にマッチする場合のみ、データ行として処理する
                 if (dateVal && dateRegex.test(dateVal)) {
-                    
                     const cleanValue = (val) => {
                         if (val === undefined || val === null) return null;
-                        const trimmedVal = val.trim().replace(/"/g, ''); // ダブルクォートを除去
+                        const trimmedVal = val.trim().replace(/"/g, '');
                         if (trimmedVal === "") return null;
                         const num = parseFloat(trimmedVal);
                         return isNaN(num) ? null : num;
                     };
-                    
-                    // 日付の正規化 (例: "11/3" -> "2025/11/03" のようにしたいが、年の情報がない)
-                    // ここでは一旦、シートの生の値をそのまま使う
-                    // Chart.jsは "11/3", "11/4" のような日付文字列も賢くソートしてくれる
                     const cleanDate = dateVal.trim().replace(/"/g, '');
-
                     data.push({
                         date: cleanDate,
                         distance: cleanValue(columns[indices.distance]),
@@ -400,23 +410,189 @@
                         sleep: cleanValue(columns[indices.sleep]),
                     });
                 }
-                // else: 日付形式でない行は、ゴミデータ（ヘッダー、集計行、タイトル）とみなし、無視する
             }
             return data;
         }
 
-        // 3. データをロードし、UIを更新するメインの関数 (v5: 複数URL対応)
         async function loadAndDisplayData() {
-            // UIをローディング状態に
-            document.getElementById('dashboard-loading').style.display = 'flex';
-            document.getElementById('dashboard-summary').style.display = 'none';
-            document.getElementById('dashboard-error').style.display = 'none';
-
-            const savedSettings = localStorage.getItem(SETTINGS_STORAGE_KEY);
-            if (!savedSettings) {
-                showError('「設定」ページで、公開CSVのURLと列設定を保存してください。');
-                return;
+            // UI要素の存在チェック
+            const loadingEl = document.getElementById('dashboard-loading');
+            const summaryEl = document.getElementById('dashboard-summary');
+            const errorEl = document.getElementById('dashboard-error');
+            
+            if (!loadingEl || !summaryEl || !errorEl) {
+                console.error("Dashboard UI elements not found.");
+                return; // UI要素がなければ処理を中断
             }
 
-            const settings = JSON.parse(savedSettings);
-            if (!settings.csvUrls || settings.csvUrls.length === 0 || !s
+            loadingEl.style.display = 'flex';
+            summaryEl.style.display = 'none';
+            errorEl.style.display = 'none';
+
+            try { // ★ v6: tryブロックを関数の先頭に移動
+                const savedSettings = localStorage.getItem(SETTINGS_STORAGE_KEY);
+                if (!savedSettings) {
+                    showError('「設定」ページで、公開CSVのURLと列設定を保存してください。');
+                    return;
+                }
+
+                const settings = JSON.parse(savedSettings); // ★ parseもtryの中
+                if (!settings.csvUrls || settings.csvUrls.length === 0 || !settings.mapping || !settings.mapping.date) {
+                    showError('「設定」ページで、最低1つの公開CSVのURLと「日付」の列設定を完了してください。');
+                    return;
+                }
+            
+                const fetchPromises = settings.csvUrls.map(url => fetchCSVData(url));
+                const csvTexts = await Promise.all(fetchPromises);
+                const combinedCsvText = csvTexts.join('\n');
+                appData = parseCSV(combinedCsvText, settings.mapping);
+                
+                // 年をまたぐ日付のソート処理
+                appData.sort((a, b) => {
+                    // "11/3" や "1/5" のような形式を正しく比較
+                    const [monthA, dayA] = a.date.split('/').map(Number);
+                    const [monthB, dayB] = b.date.split('/').map(Number);
+
+                    // 10, 11, 12月を年の前半(若い月)として扱うための簡易ロジック
+                    // (陸上シーズンが4月始まりと仮定し、1, 2, 3月を「年明け」として扱う)
+                    const yearOffsetA = (monthA < 4) ? 1 : 0; // 1, 2, 3月は翌年扱い
+                    const yearOffsetB = (monthB < 4) ? 1 : 0;
+                    
+                    const dateA = new Date(2000 + yearOffsetA, monthA - 1, dayA);
+                    const dateB = new Date(2000 + yearOffsetB, monthB - 1, dayB);
+
+                    return dateA - dateB;
+                });
+                
+                // 重複データの削除
+                const uniqueData = [];
+                const seenDates = new Set();
+                for (const item of appData) {
+                    if (!seenDates.has(item.date)) {
+                        uniqueData.push(item);
+                        seenDates.add(item.date);
+                    }
+                }
+                appData = uniqueData;
+
+                updateDashboard(appData);
+                updateConditionChart(appData);
+
+                loadingEl.style.display = 'none';
+                summaryEl.style.display = 'grid'; // 'grid'に戻す
+
+            } catch (error) {
+                console.error("Failed to load and display data:", error);
+                showError(error.message); // ★ すべてのエラーをここでcatch
+            }
+        }
+
+        function showError(message) {
+            const loadingEl = document.getElementById('dashboard-loading');
+            const errorEl = document.getElementById('dashboard-error');
+            const errorMsgEl = document.getElementById('dashboard-error-message');
+
+            if (loadingEl) loadingEl.style.display = 'none';
+            if (errorEl) errorEl.style.display = 'block';
+            if (errorMsgEl) errorMsgEl.textContent = message;
+        }
+
+
+        // ----------------------------------------
+        // ダッシュボードの更新
+        // ----------------------------------------
+        function updateDashboard(data) {
+            if (!data || data.length === 0) {
+                // (値がnullの場合のデフォルト表示)
+                document.getElementById('summary-distance').innerHTML = `-- <span class="text-lg font-medium text-gray-500">km</span>`;
+                document.getElementById('summary-morning-weight').innerHTML = `-- <span class="text-lg font-medium text-gray-500">kg</span>`;
+                document.getElementById('summary-sleep').innerHTML = `-- <span class="text-lg font-medium text-gray-500">時間</span>`;
+                return;
+            }
+            
+            const lastDistance = [...data].reverse().find(d => d.distance != null)?.distance ?? '--';
+            const lastMorningWeight = [...data].reverse().find(d => d.morningWeight != null)?.morningWeight ?? '--';
+            const lastSleep = [...data].reverse().find(d => d.sleep != null)?.sleep ?? '--';
+
+            document.getElementById('summary-distance').innerHTML = `${lastDistance} <span class="text-lg font-medium text-gray-500">km</span>`;
+            document.getElementById('summary-morning-weight').innerHTML = `${lastMorningWeight} <span class="text-lg font-medium text-gray-500">kg</span>`;
+            document.getElementById('summary-sleep').innerHTML = `${lastSleep} <span class="text-lg font-medium text-gray-500">時間</span>`;
+        }
+
+        // ----------------------------------------
+        // Chart.js (グラフの初期化と更新) (v6: エラー耐性強化)
+        // ----------------------------------------
+        function initializeChart() {
+            try { // ★ v6: エラーハンドリング追加
+                const ctx = document.getElementById('conditionChart');
+                if (!ctx) {
+                    console.warn("conditionChart canvas not found.");
+                    return;
+                }
+                
+                conditionChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: [], datasets: [
+                            { label: '朝体重 (kg)', data: [], borderColor: 'rgb(34, 197, 94)', yAxisID: 'yWeight', spanGaps: true },
+                            { label: '夕体重 (kg)', data: [], borderColor: 'rgb(22, 163, 74)', yAxisID: 'yWeight', spanGaps: true },
+                            { label: '起床時脈拍', data: [], borderColor: 'rgb(239, 68, 68)', yAxisID: 'yHR', spanGaps: true }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: { 
+                                title: { display: true, text: '日付' },
+                                ticks: { autoSkip: true, maxTicksLimit: 20 }
+                            },
+                            yWeight: { type: 'linear', position: 'left', title: { display: true, text: '体重 (kg)' } },
+                            yHR: { type: 'linear', position: 'right', title: { display: true, text: '脈拍 (bpm)' }, grid: { drawOnChartArea: false } }
+                        },
+                        plugins: { tooltip: { mode: 'index', intersect: false } }
+                    }
+                });
+            } catch (error) {
+                console.error("Failed to initialize chart:", error);
+            }
+        }
+
+        function updateConditionChart(data) {
+            if (!conditionChart || !data) return;
+
+            try {
+                const labels = data.map(d => d.date);
+                conditionChart.data.labels = labels;
+                conditionChart.data.datasets[0].data = data.map(d => d.morningWeight);
+                conditionChart.data.datasets[1].data = data.map(d => d.eveningWeight);
+                conditionChart.data.datasets[2].data = data.map(d => d.wakingHr);
+                
+                conditionChart.update();
+            } catch (error) {
+                console.error("Failed to update chart:", error);
+            }
+        }
+        
+        // ----------------------------------------
+        // 初期化処理
+        // ----------------------------------------
+        document.addEventListener('DOMContentLoaded', () => {
+            // (v6: 堅牢な順序で実行)
+            
+            // 1. ページ切り替えとUIの基本設定を先に実行
+            showPage(defaultPage); // まずデフォルトページを表示
+            
+            // 2. 設定フォームの値を読み込む (エラーがあっても継続)
+            loadSettings();     
+            
+            // 3. グラフの「ガワ」を初期化 (エラーがあっても継続)
+            initializeChart();  
+            
+            // 4. データ取得とUI更新を開始 (メインの処理)
+            loadAndDisplayData(); 
+        });
+
+    </script>
+</body>
+</html>
