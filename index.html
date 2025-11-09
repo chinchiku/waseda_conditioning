@@ -243,4 +243,1688 @@
                 
                 // ★ v34: Firestoreドキュメントへのパスを作成
                 const settingsRef = doc(db, 'artifacts', appId, 'users', userId, 'settings', SETTINGS_DOC_ID);
-                const manualDataRef = doc(db, 'artifacts', appId,
+                const manualDataRef = doc(db, 'artifacts', appId, 'users', userId, 'settings', MANUAL_DATA_DOC_ID);
+
+                // ★ v34: Firestoreに保存 (setDoc)
+                await setDoc(settingsRef, { data: settings });
+                await setDoc(manualDataRef, { data: manualData });
+                
+                if (saveStatus) saveStatus.textContent = '保存しました！リロードしてデータを反映します。';
+                setTimeout(() => { 
+                    if (saveStatus) saveStatus.textContent = ''; 
+                    location.reload();
+                }, 1500);
+                
+            } catch (error) {
+                console.error("Failed to save settings to Firestore:", error);
+                if (saveStatus) saveStatus.textContent = '保存に失敗しました。';
+            }
+        }
+
+        // ★ v34: async に変更 (Firestoreから読み込み)
+        async function loadSettings() {
+            if (!auth.currentUser) return; // 認証がまだなら何もしない
+            
+            try {
+                // ★ v34: Firestoreドキュメントへのパス
+                const settingsRef = doc(db, 'artifacts', appId, 'users', userId, 'settings', SETTINGS_DOC_ID);
+                const manualDataRef = doc(db, 'artifacts', appId, 'users', userId, 'settings', MANUAL_DATA_DOC_ID);
+
+                // ★ v34: Firestoreから読み込み (getDoc)
+                const settingsSnap = await getDoc(settingsRef);
+                const manualDataSnap = await getDoc(manualDataRef);
+                
+                if (manualDataSnap.exists() && manualDataInput) {
+                    manualDataInput.value = manualDataSnap.data().data || "";
+                }
+                
+                if (settingsSnap.exists()) {
+                    const settings = settingsSnap.data().data;
+                    
+                    if (settings.dataSource === 'manual') {
+                        if (dataSourceManual) dataSourceManual.checked = true;
+                        toggleDataSourceView('manual');
+                    } else {
+                        if (dataSourceCsv) dataSourceCsv.checked = true;
+                        toggleDataSourceView('csv');
+                    }
+                    
+                    if (settings.csvUrls && csvUrlsInput) {
+                        csvUrlsInput.value = (settings.csvUrls || []).join('\n');
+                    }
+                    
+                    if (settings.mapping) {
+                        for (const key in settings.mapping) {
+                            if (mappingInputs[key]) {
+                                const colNum = settings.mapping[key];
+                                mappingInputs[key].value = columnToLetter(colNum); // 2 -> "B"
+                            }
+                        }
+                    }
+                } else {
+                    // クラウドに設定がない場合 (初回起動)
+                    console.log("No settings found in Firestore, using defaults.");
+                    toggleDataSourceView('csv');
+                }
+            } catch (error) {
+                console.error("Failed to load settings from Firestore:", error);
+            }
+        }
+        
+        // ----------------------------------------
+        // データ取得・解析処理 (v33と同じ)
+        // ----------------------------------------
+        
+        function fetchWithTimeout(url, timeout = 10000) { 
+            return Promise.race([
+                fetch(url),
+                new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error('リクエストがタイムアウトしました')), timeout)
+                )
+            ]);
+        }
+        
+        async function fetchCSVData(url) {
+            const cacheBustUrl = `${url}&_=${new Date().getTime()}`;
+            try {
+                const response = await fetchWithTimeout(cacheBustUrl, 10000); 
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status} (URL: ${url})`);
+                }
+                return await response.text();
+            } catch (error) {
+                console.error("Fetch error:", error);
+                if (error.message.includes('timeout')) {
+                    throw new Error(`データ取得がタイムアウトしました (10秒)。URLが正しいか確認してください: ${url}`);
+                }
+                if (error.message.includes('Failed to fetch')) {
+                     throw new Error('データの取得に失敗しました。CORSポリシー違反、またはネットワークエラーの可能性があります。');
+                }
+                throw error;
+            }
+        }
+
+        // CSV (Google Sheet) 用のパーサー
+        function parseCSV(csvText, mapping) {
+            if (!mapping || !mapping.date) {
+                throw new Error("「日付」の列設定は必須です。");
+            }
+
+            const indices = {};
+            for (const key in mapping) {
+                if (mapping[key]) {
+                    indices[key] = parseInt(mapping[key], 10) - 1; // 1-based to 0-based
+                }
+            }
+            
+            const dateRegex = /^\s*"?\s*(\d{4}[-\/]\d{1,2}[-\/]\d{1,2}|\d{1,2}\/\d{1,2})\s*"?\s*$/i;
+            const lines = csvText.trim().split('\n');
+            const data = [];
+
+            for (const line of lines) {
+                const columns = line.split(',');
+                const dateVal = columns[indices.date];
+
+                if (dateVal && dateRegex.test(dateVal)) {
+                    const cleanValue = (val) => {
+                        if (val === undefined || val === null) return null;
+                        const trimmedVal = val.trim().replace(/^["']|["']$/g, '').trim();
+                        if (trimmedVal === "") return null;
+                        const num = parseFloat(trimmedVal);
+                        return isNaN(num) ? null : num;
+                    };
+                    const cleanDate = dateVal.trim().replace(/^["']|["']$/g, '').trim();
+                    
+                    data.push({
+                        date: cleanDate,
+                        distance: cleanValue(columns[indices.distance]),
+                        morningWeight: cleanValue(columns[indices.morningWeight]),
+                        eveningWeight: cleanValue(columns[indices.eveningWeight]),
+                        wakingHr: cleanValue(columns[indices.wakingHr]),
+                        practiceHr: cleanValue(columns[indices.practiceHr]),
+                        sleep: cleanValue(columns[indices.sleep]),
+                    });
+                }
+            }
+            return data;
+        }
+
+        // 手動入力データ用のパーサー
+        function parseManualData(manualText, mapping) {
+            const dateRegex = /^\s*"?\s*(\d{4}[-\/]\d{1,2}[-\/]\d{1,2}|\d{1,2}\/\d{1,2})\s*"?\s*$/i;
+            const lines = manualText.trim().split('\n');
+            const data = [];
+            
+            for (const line of lines) {
+                const parts = line.split(',');
+                if (parts.length < 2) continue; // 「日付, 距離」の形式でない行はスキップ
+                
+                const dateVal = parts[0].trim();
+                const distVal = parts[1].trim();
+
+                if (dateVal && dateRegex.test(dateVal)) {
+                     const cleanValue = (val) => {
+                        if (val === undefined || val === null) return null;
+                        const trimmedVal = val.trim().replace(/^["']|["']$/g, '').trim();
+                        if (trimmedVal === "") return null;
+                        const num = parseFloat(trimmedVal);
+                        return isNaN(num) ? null : num;
+                    };
+                    const cleanDate = dateVal.trim().replace(/^["']|["']$/g, '').trim();
+                    
+                    // 手動入力は日付と距離のみ
+                    data.push({
+                        date: cleanDate,
+                        distance: cleanValue(distVal),
+                        morningWeight: null,
+                        eveningWeight: null,
+                        wakingHr: null,
+                        practiceHr: null,
+                        sleep: null,
+                    });
+                }
+            }
+            return data;
+        }
+
+
+        // データ読み込みのメインロジック (★ v34: Firestoreから設定取得)
+        async function loadAndDisplayData() {
+            const loadingEl = document.getElementById('dashboard-loading');
+            const summaryTopEl = document.getElementById('dashboard-summary-top');
+            const summaryBottomEl = document.getElementById('dashboard-summary-bottom');
+            const errorEl = document.getElementById('dashboard-error');
+            
+            if (!loadingEl || !summaryTopEl || !summaryBottomEl || !errorEl) {
+                console.error("Dashboard UI elements (top/bottom) not found.");
+                return;
+            }
+
+            loadingEl.style.display = 'flex';
+            summaryTopEl.style.display = 'none'; 
+            summaryBottomEl.style.display = 'none'; 
+            errorEl.style.display = 'none';
+
+            try {
+                // ★ v34: Firestoreから設定を読み込む
+                const settingsRef = doc(db, 'artifacts', appId, 'users', userId, 'settings', SETTINGS_DOC_ID);
+                const settingsSnap = await getDoc(settingsRef);
+
+                if (!settingsSnap.exists()) {
+                    showError('「設定」ページで、入力方法と列設定を保存してください。');
+                    return;
+                }
+                const settings = settingsSnap.data().data;
+                
+                // データソースによって処理を分岐
+                if (settings.dataSource === 'manual') {
+                    // --- 手動データの場合 ---
+                    console.log("Loading data from: Manual Input");
+                    const manualDataRef = doc(db, 'artifacts', appId, 'users', userId, 'settings', MANUAL_DATA_DOC_ID);
+                    const manualDataSnap = await getDoc(manualDataRef);
+                    
+                    if (!manualDataSnap.exists() || !manualDataSnap.data().data) {
+                        showError('「設定」ページで、手動入力データを貼り付けて保存してください。');
+                        return;
+                    }
+                    const manualData = manualDataSnap.data().data;
+                    appData = parseManualData(manualData, settings.mapping);
+                    
+                } else {
+                    // --- CSV連携の場合 ---
+                    console.log("Loading data from: CSV URLs");
+                    if (!settings.csvUrls || settings.csvUrls.length === 0 || !settings.mapping || !settings.mapping.date) {
+                        showError('「設定」ページで、最低1つの公開CSVのURLと「日付」の列設定を完了してください。');
+                        return;
+                    }
+                    
+                    const fetchPromises = settings.csvUrls.map(url => fetchCSVData(url));
+                    const csvTexts = await Promise.all(fetchPromises);
+                    
+                    const combinedCsvText = csvTexts.join('\n');
+                    appData = parseCSV(combinedCsvText, settings.mapping);
+                }
+
+                // --- 共通処理 (ソートと重複排除) ---
+                appData.sort((a, b) => {
+                    const dateA = parseDateToSort(a.date);
+                    const dateB = parseDateToSort(b.date);
+                    if (dateA === null) return 1;
+                    if (dateB === null) return -1;
+                    return dateA - dateB;
+                });
+                
+                const uniqueData = [];
+                const seenDates = new Set();
+                for (const item of appData) {
+                    if (item.date && parseDateToSort(item.date) && !seenDates.has(item.date)) {
+                        uniqueData.push(item);
+                        seenDates.add(item.date);
+                    }
+                }
+                appData = uniqueData;
+
+                if (appData.length === 0) {
+                     showError('データを読み込めませんでした。設定（データソース、URL、列設定、日付形式）を確認してください。');
+                     return;
+                }
+
+                updateDashboard(appData);
+                updateConditionChart(appData); 
+
+                loadingEl.style.display = 'none';
+                summaryTopEl.style.display = 'grid'; 
+                summaryBottomEl.style.display = 'grid'; 
+
+            } catch (error) {
+                console.error("Failed to load and display data:", error);
+                showError(error.message);
+            }
+        }
+
+        function showError(message) {
+            const loadingEl = document.getElementById('dashboard-loading');
+            const errorEl = document.getElementById('dashboard-error');
+            const errorMsgEl = document.getElementById('dashboard-error-message');
+            const summaryTopEl = document.getElementById('dashboard-summary-top');
+            const summaryBottomEl = document.getElementById('dashboard-summary-bottom');
+
+            if (loadingEl) loadingEl.style.display = 'none';
+            if (summaryTopEl) summaryTopEl.style.display = 'none'; 
+            if (summaryBottomEl) summaryBottomEl.style.display = 'none'; 
+            if (errorEl) errorEl.style.display = 'block';
+            if (errorMsgEl) errorMsgEl.textContent = message;
+        }
+
+
+        // ----------------------------------------
+        // ダッシュボードの更新 (v33と同じ)
+        // ----------------------------------------
+        
+        // v33と同じヘルパー関数
+        function findChangeData(data, key) {
+            if (!data || data.length === 0) return null;
+            
+            let latestValue = null;
+            let latestIndex = -1;
+            
+            for (let i = data.length - 1; i >= 0; i--) {
+                const value = data[i][key];
+                if (value !== null && value !== undefined && !isNaN(parseFloat(value))) {
+                    latestValue = parseFloat(value);
+                    latestIndex = i;
+                    break;
+                }
+            }
+
+            if (latestIndex === -1) return { latest: null, previous: null, diff: null, percent: null };
+
+            let previousValue = null;
+            
+            for (let i = latestIndex - 1; i >= 0; i--) {
+                const value = data[i][key];
+                if (value !== null && value !== undefined && !isNaN(parseFloat(value))) {
+                    previousValue = parseFloat(value);
+                    break;
+                }
+            }
+
+            const result = { latest: latestValue, previous: null, diff: null, percent: null };
+
+            if (previousValue !== null) {
+                const diff = latestValue - previousValue;
+                result.previous = previousValue;
+                result.diff = diff;
+                if (previousValue !== 0) {
+                    result.percent = (diff / previousValue) * 100;
+                } else {
+                    result.percent = (latestValue > 0) ? 100.0 : 0; 
+                }
+            }
+            
+            return result;
+        }
+        
+        // v33と同じヘルパー関数
+        function calculateWeeklyAverage(data, key) {
+            if (!data || data.length === 0) {
+                return null;
+            }
+
+            const latestDate = new Date(); // 「今日」
+            latestDate.setHours(0, 0, 0, 0); 
+
+            const startDate = new Date(latestDate.getTime());
+            startDate.setDate(startDate.getDate() - 6); // 7日間 (今日を含む)
+
+            const recentData = data.filter(day => {
+                const d = parseDateToReal(day.date); // 実日付に変換
+                return d && d >= startDate && d <= latestDate;
+            });
+            
+            if (recentData.length === 0) {
+                return null; // この7日間にデータなし
+            }
+
+            let includedDays = 0;
+            const totalValue = recentData.reduce((sum, day) => {
+                const value = day[key];
+                if (value !== null && value !== undefined && !isNaN(parseFloat(value))) {
+                    const numValue = parseFloat(value);
+                    if (key === 'distance') {
+                        if (numValue >= 10) { 
+                            includedDays++;
+                            return sum + numValue;
+                        }
+                    } else {
+                        includedDays++;
+                        return sum + numValue;
+                    }
+                }
+                return sum;
+            }, 0);
+            
+            if (includedDays > 0) {
+                return totalValue / includedDays;
+            } else {
+                return null; // 有効なデータがなかった
+            }
+        }
+
+
+        // v33と同じ
+        function updateDashboard(data) {
+            
+            const metrics = [
+                { 
+                    key: 'distance', 
+                    el: document.getElementById('summary-distance'), 
+                    changeEl: document.getElementById('summary-distance-change'), 
+                    avgEl: document.getElementById('avg-distance'),
+                    unit: 'km', 
+                    avgUnit: 'km/日'
+                },
+                { 
+                    key: 'morningWeight', 
+                    el: document.getElementById('summary-morning-weight'), 
+                    changeEl: document.getElementById('summary-morning-weight-change'), 
+                    avgEl: document.getElementById('avg-morning-weight'),
+                    unit: 'kg', 
+                    avgUnit: 'kg'
+                },
+                { 
+                    key: 'eveningWeight', 
+                    el: document.getElementById('summary-evening-weight'), 
+                    changeEl: document.getElementById('summary-evening-weight-change'), 
+                    avgEl: document.getElementById('avg-evening-weight'),
+                    unit: 'kg', 
+                    avgUnit: 'kg'
+                },
+                { 
+                    key: 'wakingHr', 
+                    el: document.getElementById('summary-waking-hr'), 
+                    changeEl: document.getElementById('summary-waking-hr-change'), 
+                    avgEl: document.getElementById('avg-waking-hr'),
+                    unit: 'bpm', 
+                    avgUnit: 'bpm'
+                },
+                { 
+                    key: 'sleep', 
+                    el: document.getElementById('summary-sleep'), 
+                    changeEl: document.getElementById('summary-sleep-change'), 
+                    avgEl: document.getElementById('avg-sleep'),
+                    unit: '時間', 
+                    avgUnit: '時間'
+                },
+            ];
+
+            if (!data || data.length === 0) {
+                metrics.forEach(m => {
+                    if (m.el) m.el.innerHTML = `– <span class="text-lg font-medium text-gray-500">${m.unit}</span>`;
+                    if (m.avgEl) m.avgEl.textContent = `週平均: – ${m.avgUnit}`;
+                    if (m.changeEl) m.changeEl.innerHTML = `<span>–</span> (<span>–</span>)`;
+                });
+                return;
+            }
+
+            // 各メトリクスを更新
+            metrics.forEach(m => {
+                if (!m.el || !m.changeEl || !m.avgEl) {
+                    console.warn(`Dashboard elements for ${m.key} not found.`);
+                    return;
+                }
+                
+                // 1. 最新値と前日比
+                const changeData = findChangeData(data, m.key);
+                
+                if (changeData && changeData.latest !== null) {
+                    m.el.innerHTML = `${changeData.latest.toFixed(1)} <span class="text-lg font-medium text-gray-500">${m.unit}</span>`;
+                } else {
+                    m.el.innerHTML = `– <span class="text-lg font-medium text-gray-500">${m.unit}</span>`;
+                }
+                
+                if (changeData && changeData.diff !== null) {
+                    const diff = changeData.diff;
+                    const percent = changeData.percent;
+                    const isGoodWhenDown = m.key.includes('Weight') || m.key.includes('Hr');
+                    const defaultColor = diff > 0 ? 'text-green-600' : (diff < 0 ? 'text-red-600' : 'text-gray-500');
+                    const goodWhenDownColor = diff < 0 ? 'text-green-600' : (diff > 0 ? 'text-red-600' : 'text-gray-500');
+                    const color = isGoodWhenDown ? goodWhenDownColor : defaultColor;
+                    const sign = diff > 0 ? '+' : '';
+                    
+                    m.changeEl.innerHTML = `
+                        <span class="${color} font-semibold">${sign}${diff.toFixed(1)}</span>
+                        <span class="text-gray-500">(${sign}${percent.toFixed(1)}%)</span>
+                    `;
+                } else {
+                    m.changeEl.innerHTML = `<span>–</span> (<span>–</span>)`;
+                }
+                
+                // 2. 週平均
+                const avgValue = calculateWeeklyAverage(data, m.key);
+                if (avgValue !== null) {
+                    m.avgEl.textContent = `週平均: ${avgValue.toFixed(1)} ${m.avgUnit}`;
+                } else {
+                    m.avgEl.textContent = `週平均: – ${m.avgUnit}`;
+                }
+            });
+        }
+
+
+        // ----------------------------------------
+        // Chart.js (v33と同じ)
+        // ----------------------------------------
+        function initializeChart() {
+            try {
+                const ctx = document.getElementById('conditionChart');
+                if (!ctx) {
+                    console.warn("conditionChart canvas not found.");
+                    return;
+                }
+                
+                conditionChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: [], 
+                        datasets: [
+                            { 
+                                label: '走行距離 (km)', 
+                                data: [], 
+                                borderColor: 'rgb(59, 130, 246)', // blue-600
+                                yAxisID: 'yDistance', 
+                                spanGaps: true,
+                                hidden: true 
+                            },
+                            { 
+                                label: '朝体重 (kg)', 
+                                data: [], 
+                                borderColor: 'rgb(34, 197, 94)', // green-500
+                                yAxisID: 'yWeight', 
+                                spanGaps: true,
+                                hidden: false 
+                            },
+                            { 
+                                label: '夕体重 (kg)', 
+                                data: [], 
+                                borderColor: 'rgb(5, 150, 105)', // emerald-600
+                                yAxisID: 'yWeight', 
+                                spanGaps: true,
+                                hidden: true 
+                            },
+                            { 
+                                label: '起床時脈拍', 
+                                data: [], 
+                                borderColor: 'rgb(239, 68, 68)', // red-500
+                                yAxisID: 'yHR', 
+                                spanGaps: true,
+                                hidden: false 
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: { 
+                                title: { display: true, text: '日付' },
+                                ticks: { autoSkip: true, maxTicksLimit: 20 }
+                            },
+                            yWeight: { 
+                                type: 'linear', 
+                                position: 'left', 
+                                title: { display: true, text: '体重 (kg)' },
+                                ticks: { stepSize: 1 }, 
+                                grace: '10%' 
+                            },
+                            yHR: { 
+                                type: 'linear', 
+                                position: 'right', 
+                                title: { display: true, text: '脈拍 (bpm)' }, 
+                                grid: { drawOnChartArea: false },
+                                ticks: { stepSize: 5 }, 
+                                grace: '10%'
+                            },
+                            yDistance: {
+                                type: 'linear',
+                                position: 'left', 
+                                title: { display: true, text: '距離 (km)' },
+                                grid: { drawOnChartArea: false },
+                                display: false,
+                                grace: '10%'
+                            }
+                        },
+                        plugins: { tooltip: { mode: 'index', intersect: false } }
+                    }
+                });
+            } catch (error) {
+                console.error("Failed to initialize chart:", error);
+            }
+        }
+
+        // v33と同じ
+        function updateConditionChart(data) {
+            if (!conditionChart) return;
+            
+            const avgContentEl = document.getElementById('chart-averages-content');
+            
+            if (!data || data.length === 0) {
+                 if(avgContentEl) avgContentEl.innerHTML = `<p class="text-gray-500">（データを読み込み中...）</p>`;
+                return;
+            }
+
+            try {
+                // チェックボックスの状態を読み取る
+                const toggles = {
+                    distance: document.getElementById('toggle-distance').checked,
+                    morningWeight: document.getElementById('toggle-morning-weight').checked,
+                    eveningWeight: document.getElementById('toggle-evening-weight').checked,
+                    wakingHr: document.getElementById('toggle-waking-hr').checked,
+                };
+                
+                // データをセット
+                const labels = data.map(d => d.date);
+                conditionChart.data.labels = labels;
+                
+                // データセットの表示/非表示を切り替え
+                conditionChart.data.datasets[0].data = data.map(d => d.distance);
+                conditionChart.data.datasets[0].hidden = !toggles.distance;
+                
+                conditionChart.data.datasets[1].data = data.map(d => d.morningWeight);
+                conditionChart.data.datasets[1].hidden = !toggles.morningWeight;
+                
+                conditionChart.data.datasets[2].data = data.map(d => d.eveningWeight);
+                conditionChart.data.datasets[2].hidden = !toggles.eveningWeight;
+                
+                conditionChart.data.datasets[3].data = data.map(d => d.wakingHr);
+                conditionChart.data.datasets[3].hidden = !toggles.wakingHr;
+
+                // Y軸の表示/非表示を切り替え
+                conditionChart.options.scales.yDistance.display = toggles.distance;
+                conditionChart.options.scales.yWeight.display = toggles.morningWeight || toggles.eveningWeight;
+                conditionChart.options.scales.yHR.display = toggles.wakingHr;
+                
+                // 軸が重なった場合（走行距離と体重を同時表示）のオフセット調整
+                if (toggles.distance && (toggles.morningWeight || toggles.eveningWeight)) {
+                    conditionChart.options.scales.yDistance.position = 'left';
+                    conditionChart.options.scales.yWeight.position = 'left';
+                    conditionChart.options.scales.yWeight.offset = true; // 重ならないようにオフセット
+                } else {
+                    conditionChart.options.scales.yWeight.offset = false; // オフセット解除
+                    conditionChart.options.scales.yDistance.position = 'left';
+                    conditionChart.options.scales.yWeight.position = 'left';
+                }
+                
+                // 平均値を計算して表示 (v33と同じ)
+                let avgHtml = '';
+                const avgMetrics = [
+                    { key: 'distance', label: '走行距離', unit: 'km/日', shown: toggles.distance, color: 'text-blue-600' },
+                    { key: 'morningWeight', label: '朝体重', unit: 'kg', shown: toggles.morningWeight, color: 'text-green-600' },
+                    { key: 'eveningWeight', label: '夕体重', unit: 'kg', shown: toggles.eveningWeight, color: 'text-emerald-600' },
+                    { key: 'wakingHr', label: '起床時脈拍', unit: 'bpm', shown: toggles.wakingHr, color: 'text-red-600' },
+                ];
+                
+                avgMetrics.forEach(m => {
+                    if (m.shown) {
+                        const avg = calculateWeeklyAverage(data, m.key);
+                        const avgText = (avg !== null) ? `${avg.toFixed(1)} ${m.unit}` : '–';
+                        avgHtml += `<p><strong class="${m.color}">${m.label}:</strong> ${avgText}</p>`;
+                    }
+                });
+                
+                if (avgHtml === '') {
+                    avgHtml = '<p class="text-gray-500">（グラフの表示項目を選択してください）</p>';
+                }
+                if (avgContentEl) avgContentEl.innerHTML = avgHtml;
+
+                conditionChart.update();
+            } catch (error) {
+                console.error("Failed to update chart:", error);
+            }
+        }
+        
+        // ----------------------------------------
+        // テーパリング計画 機能 (v33と同じ)
+        // ----------------------------------------
+        // const newPlanButton = ... (★ v35: DOMContentLoaded に移動)
+        
+        // 日付を "MM/DD (曜)" 形式にフォーマットするヘルパー関数
+        function formatDate(date) {
+            // v31: dateが文字列の場合、Dateオブジェクトに変換
+            const dateObj = (typeof date === 'string') ? new Date(date) : date;
+            const month = dateObj.getMonth() + 1;
+            const day = dateObj.getDate();
+            const weekday = ['日', '月', '火', '水', '木', '金', '土'][dateObj.getDay()];
+            return `${month}/${day} (${weekday})`;
+        }
+
+        // 「日平均」走行距離の計算ロジック (「今日」基準) - v33と同じ
+        function calculateAverageDistance() {
+            if (!appData || appData.length === 0) {
+                console.warn("[calcAvg] appData is empty. Returning 0.0");
+                return 0.0.toFixed(1); 
+            }
+
+            const latestDate = new Date(); // 「今日」
+            latestDate.setHours(0, 0, 0, 0); 
+
+            const startDate = new Date(latestDate.getTime());
+            startDate.setDate(startDate.getDate() - 20); // 21日間
+
+            console.log(`[calcAvg] Calculating average for 21 days from ${startDate.toLocaleDateString()} to ${latestDate.toLocaleDateString()}`);
+
+            const recentData = appData.filter(day => {
+                const d = parseDateToReal(day.date); // 実日付に変換
+                return d && d >= startDate && d <= latestDate;
+            });
+            
+            if (recentData.length === 0) {
+                console.warn("[calcAvg] No data found in the last 21 days.");
+                return 0.0.toFixed(1);
+            }
+
+            console.log(`[calcAvg] Found ${recentData.length} entries in the last 21 days.`);
+            
+            let includedDays = 0;
+            const totalDistance = recentData.reduce((sum, day) => {
+                const dist = day.distance || 0;
+                if (dist >= 10) { 
+                    includedDays++;
+                    return sum + dist;
+                }
+                return sum;
+            }, 0);
+            
+            console.log(`[calcAvg] Total distance (>=10km): ${totalDistance} km from ${includedDays} days.`);
+            
+            let dailyAvg = 0;
+            if (includedDays > 0) {
+                dailyAvg = totalDistance / includedDays; // 21 ではなく includedDays で割る
+            }
+            
+            console.log(`[calcAvg] Daily Avg (Total / includedDays): ${dailyAvg.toFixed(1)} km/day`);
+
+            return dailyAvg.toFixed(1);
+        }
+        
+        // レース日と期間を基準に平均を計算する (フォーム変更時) - v33と同じ
+        function calculateAverageDistanceOnFormChange(raceDateStr, durationStr) {
+            if (!appData || appData.length === 0) {
+                console.warn("[calcAvgForm] appData is empty. Returning 0.0");
+                return 0.0.toFixed(1);
+            }
+            
+            const raceDate = new Date(raceDateStr);
+            const duration = parseInt(durationStr, 10);
+            if (isNaN(raceDate.getTime()) || isNaN(duration) || duration <= 0) {
+                console.warn("[calcAvgForm] Invalid race date or duration.");
+                return "--"; // 0.0 ではなく "--" を返す
+            }
+
+            // 1. 基準日 (レースの(duration+1)日前) を計算
+            const baselineDaysBefore = duration + 1;
+            const latestDate = new Date(raceDate.getTime());
+            latestDate.setDate(latestDate.getDate() - baselineDaysBefore);
+            latestDate.setHours(0, 0, 0, 0); // 日付の比較のため時刻をリセット
+
+            // 2. 21日間の開始日を計算 (基準日 - 20日 = 21日間の窓)
+            const startDate = new Date(latestDate.getTime());
+            startDate.setDate(startDate.getDate() - 20); // 21日間をカバー
+            
+            console.log(`[calcAvgForm] Calculating average for 21 days from ${startDate.toLocaleDateString()} to ${latestDate.toLocaleDateString()}`);
+
+            // 3. 該当期間のデータをフィルタリング
+            const recentData = appData.filter(day => {
+                const d = parseDateToReal(day.date); // 実日付に変換
+                return d && d >= startDate && d <= latestDate;
+            });
+            
+            if (recentData.length === 0) {
+                console.warn(`[calcAvgForm] No data found in the period ${startDate.toLocaleDateString()} to ${latestDate.toLocaleDateString()}.`);
+                return 0.0.toFixed(1);
+            }
+
+            console.log(`[calcAvgForm] Found ${recentData.length} entries in the period.`);
+            
+            // 4. 外れ値(10km未満)を除外して合計距離を計算
+            let includedDays = 0;
+            const totalDistance = recentData.reduce((sum, day) => {
+                const dist = day.distance || 0;
+                if (dist >= 10) { // ★ 外れ値除外ルール
+                    includedDays++;
+                    return sum + dist;
+                }
+                return sum;
+            }, 0);
+            
+            console.log(`[calcAvgForm] Total distance (>=10km): ${totalDistance} km from ${includedDays} days.`);
+            
+            // 5. 日平均を計算 (「外れ値を除外した日数」で割る)
+            let dailyAvg = 0;
+            if (includedDays > 0) {
+                dailyAvg = totalDistance / includedDays; // 21 ではなく includedDays で割る
+            }
+            
+            console.log(`[calcAvgForm] Daily Avg (Total / includedDays): ${dailyAvg.toFixed(1)} km/day`);
+
+            return dailyAvg.toFixed(1);
+        }
+
+        // v33と同じ
+        function showPlanForm(show = true) {
+            if (planFormContainer) {
+                planFormContainer.style.display = show ? 'block' : 'none';
+            }
+            if (!show) {
+                const planFormError = document.getElementById('plan-form-error');
+                if (planFormError) {
+                    planFormError.textContent = '';
+                    planFormError.style.display = 'none';
+                }
+            }
+        }
+
+        // v33と同じ
+        function showNewPlanForm() {
+            if (!planFormContainer) return;
+            
+            const planFormError = document.getElementById('plan-form-error');
+            if (planFormError) {
+                planFormError.textContent = '';
+                planFormError.style.display = 'none';
+            }
+            
+            planFormTitle.textContent = "新規計画";
+            planEditId.value = ""; 
+            planRaceName.value = "";
+            planRaceDate.value = "";
+            planDuration.value = "";
+            planFinalLoad.value = "";
+            
+            const avgDistance = calculateAverageDistance(); 
+            if (planAvgDistanceSpan) {
+                planAvgDistanceSpan.textContent = avgDistance; 
+            }
+            showPlanForm(true);
+            planOutputContainer.innerHTML = ''; // 出力エリアをクリア
+        }
+        
+        // v33と同じ
+        function handleFormChange() {
+            const raceDateStr = planRaceDate.value;
+            const durationStr = planDuration.value;
+            
+            if (raceDateStr && durationStr && parseInt(durationStr, 10) > 0) {
+                const avgDistance = calculateAverageDistanceOnFormChange(raceDateStr, durationStr);
+                if(planAvgDistanceSpan) {
+                    planAvgDistanceSpan.textContent = avgDistance;
+                }
+            } else {
+                if(planAvgDistanceSpan) {
+                    planAvgDistanceSpan.textContent = "--";
+                }
+            }
+        }
+        
+        // ★ v34: async に変更 (Firestore保存のため)
+        async function saveTaperPlan() {
+            if (!planRaceName || !planRaceDate || !planDuration || !planFinalLoad || !planOutputContainer || !planAvgDistanceSpan) {
+                console.error("Tapering plan calculation UI elements not found.");
+                return;
+            }
+            
+            const planFormError = document.getElementById('plan-form-error');
+            planFormError.textContent = '';
+            planFormError.style.display = 'none';
+
+            // 1. フォームから値を取得
+            const raceName = planRaceName.value || "（名称未設定のレース）";
+            const raceDateStr = planRaceDate.value;
+            const dailyAvgDistance = parseFloat(planAvgDistanceSpan.textContent); 
+            const duration = parseInt(planDuration.value, 10); 
+            const finalLoad = parseInt(planFinalLoad.value, 10); 
+            const editId = planEditId.value; 
+
+            // 2. バリデーション
+            if (!raceDateStr || isNaN(duration) || isNaN(dailyAvgDistance) || dailyAvgDistance <= 0 || isNaN(finalLoad)) {
+                planFormError.textContent = '「レース日」「期間」「負荷」を正しく入力してください。（平均距離が "0.0" または "--" の場合はデータ不足か計算できません）';
+                planFormError.style.display = 'block';
+                return;
+            }
+            if (finalLoad <= 0 || finalLoad >= 100) {
+                 planFormError.textContent = '「最終日の負荷」は 1% から 99% の間で入力してください。';
+                 planFormError.style.display = 'block';
+                return;
+            }
+            const raceDate = new Date(raceDateStr);
+            if (isNaN(raceDate.getTime())) {
+                planFormError.textContent = '有効なレース日を選択してください。';
+                planFormError.style.display = 'block';
+                return;
+            }
+
+            // 3. τ (タウ) の計算
+            const tau = -duration / Math.log(finalLoad / 100);
+
+            // 4. 保存するプランオブジェクトを作成
+            const planData = {
+                id: editId || Date.now().toString(), 
+                raceName: raceName,
+                raceDate: raceDateStr, 
+                duration: duration,
+                finalLoad: finalLoad,
+                dailyAvgDistance: dailyAvgDistance,
+                tau: tau
+            };
+
+            // 5. savedTaperPlans 配列を更新
+            if (editId) {
+                const index = savedTaperPlans.findIndex(p => p.id === editId);
+                if (index !== -1) {
+                    savedTaperPlans[index] = planData;
+                }
+            } else {
+                savedTaperPlans.push(planData);
+            }
+            
+            // 6. 保存、再描画、フォーム非表示
+            await saveTaperPlansToStorage(); // ★ v34: await
+            renderTaperPlanList();
+            showPlanForm(false);
+            
+            // v33のロジックを維持
+            displaySavedPlan(planData.id);
+        }
+        
+        // v33と同じ
+        function cancelPlanForm() {
+            showPlanForm(false);
+            planOutputContainer.innerHTML = ''; // 出力エリアをクリア
+            const planFormError = document.getElementById('plan-form-error');
+            if (planFormError) {
+                planFormError.textContent = '';
+                planFormError.style.display = 'none';
+            }
+        }
+
+        // ★ v34: async に変更 (Firestoreに保存)
+        async function saveTaperPlansToStorage() {
+            if (!auth.currentUser) return;
+            try {
+                const plansRef = doc(db, 'artifacts', appId, 'users', userId, 'taperPlans', TAPER_PLANS_DOC_ID);
+                await setDoc(plansRef, { data: savedTaperPlans });
+                console.log("Taper plans saved to Firestore.");
+            } catch (error) {
+                console.error("Failed to save taper plans:", error);
+            }
+        }
+
+        // ★ v34: async に変更 (Firestoreから読み込み)
+        async function loadTaperPlans() {
+            if (!auth.currentUser) return;
+            try {
+                const plansRef = doc(db, 'artifacts', appId, 'users', userId, 'taperPlans', TAPER_PLANS_DOC_ID);
+                const docSnap = await getDoc(plansRef);
+                
+                if (docSnap.exists()) {
+                    savedTaperPlans = docSnap.data().data || [];
+                    console.log(`Loaded ${savedTaperPlans.length} taper plans from Firestore.`);
+                    renderTaperPlanList();
+                } else {
+                    console.log("No taper plans found in Firestore.");
+                    renderTaperPlanList(); // 空のリストを描画
+                }
+            } catch (error) {
+                console.error("Failed to load taper plans:", error);
+                savedTaperPlans = [];
+            }
+        }
+        
+        // v33と同じ
+        function renderTaperPlanList() {
+            if (!savedPlansList) return;
+            
+            if (savedTaperPlans.length === 0) {
+                savedPlansList.innerHTML = '<p class="text-gray-500 text-sm">保存された計画はまだありません。</p>';
+                return;
+            }
+
+            savedTaperPlans.sort((a, b) => new Date(b.raceDate) - new Date(a.raceDate));
+            
+            savedPlansList.innerHTML = savedTaperPlans.map(plan => {
+                const raceDate = new Date(plan.raceDate);
+                return `
+                    <div class="flex items-center justify-between bg-gray-50 p-3 rounded-lg border border-gray-200">
+                        <div>
+                            <a href="#" class="font-semibold text-red-800 hover:underline view-plan-button" data-id="${plan.id}">${plan.raceName}</a>
+                            <p class="text-sm text-gray-600">レース日: ${formatDate(raceDate)}</p>
+                        </div>
+                        <div class="flex-shrink-0">
+                            <button class="plan-button text-gray-500 hover:text-blue-600 edit-plan-button" title="編集" data-id="${plan.id}">✏️</button>
+                            <button class="plan-button text-gray-500 hover:text-red-600 delete-plan-button" title="削除" data-id="${plan.id}">🗑️</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            addPlanListEventListeners();
+        }
+        
+        // v33と同じ
+        function addPlanListEventListeners() {
+            document.querySelectorAll('.view-plan-button').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    displaySavedPlan(e.currentTarget.dataset.id);
+                });
+            });
+            document.querySelectorAll('.edit-plan-button').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    editPlan(e.currentTarget.dataset.id);
+                });
+            });
+            document.querySelectorAll('.delete-plan-button').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    deletePlan(e.currentTarget.dataset.id);
+                });
+            });
+        }
+        
+        // v33と同じ
+        function generatePlanHtml(plan) {
+            const raceDate = new Date(plan.raceDate);
+            let outputHtml = `
+                <h3 class="text-xl font-semibold text-gray-800 mb-4 mt-6">${plan.raceName} への計画</h3>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 text-sm">
+                    <div><span class="font-semibold text-gray-600">レース日:</span> ${formatDate(raceDate)}</div>
+                    <div><span class="font-semibold text-gray-600">日平均:</span> ${plan.dailyAvgDistance} km</div>
+                    <div><span class="font-semibold text-gray-600">期間:</span> ${plan.duration} 日</div>
+                    <div><span class="font-semibold text-gray-600">τ (タウ):</span> ${plan.tau.toFixed(3)}</div>
+                </div>
+
+                <h4 class="text-lg font-semibold text-gray-800 mb-3">推奨走行距離</h4>
+                <div class="overflow-x-auto shadow rounded-lg">
+                    <table class="plan-table">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="plan-table th">日付</th>
+                                <th class="plan-table th">レースまで</th>
+                                <th class="plan-table th">経過日数</th>
+                                <th class="plan-table th">負荷</th>
+                                <th class="plan-table th">推奨距離 (km)</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+            `;
+
+            const planDays = [];
+            const duration = plan.duration;
+            const dailyAvgDistance = plan.dailyAvgDistance;
+            const tau = plan.tau;
+
+            const baselineDaysBefore = duration + 1;
+            const baselineDate = new Date(raceDate.getTime());
+            baselineDate.setDate(baselineDate.getDate() - baselineDaysBefore);
+            
+            planDays.push({
+                date: formatDate(baselineDate),
+                daysBefore: `${baselineDaysBefore} 日前`,
+                dayCounter: 0,
+                loadPercent: 100.0,
+                distance: dailyAvgDistance
+            });
+
+            for (let dayCounter = 1; dayCounter <= duration; dayCounter++) {
+                const daysBeforeRace = duration - dayCounter + 1; 
+                const currentDate = new Date(raceDate.getTime());
+                currentDate.setDate(currentDate.getDate() - daysBeforeRace);
+                const loadPercent = Math.exp(-dayCounter / tau) * 100;
+                const distance = dailyAvgDistance * (loadPercent / 100);
+                
+                planDays.push({
+                    date: formatDate(currentDate),
+                    daysBefore: `${daysBeforeRace} 日前`,
+                    dayCounter: dayCounter,
+                    loadPercent: loadPercent,
+                    distance: distance
+                });
+            }
+
+            for (const day of planDays) {
+                 outputHtml += `
+                    <tr>
+                        <td class="plan-table td">${day.date}</td>
+                        <td class="plan-table td">${day.daysBefore}</td>
+                        <td class="plan-table td">${day.dayCounter}</td>
+                        <td class="plan-table td">${day.loadPercent.toFixed(1)} %</td>
+                        <td class="plan-table td font-bold">${day.distance.toFixed(1)} km</td>
+                    </tr>
+                `;
+            }
+
+            outputHtml += `
+                        </tbody>
+                    </table>
+                </div>
+                <p class="text-xs text-gray-500 mt-2">※レース当日の推奨距離は含まれていません。</p>
+            `;
+            return outputHtml;
+        }
+
+        // v33と同じ
+        function displaySavedPlan(id) {
+            const plan = savedTaperPlans.find(p => p.id === id);
+            if (plan) {
+                planOutputContainer.innerHTML = generatePlanHtml(plan);
+                showPlanForm(false); // フォームは隠す
+            }
+        }
+        
+        // v33と同じ
+        function editPlan(id) {
+            const plan = savedTaperPlans.find(p => p.id === id);
+            if (plan) {
+                const planFormError = document.getElementById('plan-form-error');
+                if (planFormError) {
+                    planFormError.textContent = '';
+                    planFormError.style.display = 'none';
+                }
+
+                planFormTitle.textContent = "計画を編集";
+                planEditId.value = plan.id; 
+                planRaceName.value = plan.raceName;
+                planRaceDate.value = plan.raceDate; 
+                planDuration.value = plan.duration;
+                planFinalLoad.value = plan.finalLoad;
+                planAvgDistanceSpan.textContent = plan.dailyAvgDistance;
+                
+                showPlanForm(true); // フォーム表示
+                planOutputContainer.innerHTML = ''; // 出力エリアをクリア
+            }
+        }
+        
+        // ★ v34: async に変更 (Firestore保存のため)
+        async function deletePlan(id) {
+            // ご要望により、確認ダイアログは省略
+            savedTaperPlans = savedTaperPlans.filter(p => p.id !== id);
+            await saveTaperPlansToStorage(); // ★ v34: await
+            renderTaperPlanList();
+            planOutputContainer.innerHTML = ''; // 表示されていた計画をクリア
+        }
+
+        // ★ v35: DOMContentLoaded の中に移動
+        // if (newPlanButton) { ...
+
+
+        // ----------------------------------------
+        // ★ v35: 初期化処理 (v34をリファクタリング)
+        // ----------------------------------------
+        document.addEventListener('DOMContentLoaded', async () => {
+            
+            // ★ v35: ここで DOM 要素をすべて取得
+            navLinks = document.querySelectorAll('.nav-link');
+            pages = document.querySelectorAll('.page-content');
+            mobileMenuButton = document.getElementById('mobile-menu-button');
+            
+            // 設定ページ
+            csvUrlsInput = document.getElementById('csv-urls');
+            manualDataInput = document.getElementById('manual-data-input');
+            saveButton = document.getElementById('save-settings-button');
+            saveStatus = document.getElementById('save-status');
+            dataSourceCsv = document.getElementById('data-source-csv');
+            dataSourceManual = document.getElementById('data-source-manual');
+            settingsCsvContainer = document.getElementById('settings-csv-container');
+            settingsManualContainer = document.getElementById('settings-manual-container');
+            mappingInputs = {
+                date: document.getElementById('col-date'),
+                distance: document.getElementById('col-distance'),
+                morningWeight: document.getElementById('col-morning-weight'),
+                eveningWeight: document.getElementById('col-evening-weight'),
+                wakingHr: document.getElementById('col-waking-hr'),
+                practiceHr: document.getElementById('col-practice-hr'),
+                sleep: document.getElementById('col-sleep'),
+            };
+            
+            // テーパリングページ
+            newPlanButton = document.getElementById('new-plan-button');
+            planFormContainer = document.getElementById('plan-form-container');
+            planAvgDistanceSpan = document.getElementById('plan-avg-distance');
+            savePlanButton = document.getElementById('save-plan-button');
+            cancelPlanButton = document.getElementById('cancel-plan-button');
+            planOutputContainer = document.getElementById('plan-output-container');
+            savedPlansList = document.getElementById('saved-plans-list');
+            planFormTitle = document.getElementById('plan-form-title');
+            planRaceName = document.getElementById('plan-race-name');
+            planRaceDate = document.getElementById('plan-race-date');
+            planDuration = document.getElementById('plan-duration');
+            planFinalLoad = document.getElementById('plan-final-load');
+            planEditId = document.getElementById('plan-edit-id');
+
+            // ★ v35: ここでイベントリスナーをすべて登録
+            
+            // ページ切り替え
+            navLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const pageId = link.dataset.page;
+                    showPage(pageId);
+                    const navContent = document.getElementById('nav-content');
+                    if (window.innerWidth < 768) {
+                        if (navContent) navContent.classList.add('hidden');
+                    }
+                });
+            });
+            
+            if (mobileMenuButton) {
+                mobileMenuButton.addEventListener('click', () => {
+                    const navContent = document.getElementById('nav-content');
+                    if (navContent) navContent.classList.toggle('hidden');
+                });
+            }
+
+            // 設定ページ
+            if (dataSourceCsv) {
+                dataSourceCsv.addEventListener('change', () => toggleDataSourceView('csv'));
+            }
+            if (dataSourceManual) {
+                dataSourceManual.addEventListener('change', () => toggleDataSourceView('manual'));
+            }
+            if (saveButton) {
+                saveButton.addEventListener('click', saveSettings);
+            }
+
+            // テーパリングページ
+            if (newPlanButton) {
+                newPlanButton.addEventListener('click', showNewPlanForm);
+            }
+            if (savePlanButton) { 
+                savePlanButton.addEventListener('click', saveTaperPlan);
+            }
+            if (cancelPlanButton) { 
+                cancelPlanButton.addEventListener('click', cancelPlanForm);
+            }
+            if (planRaceDate) {
+                planRaceDate.addEventListener('change', handleFormChange);
+            }
+            if (planDuration) {
+                planDuration.addEventListener('change', handleFormChange);
+            }
+
+            // グラフ
+            const chartToggles = document.querySelectorAll('.chart-toggle');
+            chartToggles.forEach(toggle => {
+                toggle.addEventListener('change', () => {
+                    updateConditionChart(appData); 
+                });
+            });
+            
+            // ★ v34: Firebase 初期化
+            try {
+                const firebaseConfig = JSON.parse(__firebase_config);
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                setLogLevel('Debug'); // Firestoreのデバッグログを有効化
+
+                // ★ v34: 認証
+                if (typeof __initial_auth_token !== 'undefined') {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+                userId = auth.currentUser?.uid || crypto.randomUUID();
+                console.log("Firebase Auth User ID:", userId);
+
+            } catch (error) {
+                console.error("Firebase initialization failed:", error);
+                showError("アプリの初期化に失敗しました。");
+                return;
+            }
+            
+            // ★ v34: 認証後に設定・データを読み込む
+            showPage(defaultPage); 
+            await loadSettings(); // ★ await: クラウドから設定を読み込むのを待つ
+            await loadTaperPlans(); // ★ await: クラウドから計画を読み込むのを待つ
+            
+            initializeChart();  
+            await loadAndDisplayData(); // ★ await: 設定に基づいてデータを読み込む
+            
+        });
+
+    </script>
+</head>
+<body class="bg-gray-50 text-gray-900 font-sans">
+
+    <!-- ★ v36: ここから v33 の body を再挿入 -->
+    
+    <div class="min-h-screen flex flex-col md:flex-row">
+
+        <!-- サイド ナビゲーションバー (v33と同じ) -->
+        <nav class="bg-white shadow-lg md:w-64 flex-shrink-0">
+            <!-- ヘッダー (モバイル用) -->
+            <div class="flex justify-between items-center p-4 md:hidden">
+                <h1 class="text-xl font-bold text-red-800">ワセダ_覇者への道のり</h1>
+                <button id="mobile-menu-button" class="text-gray-600 focus:outline-none">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                </button>
+            </div>
+            
+            <!-- ナビゲーション (PC用 / モバイル用メニュー) -->
+            <div id="nav-content" class="hidden md:block md:mt-8">
+                <h1 class="hidden md:block text-2xl font-bold text-red-800 px-6 mb-10">ワセダ_覇者への道のり</h1>
+                
+                <ul class="space-y-2 px-4">
+                    <li>
+                        <a href="#" class="nav-link flex items-center px-4 py-3 text-gray-700 rounded-lg hover:bg-red-50 hover:text-red-800" data-page="page-settings">
+                            <span class="mr-3">⚙️</span> 設定
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="nav-link flex items-center px-4 py-3 text-gray-700 rounded-lg hover:bg-red-50 hover:text-red-800" data-page="page-dashboard">
+                            <span class="mr-3">📊</span> ダッシュボード
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="nav-link flex items-center px-4 py-3 text-gray-700 rounded-lg hover:bg-red-50 hover:text-red-800" data-page="page-condition">
+                            <span class="mr-3">📈</span> コンディション
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="nav-link flex items-center px-4 py-3 text-gray-700 rounded-lg hover:bg-red-50 hover:text-red-800" data-page="page-tapering">
+                            <span class="mr-3">🗓️</span> テーパリング
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <!-- メインコンテンツ -->
+        <main class="flex-grow p-6 md:p-10 overflow-auto">
+            
+            <!-- 1. ダッシュボード ページ (v33と同じ) -->
+            <div id="page-dashboard" class="page-content">
+                <h2 class="text-3xl font-semibold mb-6">ダッシュボード</h2>
+
+                <!-- 使い方マニュアル (v33と同じ) -->
+                <details class="bg-white p-6 rounded-2xl shadow-lg mb-8 border-l-4 border-red-800">
+                    <summary class="text-xl font-semibold text-gray-800">はじめに (使い方マニュアル)</summary>
+                    <div class="mt-4 pt-4 border-t border-gray-200 text-gray-700 space-y-3 text-sm">
+                        <p>このアプリは、日々の練習日誌データ（CSVまたは手動入力）を読み込み、コンディションやテーパリング計画を管理するためのツールです。</p>
+                        <ol class="list-decimal list-inside space-y-2">
+                            <li>
+                                <strong class="font-semibold text-gray-800">[設定] ページ (最重要):</strong>
+                                <ul class="list-disc list-inside ml-4 mt-1">
+                                    <li>最初に、このページでデータ入力方法（CSV連携 or 手動）を選択します。</li>
+                                    <li><strong class="font-semibold text-red-800">CSV連携:</strong> 「ウェブに公開」したCSVのURLを貼り付けます。CSV連携の場合は「列設定」でアルファベット（A, Bなど）の指定が<strong>必須</strong>です。</li>
+                                    <li><strong class="font-semibold text-red-800">手動入力:</strong> 走行距離データを「日付,距離」の形式で貼り付けます。（この場合、列設定は不要です）</li>
+                                    <li>最後に必ず「設定を保存」ボタンを押してください。データは保存後にリロードすると反映されます。</li>
+                                </ul>
+                            </li>
+                            <li>
+                                <strong class="font-semibold text-gray-800">[ダッシュボード] ページ:</strong>
+                                <ul class="list-disc list-inside ml-4 mt-1">
+                                    <li>読み込んだデータの「最新値」「前日比」「直近7日間平均」を一覧表示します。</li>
+                                </ul>
+                            </li>
+                            <li>
+                                <strong class="font-semibold text-gray-800">[コンディション] ページ:</strong>
+                                <ul class="list-disc list-inside ml-4 mt-1">
+                                    <li>データの推移をグラフで視覚化します。チェックボックスで表示項目を切り替えられます。</li>
+                                </ul>
+                            </li>
+                            <li>
+                                <strong class="font-semibold text-gray-800">[テーパリング] ページ:</strong>
+                                <ul class="list-disc list-inside ml-4 mt-1">
+                                    <li>レース日と期間から、推奨される走行距離の減衰計画を自動で計算し、保存・管理できます。</li>
+                                </ul>
+                            </li>
+                        </ol>
+                    </div>
+                </details>
+                
+                <div id="dashboard-loading" class="flex flex-col items-center justify-center h-64">
+                    <div class="loader"></div>
+                    <p class="mt-4 text-gray-600">データを読み込み中...</p>
+                </div>
+
+                <div id="dashboard-error" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg relative" role="alert">
+                    <strong class="font-bold">データ取得エラー</strong>
+                    <span class="block sm:inline" id="dashboard-error-message"></span>
+                </div>
+
+                <!-- 上段3つ (v33と同じ) -->
+                <div id="dashboard-summary-top" class="hidden grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                    <!-- 走行距離カード -->
+                    <div class="bg-white p-6 rounded-2xl shadow-lg">
+                        <h3 class="text-lg font-semibold text-gray-600 mb-2">走行距離</h3>
+                        <p id="summary-distance" class="text-4xl font-bold text-blue-600">– <span class="text-lg font-medium text-gray-500">km</span></p>
+                        <p id="avg-distance" class="text-sm text-gray-500 mt-1">週平均: – km/日</p>
+                        <div id="summary-distance-change" class="mt-2 text-sm text-gray-500 h-5">
+                            <span>–</span> (<span>–</span>)
+                        </div>
+                    </div>
+                    <!-- 朝体重カード -->
+                    <div class="bg-white p-6 rounded-2xl shadow-lg">
+                        <h3 class="text-lg font-semibold text-gray-600 mb-2">朝体重</h3>
+                        <p id="summary-morning-weight" class="text-4xl font-bold text-green-600">– <span class="text-lg font-medium text-gray-500">kg</span></p>
+                        <p id="avg-morning-weight" class="text-sm text-gray-500 mt-1">週平均: – kg</p>
+                        <div id="summary-morning-weight-change" class="mt-2 text-sm text-gray-500 h-5">
+                            <span>–</span> (<span>–</span>)
+                        </div>
+                    </div>
+                    <!-- 夜体重カード -->
+                    <div class="bg-white p-6 rounded-2xl shadow-lg">
+                        <h3 class="text-lg font-semibold text-gray-600 mb-2">夜体重</h3>
+                        <p id="summary-evening-weight" class="text-4xl font-bold text-emerald-600">– <span class="text-lg font-medium text-gray-500">kg</span></p>
+                        <p id="avg-evening-weight" class="text-sm text-gray-500 mt-1">週平均: – kg</p>
+                        <div id="summary-evening-weight-change" class="mt-2 text-sm text-gray-500 h-5">
+                            <span>–</span> (<span>–</span>)
+                        </div>
+                    </div>
+                </div>
+                <!-- 下段2つ (v33と同じ) -->
+                <div id="dashboard-summary-bottom" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-6">
+                     <!-- 起床時脈拍カード -->
+                    <div class="bg-white p-6 rounded-2xl shadow-lg">
+                        <h3 class="text-lg font-semibold text-gray-600 mb-2">起床時脈拍</h3>
+                        <p id="summary-waking-hr" class="text-4xl font-bold text-red-600">– <span class="text-lg font-medium text-gray-500">bpm</span></p>
+                        <p id="avg-waking-hr" class="text-sm text-gray-500 mt-1">週平均: – bpm</p>
+                        <div id="summary-waking-hr-change" class="mt-2 text-sm text-gray-500 h-5">
+                            <span>–</span> (<span>–</span>)
+                        </div>
+                    </div>
+                    <!-- 睡眠時間カード -->
+                    <div class="bg-white p-6 rounded-2xl shadow-lg">
+                        <h3 class="text-lg font-semibold text-gray-600 mb-2">睡眠時間</h3>
+                        <p id="summary-sleep" class="text-4xl font-bold text-purple-600">– <span class="text-lg font-medium text-gray-500">時間</span></p>
+                        <p id="avg-sleep" class="text-sm text-gray-500 mt-1">週平均: – 時間</p>
+                        <div id="summary-sleep-change" class="mt-2 text-sm text-gray-500 h-5">
+                            <span>–</span> (<span>–</span>)
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+
+            <!-- 2. コンディション記録 ページ (v33と同じ) -->
+            <div id="page-condition" class="page-content">
+                <h2 class="text-3xl font-semibold mb-6">コンディション記録</h2>
+                
+                <!-- グラフ表示切り替え -->
+                <div id="chart-controls" class="bg-white p-4 rounded-2xl shadow-lg mb-6 flex flex-wrap gap-4 items-center">
+                    <h4 class="text-lg font-semibold text-gray-700 mr-4">表示項目:</h4>
+                    <label class="flex items-center space-x-2 cursor-pointer">
+                        <input type="checkbox" id="toggle-distance" class="chart-toggle form-checkbox text-red-800 rounded focus:ring-red-700" data-dataset-index="0">
+                        <span class="text-gray-700">走行距離</span>
+                    </label>
+                    <label class="flex items-center space-x-2 cursor-pointer">
+                        <input type="checkbox" id="toggle-morning-weight" class="chart-toggle form-checkbox text-red-800 rounded focus:ring-red-700" data-dataset-index="1" checked>
+                        <span class="text-gray-700">朝体重</span>
+                    </label>
+                    <label class="flex items-center space-x-2 cursor-pointer">
+                        <input type="checkbox" id="toggle-evening-weight" class="chart-toggle form-checkbox text-red-800 rounded focus:ring-red-700" data-dataset-index="2">
+                        <span class="text-gray-700">夕体重</span>
+                    </label>
+                    <label class="flex items-center space-x-2 cursor-pointer">
+                        <input type="checkbox" id="toggle-waking-hr" class="chart-toggle form-checkbox text-red-800 rounded focus:ring-red-700" data-dataset-index="3" checked>
+                        <span class="text-gray-700">起床時脈拍</span>
+                    </label>
+                </div>
+                
+                <!-- 週平均表示エリア (v33と同じ) -->
+                <div id="chart-averages" class="bg-white p-4 rounded-2xl shadow-lg mb-6">
+                    <h4 class="text-lg font-semibold text-gray-700 mb-2">直近7日間平均</h4>
+                    <div id="chart-averages-content" class="flex flex-wrap gap-x-6 gap-y-2 text-gray-600">
+                        <p>（グラフの表示項目を選択してください）</p>
+                    </div>
+                </div>
+                
+                <div class="bg-white p-6 rounded-2xl shadow-lg">
+                    <h3 class="text-xl font-semibold mb-4">コンディションの推移</h3>
+                    <div class="w-full" style="height: 400px;">
+                        <canvas id="conditionChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. テーパリング計画 ページ (v33と同じ) -->
+            <div id="page-tapering" class="page-content">
+                <h2 class="text-3xl font-semibold mb-6">テーパリング計画</h2>
+                <div class="bg-white p-6 rounded-2xl shadow-lg">
+                    
+                    <!-- テーパリングの原則 (v33と同じ) -->
+                    <div class="mb-8 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded-lg">
+                        <h3 class="text-lg font-semibold text-yellow-800 mb-3">テーパリングの原則</h3>
+                        <div class="space-y-2 text-gray-700">
+                            <ul class="list-disc list-inside space-y-1">
+                                <li><strong>強度</strong> &rarr; 維持</li>
+                                <li><strong>量</strong> &rarr; 40-60%減らす</li>
+                                <li><strong>頻度</strong> &rarr; 維持（80%程度）</li>
+                            </ul>
+                            <div class="mt-3 pt-3 border-t border-yellow-200">
+                                <p class="font-semibold text-gray-800">💡 ポイント：</p>
+                                <ul class="list-disc list-inside space-y-1 mt-1 text-sm">
+                                    <li>練習が積めていない &rarr; 期間を短く、最終負荷を大きく</li>
+                                    <li>試合の距離が短い &rarr; 期間を短く</li>
+                                    <li>疲労が抜けにくい &rarr; 最終負荷を小さく</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 「保存された計画」セクション (v33と同じ) -->
+                    <h3 class="text-xl font-semibold text-gray-800 mb-4">保存された計画</h3>
+                    <div id="saved-plans-list" class="space-y-3 mb-6">
+                        <!-- JSによって計画がここに追加されます -->
+                        <p class="text-gray-500 text-sm">保存された計画はまだありません。</p>
+                    </div>
+
+                    <!-- 新規計画ボタン (v33と同じ) -->
+                    <div class="mb-6">
+                         <button id="new-plan-button" class="bg-red-800 hover:bg-red-900 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 w-full md:w-auto">
+                            新規テーパリング計画を作成
+                        </button>
+                    </div>
+
+                    <!-- 新規/編集フォーム (v33と同じ) -->
+                    <div id="plan-form-container" class="hidden mb-8 p-6 bg-gray-50 rounded-lg border border-gray-200">
+                        <h3 id="plan-form-title" class="text-xl font-semibold text-gray-800 mb-6">新規計画</h3>
+                        
+                        <input type="hidden" id="plan-edit-id" value="">
+                        
+                        <!-- (v33と同じ) -->
+                        <div id="plan-form-error" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-4" role="alert"></div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- レース名 -->
+                            <div>
+                                <label for="plan-race-name" class="form-label font-bold">レース名</label>
+                                <input type="text" id="plan-race-name" class="form-input" placeholder="例: ○○駅伝">
+                            </div>
+                            <!-- レース日 -->
+                            <div>
+                                <label for="plan-race-date" class="form-label font-bold">レース日</label>
+                                <input type="date" id="plan-race-date" class="form-input">
+                            </div>
+                            <!-- 平均走行距離 (自動計算) -->
+                            <div>
+                                <label class="form-label font-bold">「日平均」走行距離</label>
+                                <p class="mt-2 text-lg">
+                                    <span id="plan-avg-distance" class="font-bold text-red-800">--</span>
+                                    <span class="text-sm text-gray-600"> km/日</span>
+                                </p>
+                                <p class="text-xs text-gray-500">（レース日・期間から自動計算。10km未満除外）</p>
+                            </div>
+                            <div></div> <!-- 空のセル -->
+                            <!-- テーパリング期間 -->
+                            <div>
+                                <label for="plan-duration" class="form-label font-bold">テーパリング期間 (日数)</label>
+                                <input type="number" id="plan-duration" class="form-input" placeholder="例: 10 (10日前から調整開始)" min="1">
+                            </div>
+                            <!-- 最終日の負荷 -->
+                            <div>
+                                <label for="plan-final-load" class="form-label font-bold">最終日の負荷 (%)</label>
+                                <input type="number" id="plan-final-load" class="form-input" placeholder="例: 50 (1〜99)" min="1" max="99">
+                            </div>
+                        </div>
+                        
+                        <!-- ボタン (v33と同じ) -->
+                        <div class="mt-8 flex space-x-4">
+                            <button id="save-plan-button" class="bg-red-700 hover:bg-red-800 text-white font-bold py-2 px-5 rounded-lg shadow-md transition duration-300">
+                                計画を保存
+                            </button>
+                            <button type="button" id="cancel-plan-button" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-5 rounded-lg transition duration-300">
+                                キャンセル
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 計画表示エリア (v33と同じ) -->
+                    <div id="plan-output-container">
+                        <!-- JSによって計算結果がここに追加されます -->
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- 4. 設定 ページ (v33と同じ) -->
+            <div id="page-settings" class="page-content">
+                <h2 class="text-3xl font-semibold mb-6">設定</h2>
+                
+                <!-- 1. データ入力方法の選択 -->
+                <div class="bg-white p-6 rounded-2xl shadow-lg mb-8">
+                    <h3 class="text-xl font-semibold mb-4">1. データ入力方法の選択</h3>
+                    <p class="text-gray-700 mb-4 text-sm">
+                        データの連携方法を選んでください。
+                    </p>
+                    <div class="flex space-x-6">
+                        <label class="flex items-center">
+                            <input type="radio" id="data-source-csv" name="dataSource" value="csv" class="form-radio text-red-800 focus:ring-red-700" checked>
+                            <span class="ml-2 text-gray-700">CSV自動連携</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="radio" id="data-source-manual" name="dataSource" value="manual" class="form-radio text-red-800 focus:ring-red-700">
+                            <span class="ml-2 text-gray-700">手動データ入力</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- 2. CSV自動連携 (デフォルト表示) -->
+                <div id="settings-csv-container" class="bg-white p-6 rounded-2xl shadow-lg mb-8">
+                    <h3 class="text-xl font-semibold mb-4">2. CSV自動連携</h3>
+                    <p class="text-gray-700 mb-6 text-sm">
+                        各月のシートを「ファイル > 共有 > ウェブに公開」で <strong class="text-red-600">CSV形式</strong> で公開し、
+                        発行されたURLを <strong class="text-red-800">1行に1つずつ</strong>、すべて貼り付けてください。
+                    </p>
+                    <div>
+                        <label for="csv-urls" class="form-label font-bold">公開CSVのURL一覧 (1行に1URL)</label>
+                        <textarea id="csv-urls" class="form-input font-mono" rows="8" placeholder="https://docs.google.com/spreadsheets/d/.../pub?output=csv (11月シートのURL)&#10;https://docs.google.com/spreadsheets/d/.../pub?output=csv (12月シートのURL)&#10;..."></textarea>
+                    </div>
+                </div>
+                
+                <!-- 3. 手動データ入力 (デフォルト非表示) -->
+                <div id="settings-manual-container" class="hidden bg-white p-6 rounded-2xl shadow-lg mb-8">
+                    <h3 class="text-xl font-semibold mb-4">3. 手動データ入力</h3>
+                    <p class="text-gray-700 mb-6 text-sm">
+                        CSV連携を使わない場合、ここに走行距離データを貼り付けてください。<br>
+                        形式: <code class="text-xs bg-gray-200 p-1 rounded">日付,走行距離</code> (半角カンマ区切り、<strong class="text-red-600">スペースなし</strong>、1行に1日分)
+                    </p>
+                    <div>
+                        <label for="manual-data-input" class="form-label font-bold">日付と走行距離データ</label>
+                        <textarea id="manual-data-input" class="form-input font-mono" rows="15" placeholder="11/1,15.2&#10;11/2,10.0&#10;11/3,0&#10;11/4,12.5&#10;..."></textarea>
+                    </div>
+                </div>
+
+                <!-- 4. 列マッピング (v33と同じ) -->
+                <div class="bg-white p-6 rounded-2xl shadow-lg mb-8">
+                    <h3 class="text-xl font-semibold mb-4">4. 列設定 (CSV連携のみ)</h3>
+                    <p class="text-gray-700 mb-6 text-sm">
+                        <strong class="text-red-800">CSV自動連携</strong> を使う場合、シートの「何列目」にどのデータが入っているか <strong class="text-red-800">アルファベット (A, B, G など)</strong> で設定してください。<br>
+                        <span class="text-gray-500">※ 手動入力の場合は、この列設定は無視されます。</span>
+                    </p>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div>
+                            <label for="col-date" class="form-label font-bold">日付</label>
+                            <input type="text" id="col-date" class="form-input uppercase" placeholder="例: B">
+                        </div>
+                        <div>
+                            <label for="col-distance" class="form-label">走行距離</label>
+                            <input type="text" id="col-distance" class="form-input uppercase" placeholder="例: J">
+                        </div>
+                        <div>
+                            <label for="col-morning-weight" class="form-label">朝体重</label>
+                            <input type="text" id="col-morning-weight" class="form-input uppercase" placeholder="例: L">
+                        </div>
+                        <div>
+                            <label for="col-evening-weight" class="form-label">夕体重</label>
+                            <input type="text" id="col-evening-weight" class="form-input uppercase">
+                        </div>
+                        <div>
+                            <label for="col-waking-hr" class="form-label">起床時脈拍</label>
+                            <input type="text" id="col-waking-hr" class="form-input uppercase" placeholder="例: M">
+                        </div>
+                        <div>
+                            <label for="col-practice-hr" class="form-label">本練脈拍</label>
+                            <input type="text" id="col-practice-hr" class="form-input uppercase">
+                        </div>
+                        <div>
+                            <label for="col-sleep" class="form-label">睡眠時間</label>
+                            <input type="text" id="col-sleep" class="form-input uppercase" placeholder="例: O">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 5. 保存ボタン -->
+                <div class="bg-white p-6 rounded-2xl shadow-lg">
+                    <h3 class="text-xl font-semibold mb-4">5. 設定の保存</h3>
+                    <p class="text-gray-700 mb-4 text-sm">
+                        設定を変更したら、必ず保存ボタンを押してください。
+                    </p>
+                    <button id="save-settings-button" class="bg-red-800 hover:bg-red-900 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300">
+                        設定を保存
+                    </button>
+                    <span id="save-status" class="ml-4 text-green-600"></span>
+                    <!-- (v33と同じ) -->
+                    <p class="text-gray-700 mt-6 text-sm">
+                        保存後、ダッシュボードに戻るか、ページをリロードするとデータが自動で読み込まれます。
+                    </p>
+                </div>
+
+            </div>
+
+        </main>
+    </div>
+
+    <!-- ★ v36: </script> と </body> </html> を正しく配置 -->
+    </script>
+    <script type="text/javascript">
+        // ★ v36: スクリプトタイプを text/javascript に変更 (互換性のため)
+        // (実際には type="module" が正しいが、もし環境の問題ならこちらを試す価値がある)
+        // → やはり "module" に戻す。v35のエラーはDOM読み込み順の問題だった。
+        // このファイルは v34 (Firebase) + v35 (DOM Fix) の完全版
+        // v34 と v35 で定義された関数はすべて <script type="module"> の中に移動済み
+    </script>
+</body>
+</html>
