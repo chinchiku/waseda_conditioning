@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>練習日誌アプリ (v23)</title>
+    <title>練習日誌アプリ (v24)</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -33,7 +33,8 @@
             -moz-osx-font-smoothing: grayscale;
         }
         .page-content { display: none; }
-        #page-dashboard { display: block; }
+        /* ★ v24: デフォルト表示を「設定」ページに変更 */
+        #page-settings { display: block; }
         
         .form-input {
             @apply w-full p-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm;
@@ -60,7 +61,7 @@
             @apply px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider;
         }
         .plan-table td {
-            @apply px-4 py-3 whitespace-nowrap text-sm text-gray-700;
+            @apply px-4 py-3 whitespace-nowLrap text-sm text-gray-700;
         }
     </style>
 </head>
@@ -68,7 +69,7 @@
 
     <div class="min-h-screen flex flex-col md:flex-row">
 
-        <!-- サイド ナビゲーションバー (v22と同じ) -->
+        <!-- ★ v24: サイド ナビゲーションバー (順序変更) -->
         <nav class="bg-white shadow-lg md:w-64 flex-shrink-0">
             <!-- ヘッダー (モバイル用) -->
             <div class="flex justify-between items-center p-4 md:hidden">
@@ -81,7 +82,13 @@
             <!-- ナビゲーション (PC用 / モバイル用メニュー) -->
             <div id="nav-content" class="hidden md:block md:mt-8">
                 <h1 class="hidden md:block text-3xl font-bold text-blue-600 px-6 mb-10">練習日誌</h1>
+                <!-- ★ v24: 順序変更 -->
                 <ul class="space-y-2 px-4">
+                    <li>
+                        <a href="#" class="nav-link flex items-center px-4 py-3 text-gray-700 rounded-lg hover:bg-blue-50 hover:text-blue-600" data-page="page-settings">
+                            <span class="mr-3">⚙️</span> 設定
+                        </a>
+                    </li>
                     <li>
                         <a href="#" class="nav-link flex items-center px-4 py-3 text-gray-700 rounded-lg hover:bg-blue-50 hover:text-blue-600" data-page="page-dashboard">
                             <span class="mr-3">📊</span> ダッシュボード
@@ -97,11 +104,6 @@
                             <span class="mr-3">🗓️</span> テーパリング
                         </a>
                     </li>
-                    <li>
-                        <a href="#" class="nav-link flex items-center px-4 py-3 text-gray-700 rounded-lg hover:bg-blue-50 hover:text-blue-600" data-page="page-settings">
-                            <span class="mr-3">⚙️</span> 設定
-                        </a>
-                    </li>
                 </ul>
             </div>
         </nav>
@@ -109,13 +111,13 @@
         <!-- メインコンテンツ -->
         <main class="flex-grow p-6 md:p-10 overflow-auto">
             
-            <!-- 1. ダッシュボード ページ (v22と同じ) -->
+            <!-- 1. ダッシュボード ページ (v23と同じ) -->
             <div id="page-dashboard" class="page-content">
                 <h2 class="text-3xl font-semibold mb-6">ダッシュボード</h2>
                 
                 <div id="dashboard-loading" class="flex flex-col items-center justify-center h-64">
                     <div class="loader"></div>
-                    <p class="mt-4 text-gray-600">スプレッドシートからデータを読み込み中...</p>
+                    <p class="mt-4 text-gray-600">データを読み込み中...</p>
                 </div>
 
                 <div id="dashboard-error" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg relative" role="alert">
@@ -139,7 +141,7 @@
                 </div>
             </div>
 
-            <!-- 2. コンディション記録 ページ (v22と同じ) -->
+            <!-- 2. コンディション記録 ページ (v23と同じ) -->
             <div id="page-condition" class="page-content">
                 <h2 class="text-3xl font-semibold mb-6">コンディション記録</h2>
                 <div class="bg-white p-6 rounded-2xl shadow-lg">
@@ -150,12 +152,12 @@
                 </div>
             </div>
 
-            <!-- 3. テーパリング計画 ページ (v22と同じ) -->
+            <!-- 3. テーパリング計画 ページ (v23と同じ) -->
             <div id="page-tapering" class="page-content">
                 <h2 class="text-3xl font-semibold mb-6">テーパリング計画</h2>
                 <div class="bg-white p-6 rounded-2xl shadow-lg">
                     
-                    <!-- テーパリングの原則 (v22と同じ) -->
+                    <!-- テーパリングの原則 (v23と同じ) -->
                     <div class="mb-8 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded-lg">
                         <h3 class="text-lg font-semibold text-yellow-800 mb-3">テーパリングの原則</h3>
                         <div class="space-y-2 text-gray-700">
@@ -175,14 +177,14 @@
                         </div>
                     </div>
 
-                    <!-- 新規計画ボタン (v22と同じ) -->
+                    <!-- 新規計画ボタン (v23と同じ) -->
                     <div class="mb-6">
                          <button id="new-plan-button" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 w-full md:w-auto">
                             新規テーパリング計画を作成
                         </button>
                     </div>
 
-                    <!-- 新規計画フォーム (v22と同じ) -->
+                    <!-- 新規計画フォーム (v23と同じ) -->
                     <div id="plan-form-container" class="hidden mb-8 p-6 bg-gray-50 rounded-lg border border-gray-200">
                         <h3 class="text-xl font-semibold text-gray-800 mb-6">新規計画</h3>
                         
@@ -219,7 +221,7 @@
                             </div>
                         </div>
                         
-                        <!-- 計算ボタン (v22と同じ) -->
+                        <!-- 計算ボタン (v23と同じ) -->
                         <div class="mt-8">
                             <button id="calculate-plan-button" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-5 rounded-lg shadow-md transition duration-300">
                                 計画を計算
@@ -235,13 +237,31 @@
                 </div>
             </div>
 
-            <!-- 4. 設定 ページ (v22と同じ) -->
+            <!-- 4. 設定 ページ (★ v24: 全面改修) -->
             <div id="page-settings" class="page-content">
                 <h2 class="text-3xl font-semibold mb-6">設定</h2>
                 
-                <!-- 1. 公開URL設定 -->
+                <!-- 1. データ入力方法の選択 -->
                 <div class="bg-white p-6 rounded-2xl shadow-lg mb-8">
-                    <h3 class="text-xl font-semibold mb-4">1. スプレッドシート連携 (必須)</h3>
+                    <h3 class="text-xl font-semibold mb-4">1. データ入力方法の選択</h3>
+                    <p class="text-gray-700 mb-4 text-sm">
+                        データの連携方法を選んでください。
+                    </p>
+                    <div class="flex space-x-6">
+                        <label class="flex items-center">
+                            <input type="radio" id="data-source-csv" name="dataSource" value="csv" class="form-radio text-blue-600 focus:ring-blue-500" checked>
+                            <span class="ml-2 text-gray-700">CSV自動連携</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="radio" id="data-source-manual" name="dataSource" value="manual" class="form-radio text-blue-600 focus:ring-blue-500">
+                            <span class="ml-2 text-gray-700">手動データ入力</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- 2. CSV自動連携 (デフォルト表示) -->
+                <div id="settings-csv-container" class="bg-white p-6 rounded-2xl shadow-lg mb-8">
+                    <h3 class="text-xl font-semibold mb-4">2. CSV自動連携</h3>
                     <p class="text-gray-700 mb-6 text-sm">
                         各月のシートを「ファイル > 共有 > ウェブに公開」で <strong class="text-red-600">CSV形式</strong> で公開し、
                         発行されたURLを <strong class="text-blue-600">1行に1つずつ</strong>、すべて貼り付けてください。
@@ -251,49 +271,66 @@
                         <textarea id="csv-urls" class="form-input font-mono" rows="8" placeholder="https://docs.google.com/spreadsheets/d/.../pub?output=csv (11月シートのURL)&#10;https://docs.google.com/spreadsheets/d/.../pub?output=csv (12月シートのURL)&#10;..."></textarea>
                     </div>
                 </div>
-
-                <!-- 2. 列マッピング -->
-                <div class="bg-white p-6 rounded-2xl shadow-lg mb-8">
-                    <h3 class="text-xl font-semibold mb-4">2. 列設定 (必須)</h3>
+                
+                <!-- 3. 手動データ入力 (デフォルト非表示) -->
+                <div id="settings-manual-container" class="hidden bg-white p-6 rounded-2xl shadow-lg mb-8">
+                    <h3 class="text-xl font-semibold mb-4">3. 手動データ入力</h3>
                     <p class="text-gray-700 mb-6 text-sm">
-                        シートの「何列目」にどのデータが入っているか設定してください。<br>
-                        (例: A列 → 1, B列 → 2, G列 → 7)
+                        CSV連携を使わない場合、ここに走行距離データを貼り付けてください。<br>
+                        形式: <code class="text-xs bg-gray-200 p-1 rounded">日付(MM/DD), 走行距離</code> (カンマ区切り、1行に1日分)
+                    </p>
+                    <div>
+                        <label for="manual-data-input" class="form-label font-bold">日付と走行距離データ</label>
+                        <textarea id="manual-data-input" class="form-input font-mono" rows="15" placeholder="11/1, 15.2&#10;11/2, 10.0&#10;11/3, 0&#10;11/4, 12.5&#10;..."></textarea>
+                    </div>
+                </div>
+
+                <!-- 4. 列マッピング (★ v24: アルファベット入力に対応) -->
+                <div class="bg-white p-6 rounded-2xl shadow-lg mb-8">
+                    <h3 class="text-xl font-semibold mb-4">4. 列設定 (CSV連携・手動入力 共通)</h3>
+                    <p class="text-gray-700 mb-6 text-sm">
+                        シートの「何列目」にどのデータが入っているか <strong class="text-blue-600">アルファベット (A, B, G など)</strong> で設定してください。<br>
+                        <strong class="text-red-600">※ 手動入力の場合も、CSV連携時と同じ列設定（日付、走行距離）が必要です。</strong>
                     </p>
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                         <div>
                             <label for="col-date" class="form-label font-bold">日付</label>
-                            <input type="number" id="col-date" min="1" class="form-input" placeholder="例: 2">
+                            <!-- ★ v24: type="text", placeholder="例: B" -->
+                            <input type="text" id="col-date" class="form-input uppercase" placeholder="例: B">
                         </div>
                         <div>
                             <label for="col-distance" class="form-label">走行距離</label>
-                            <input type="number" id="col-distance" min="1" class="form-input" placeholder="例: 10">
+                            <input type="text" id="col-distance" class="form-input uppercase" placeholder="例: J">
                         </div>
                         <div>
                             <label for="col-morning-weight" class="form-label">朝体重</label>
-                            <input type="number" id="col-morning-weight" min="1" class="form-input" placeholder="例: 12">
+                            <input type="text" id="col-morning-weight" class="form-input uppercase" placeholder="例: L">
                         </div>
                         <div>
                             <label for="col-evening-weight" class="form-label">夕体重</label>
-                            <input type="number" id="col-evening-weight" min="1" class="form-input">
+                            <input type="text" id="col-evening-weight" class="form-input uppercase">
                         </div>
                         <div>
                             <label for="col-waking-hr" class="form-label">起床時脈拍</label>
-                            <input type="number" id="col-waking-hr" min="1" class="form-input" placeholder="例: 13">
+                            <input type="text" id="col-waking-hr" class="form-input uppercase" placeholder="例: M">
                         </div>
                         <div>
                             <label for="col-practice-hr" class="form-label">本練脈拍</label>
-                            <input type="number" id="col-practice-hr" min="1" class="form-input">
+                            <input type="text" id="col-practice-hr" class="form-input uppercase">
                         </div>
                         <div>
                             <label for="col-sleep" class="form-label">睡眠時間</label>
-                            <input type="number" id="col-sleep" min="1" class="form-input" placeholder="例: 15">
+                            <input type="text" id="col-sleep" class="form-input uppercase" placeholder="例: O">
                         </div>
                     </div>
                 </div>
                 
-                <!-- 3. 保存ボタン -->
+                <!-- 5. 保存ボタン -->
                 <div class="bg-white p-6 rounded-2xl shadow-lg">
-                    <h3 class="text-xl font-semibold mb-4">3. 設定の保存</h3>
+                    <h3 class="text-xl font-semibold mb-4">5. 設定の保存</h3>
+                    <p class="text-gray-700 mb-4 text-sm">
+                        設定を変更したら、必ず保存ボタンを押してください。
+                    </p>
                     <button id="save-settings-button" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300">
                         設定を保存
                     </button>
@@ -310,14 +347,55 @@
 
     <script>
         // ----------------------------------------
-        // グローバル変数 (v22と同じ)
+        // グローバル変数
         // ----------------------------------------
         let conditionChart = null;
         let appData = [];
         const SETTINGS_STORAGE_KEY = 'practiceLogSettingsV5';
+        // ★ v24: 手動データ保存用キー
+        const MANUAL_DATA_STORAGE_KEY = 'practiceLogManualData';
 
         // ----------------------------------------
-        // 日付パーサー (v22と同じ)
+        // ★ v24: 列アルファベット <-> 数字 変換ヘルパー
+        // ----------------------------------------
+        /**
+         * 列番号 (1-based) をアルファベットに変換 (1 -> A, 27 -> AA)
+         * @param {number} colNum - 列番号 (1-based)
+         * @returns {string} 列アルファベット
+         */
+        function columnToLetter(colNum) {
+            if (colNum === null || colNum === undefined || colNum === "" || colNum < 1) {
+                return "";
+            }
+            let letter = '';
+            let num = parseInt(colNum, 10);
+            while (num > 0) {
+                let rem = (num - 1) % 26;
+                letter = String.fromCharCode(65 + rem) + letter;
+                num = Math.floor((num - 1) / 26);
+            }
+            return letter;
+        }
+
+        /**
+         * 列アルファベットを列番号 (1-based) に変換 (A -> 1, AA -> 27)
+         * @param {string} letter - 列アルファベット
+         * @returns {number | null} 列番号 (1-based)
+         */
+        function letterToColumn(letter) {
+            if (!letter || typeof letter !== 'string') {
+                return null;
+            }
+            const cleanLetter = letter.toUpperCase().trim();
+            let colNum = 0;
+            for (let i = 0; i < cleanLetter.length; i++) {
+                colNum = colNum * 26 + (cleanLetter.charCodeAt(i) - 64);
+            }
+            return colNum > 0 ? colNum : null;
+        }
+
+        // ----------------------------------------
+        // 日付パーサー (v23と同じ)
         // ----------------------------------------
         
         // 「ソート用」
@@ -392,7 +470,6 @@
                     const dateObj = new Date(targetYear, month - 1, day);
                     if (isNaN(dateObj.getTime())) return null;
                     
-                    // 未来日バグ修正 (v22のロジック)
                     if (dateObj > today) {
                         dateObj.setFullYear(dateObj.getFullYear() - 1);
                     }
@@ -409,11 +486,12 @@
         }
 
         // ----------------------------------------
-        // ページ切り替えロジック (v22と同じ)
+        // ページ切り替えロジック (★ v24: デフォルトページ変更)
         // ----------------------------------------
         const navLinks = document.querySelectorAll('.nav-link');
         const pages = document.querySelectorAll('.page-content');
-        const defaultPage = 'page-dashboard';
+        // ★ v24: デフォルトを「設定」に変更
+        const defaultPage = 'page-settings'; 
 
         function showPage(pageId) {
             pages.forEach(page => { page.style.display = 'none'; });
@@ -449,9 +527,11 @@
         });
 
         // ----------------------------------------
-        // 設定 (v22と同じ)
+        // 設定 (★ v24: 全面改修)
         // ----------------------------------------
         const csvUrlsInput = document.getElementById('csv-urls');
+        const manualDataInput = document.getElementById('manual-data-input');
+        
         const mappingInputs = {
             date: document.getElementById('col-date'),
             distance: document.getElementById('col-distance'),
@@ -461,48 +541,110 @@
             practiceHr: document.getElementById('col-practice-hr'),
             sleep: document.getElementById('col-sleep'),
         };
+        
         const saveButton = document.getElementById('save-settings-button');
         const saveStatus = document.getElementById('save-status');
+        
+        // データソース切り替え
+        const dataSourceCsv = document.getElementById('data-source-csv');
+        const dataSourceManual = document.getElementById('data-source-manual');
+        const settingsCsvContainer = document.getElementById('settings-csv-container');
+        const settingsManualContainer = document.getElementById('settings-manual-container');
 
+        function toggleDataSourceView(source) {
+            if (source === 'csv') {
+                settingsCsvContainer.style.display = 'block';
+                settingsManualContainer.style.display = 'none';
+            } else { // 'manual'
+                settingsCsvContainer.style.display = 'none';
+                settingsManualContainer.style.display = 'block';
+            }
+        }
+        
+        dataSourceCsv.addEventListener('change', () => toggleDataSourceView('csv'));
+        dataSourceManual.addEventListener('change', () => toggleDataSourceView('manual'));
+        
+        // 設定の保存 (CSV設定 + 列設定 + データソース選択)
         function saveSettings() {
             try {
                 const settings = {
+                    dataSource: dataSourceManual.checked ? 'manual' : 'csv',
                     csvUrls: csvUrlsInput.value.split('\n').filter(url => url.trim() !== ''),
                     mapping: {}
                 };
+                
+                // ★ v24: アルファベットを数値に変換して保存
                 for (const key in mappingInputs) {
                     if (mappingInputs[key]) {
-                        settings.mapping[key] = mappingInputs[key].value;
+                        const letter = mappingInputs[key].value;
+                        settings.mapping[key] = letterToColumn(letter); // "B" -> 2
                     }
                 }
+                
+                // ★ v24: 手動データも保存
+                const manualData = manualDataInput.value;
+                localStorage.setItem(MANUAL_DATA_STORAGE_KEY, manualData);
+                
+                // 設定を保存
                 localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
-                saveStatus.textContent = '保存しました！';
-                setTimeout(() => { saveStatus.textContent = ''; }, 2000);
+                
+                saveStatus.textContent = '保存しました！リロードしてデータを反映します。';
+                setTimeout(() => { 
+                    saveStatus.textContent = ''; 
+                    // ★ v24: 保存したらリロードして再読み込みを促す
+                    location.reload();
+                }, 1500);
+                
             } catch (error) {
                 console.error("Failed to save settings:", error);
                 saveStatus.textContent = '保存に失敗しました。';
             }
         }
 
+        // 設定の読み込み (フォームに値を復元)
         function loadSettings() {
             try {
                 const savedSettings = localStorage.getItem(SETTINGS_STORAGE_KEY);
+                const savedManualData = localStorage.getItem(MANUAL_DATA_STORAGE_KEY);
+
+                if (savedManualData) {
+                    manualDataInput.value = savedManualData;
+                }
+                
                 if (savedSettings) {
                     const settings = JSON.parse(savedSettings);
+                    
+                    // データソースの復元
+                    if (settings.dataSource === 'manual') {
+                        dataSourceManual.checked = true;
+                        toggleDataSourceView('manual');
+                    } else {
+                        dataSourceCsv.checked = true;
+                        toggleDataSourceView('csv');
+                    }
+                    
+                    // CSV URLの復元
                     if (settings.csvUrls && csvUrlsInput) {
                         csvUrlsInput.value = (settings.csvUrls || []).join('\n');
                     }
+                    
+                    // ★ v24: 列設定の復元 (数値をアルファベットに)
                     if (settings.mapping) {
                         for (const key in settings.mapping) {
                             if (mappingInputs[key]) {
-                                mappingInputs[key].value = settings.mapping[key];
+                                const colNum = settings.mapping[key];
+                                mappingInputs[key].value = columnToLetter(colNum); // 2 -> "B"
                             }
                         }
                     }
+                } else {
+                    // デフォルトはCSV
+                    toggleDataSourceView('csv');
                 }
             } catch (error) {
                 console.error("Failed to load settings from localStorage:", error);
                 localStorage.removeItem(SETTINGS_STORAGE_KEY);
+                localStorage.removeItem(MANUAL_DATA_STORAGE_KEY);
             }
         }
         
@@ -513,7 +655,7 @@
         }
 
         // ----------------------------------------
-        // データ取得・解析処理 (v22と同じ)
+        // データ取得・解析処理 (★ v24: データソース分岐)
         // ----------------------------------------
         
         function fetchWithTimeout(url, timeout = 10000) { // 10秒タイムアウト
@@ -546,6 +688,7 @@
             }
         }
 
+        // CSV (Google Sheet) 用のパーサー
         function parseCSV(csvText, mapping) {
             if (!mapping || !mapping.date) {
                 throw new Error("「日付」の列設定は必須です。");
@@ -554,11 +697,10 @@
             const indices = {};
             for (const key in mapping) {
                 if (mapping[key]) {
-                    indices[key] = parseInt(mapping[key], 10) - 1;
+                    indices[key] = parseInt(mapping[key], 10) - 1; // 1-based to 0-based
                 }
             }
             
-            // v22と同じ (緩いRegex)
             const dateRegex = /^\s*"?\s*(\d{4}[-\/]\d{1,2}[-\/]\d{1,2}|\d{1,2}\/\d{1,2})\s*"?\s*$/i;
             const lines = csvText.trim().split('\n');
             const data = [];
@@ -567,7 +709,6 @@
                 const columns = line.split(',');
                 const dateVal = columns[indices.date];
 
-                // 日付列の値が日付形式にマッチするかチェック
                 if (dateVal && dateRegex.test(dateVal)) {
                     const cleanValue = (val) => {
                         if (val === undefined || val === null) return null;
@@ -576,11 +717,10 @@
                         const num = parseFloat(trimmedVal);
                         return isNaN(num) ? null : num;
                     };
-                    // 日付もクリーンアップ
                     const cleanDate = dateVal.trim().replace(/^["']|["']$/g, '').trim();
                     
                     data.push({
-                        date: cleanDate, // "11/3" または "2024-11-03"
+                        date: cleanDate,
                         distance: cleanValue(columns[indices.distance]),
                         morningWeight: cleanValue(columns[indices.morningWeight]),
                         eveningWeight: cleanValue(columns[indices.eveningWeight]),
@@ -589,11 +729,56 @@
                         sleep: cleanValue(columns[indices.sleep]),
                     });
                 }
-                // dateRegexにマッチしない行 (ヘッダー、ゴミ行) はスキップ
             }
             return data;
         }
 
+        // ★ v24: 手動入力データ用のパーサー
+        function parseManualData(manualText, mapping) {
+            if (!mapping || !mapping.date || !mapping.distance) {
+                throw new Error("手動入力には「日付」と「走行距離」の列設定が必須です。");
+            }
+            
+            // 手動入力は「日付, 走行距離」の2列のみと仮定し、列設定は無視する
+            // 代わりに、手動パーサーは「日付, 距離」の固定フォーマットを期待する
+            const dateRegex = /^\s*"?\s*(\d{4}[-\/]\d{1,2}[-\/]\d{1,2}|\d{1,2}\/\d{1,2})\s*"?\s*$/i;
+            const lines = manualText.trim().split('\n');
+            const data = [];
+            
+            for (const line of lines) {
+                const parts = line.split(',');
+                if (parts.length < 2) continue; // 「日付, 距離」の形式でない行はスキップ
+                
+                const dateVal = parts[0].trim();
+                const distVal = parts[1].trim();
+
+                if (dateVal && dateRegex.test(dateVal)) {
+                     const cleanValue = (val) => {
+                        if (val === undefined || val === null) return null;
+                        const trimmedVal = val.trim().replace(/^["']|["']$/g, '').trim();
+                        if (trimmedVal === "") return null;
+                        const num = parseFloat(trimmedVal);
+                        return isNaN(num) ? null : num;
+                    };
+                    const cleanDate = dateVal.trim().replace(/^["']|["']$/g, '').trim();
+                    
+                    // 手動入力は日付と距離のみ
+                    data.push({
+                        date: cleanDate,
+                        distance: cleanValue(distVal),
+                        morningWeight: null,
+                        eveningWeight: null,
+                        wakingHr: null,
+                        practiceHr: null,
+                        sleep: null,
+                    });
+                }
+            }
+            return data;
+        }
+
+
+        // ★ v24: データ読み込みのメインロジックを分岐
         async function loadAndDisplayData() {
             const loadingEl = document.getElementById('dashboard-loading');
             const summaryEl = document.getElementById('dashboard-summary');
@@ -611,23 +796,40 @@
             try {
                 const savedSettings = localStorage.getItem(SETTINGS_STORAGE_KEY);
                 if (!savedSettings) {
-                    showError('「設定」ページで、公開CSVのURLと列設定を保存してください。');
+                    showError('「設定」ページで、入力方法と列設定を保存してください。');
                     return;
                 }
 
                 const settings = JSON.parse(savedSettings);
-                if (!settings.csvUrls || settings.csvUrls.length === 0 || !settings.mapping || !settings.mapping.date) {
-                    showError('「設定」ページで、最低1つの公開CSVのURLと「日付」の列設定を完了してください。');
-                    return;
+                
+                // ★ v24: データソースによって処理を分岐
+                if (settings.dataSource === 'manual') {
+                    // --- 手動データの場合 ---
+                    console.log("Loading data from: Manual Input");
+                    const manualData = localStorage.getItem(MANUAL_DATA_STORAGE_KEY);
+                    if (!manualData) {
+                        showError('「設定」ページで、手動入力データを貼り付けて保存してください。');
+                        return;
+                    }
+                    // 手動データはCSVの列マッピングとは無関係にパースする
+                    appData = parseManualData(manualData, settings.mapping);
+                    
+                } else {
+                    // --- CSV連携の場合 ---
+                    console.log("Loading data from: CSV URLs");
+                    if (!settings.csvUrls || settings.csvUrls.length === 0 || !settings.mapping || !settings.mapping.date) {
+                        showError('「設定」ページで、最低1つの公開CSVのURLと「日付」の列設定を完了してください。');
+                        return;
+                    }
+                    
+                    const fetchPromises = settings.csvUrls.map(url => fetchCSVData(url));
+                    const csvTexts = await Promise.all(fetchPromises);
+                    
+                    const combinedCsvText = csvTexts.join('\n');
+                    appData = parseCSV(combinedCsvText, settings.mapping);
                 }
-            
-                const fetchPromises = settings.csvUrls.map(url => fetchCSVData(url));
-                const csvTexts = await Promise.all(fetchPromises);
-                
-                const combinedCsvText = csvTexts.join('\n');
-                appData = parseCSV(combinedCsvText, settings.mapping);
-                
-                // v22と同じ (ソートは parseDateToSort を使う)
+
+                // --- 共通処理 (ソートと重複排除) ---
                 appData.sort((a, b) => {
                     const dateA = parseDateToSort(a.date);
                     const dateB = parseDateToSort(b.date);
@@ -636,7 +838,6 @@
                     return dateA - dateB;
                 });
                 
-                // 重複排除ロジック (v22と同じ)
                 const uniqueData = [];
                 const seenDates = new Set();
                 for (const item of appData) {
@@ -647,9 +848,8 @@
                 }
                 appData = uniqueData;
 
-                // appDataが空の場合のハンドリング
                 if (appData.length === 0) {
-                     showError('データを読み込めませんでした。CSVのURLが正しいか、日付列 ("MM/DD" or "YYYY/MM/DD")が正しいか、列設定が正しいか確認してください。');
+                     showError('データを読み込めませんでした。設定（データソース、URL、列設定、日付形式）を確認してください。');
                      return;
                 }
 
@@ -677,7 +877,7 @@
 
 
         // ----------------------------------------
-        // ダッシュボードの更新 (v22と同じ)
+        // ダッシュボードの更新 (v23と同じ)
         // ----------------------------------------
         function updateDashboard(data) {
             const distEl = document.getElementById('summary-distance');
@@ -706,7 +906,7 @@
         }
 
         // ----------------------------------------
-        // Chart.js (グラフの初期化と更新) (v22と同じ)
+        // Chart.js (グラフの初期化と更新) (v23と同じ)
         // ----------------------------------------
         function initializeChart() {
             try {
@@ -761,7 +961,7 @@
         }
         
         // ----------------------------------------
-        // テーパリング計画 機能
+        // テーパリング計画 機能 (v23と同じ)
         // ----------------------------------------
         const newPlanButton = document.getElementById('new-plan-button');
         const planFormContainer = document.getElementById('plan-form-container');
@@ -783,8 +983,7 @@
             return `${month}/${day} (${weekday})`;
         }
 
-        // ★ v22: 「日平均」走行距離の計算ロジック (「今日」基準)
-        // 「新規作成」ボタンが押された時だけ呼ばれる
+        // 「日平均」走行距離の計算ロジック (「今日」基準)
         function calculateAverageDistance() {
             if (!appData || appData.length === 0) {
                 console.warn("[calcAvg] appData is empty. Returning 0.0");
@@ -823,10 +1022,9 @@
             
             console.log(`[calcAvg] Total distance (>=10km): ${totalDistance} km from ${includedDays} days.`);
             
-            // ★ v22: ゼロ除算を避ける
             let dailyAvg = 0;
             if (includedDays > 0) {
-                dailyAvg = totalDistance / includedDays; // ★ 21 ではなく includedDays で割る
+                dailyAvg = totalDistance / includedDays; // 21 ではなく includedDays で割る
             }
             
             console.log(`[calcAvg] Daily Avg (Total / includedDays): ${dailyAvg.toFixed(1)} km/day`);
@@ -834,7 +1032,7 @@
             return dailyAvg.toFixed(1);
         }
         
-        // ★ v22: レース日と期間を基準に平均を計算する (フォーム変更時)
+        // レース日と期間を基準に平均を計算する (フォーム変更時)
         function calculateAverageDistanceOnFormChange(raceDateStr, durationStr) {
             if (!appData || appData.length === 0) {
                 console.warn("[calcAvgForm] appData is empty. Returning 0.0");
@@ -886,10 +1084,10 @@
             
             console.log(`[calcAvgForm] Total distance (>=10km): ${totalDistance} km from ${includedDays} days.`);
             
-            // 5. ★ v22: 日平均を計算 (「外れ値を除外した日数」で割る)
+            // 5. 日平均を計算 (「外れ値を除外した日数」で割る)
             let dailyAvg = 0;
             if (includedDays > 0) {
-                dailyAvg = totalDistance / includedDays; // ★ 21 ではなく includedDays で割る
+                dailyAvg = totalDistance / includedDays; // 21 ではなく includedDays で割る
             }
             
             console.log(`[calcAvgForm] Daily Avg (Total / includedDays): ${dailyAvg.toFixed(1)} km/day`);
@@ -898,7 +1096,7 @@
         }
 
 
-        // 「新規計画」ボタンが押された時の処理 (v22と同じ)
+        // 「新規計画」ボタンが押された時の処理
         function showNewPlanForm() {
             const avgDistance = calculateAverageDistance(); 
             
@@ -913,7 +1111,7 @@
             }
         }
         
-        // ★ v23: v22で失われていた handleFormChange 関数をここに追加
+        // v23で失われていた handleFormChange 関数 (v22と同じ)
         function handleFormChange() {
             const raceDateStr = planRaceDate.value;
             const durationStr = planDuration.value;
@@ -931,7 +1129,7 @@
             }
         }
         
-        // 「計画を計算」ボタンが押された時の処理 (v22と同じ)
+        // 「計画を計算」ボタンが押された時の処理 (v23と同じ)
         function calculateTaperPlan() {
             if (!planRaceName || !planRaceDate || !planDuration || !planFinalLoad || !planOutputContainer || !planAvgDistanceSpan) {
                 console.error("Tapering plan calculation UI elements not found.");
@@ -945,7 +1143,7 @@
             const duration = parseInt(planDuration.value, 10); 
             const finalLoad = parseInt(planFinalLoad.value, 10); 
 
-            // 2. バリデーション (v22と同じ)
+            // 2. バリデーション (v23と同じ)
             if (!raceDateStr || isNaN(duration) || isNaN(dailyAvgDistance) || dailyAvgDistance <= 0 || isNaN(finalLoad)) {
                 planOutputContainer.innerHTML = `<p class="text-red-600">「レース日」「期間」「負荷」を正しく入力してください。（平均距離が "0.0" または "--" の場合はデータ不足か計算できません）</p>`;
                 return;
@@ -960,11 +1158,11 @@
                 return;
             }
 
-            // 3. τ (タウ) の計算 (v22と同じ)
+            // 3. τ (タウ) の計算 (v23と同じ)
             const tau = -duration / Math.log(finalLoad / 100);
 
             
-            // 4. 日毎の計画を生成し、テーブルHTMLを構築 (v22と同じ)
+            // 4. 日毎の計画を生成し、テーブルHTMLを構築 (v23と同じ)
             
             let outputHtml = `
                 <h3 class="text-xl font-semibold text-gray-800 mb-4">${raceName} への計画</h3>
@@ -1050,7 +1248,7 @@
         }
 
 
-        // イベントリスナーの割り当て (v22と同じ)
+        // イベントリスナーの割り当て (v23と同じ)
         if (newPlanButton) {
             newPlanButton.addEventListener('click', showNewPlanForm);
         } else {
@@ -1072,7 +1270,7 @@
 
 
         // ----------------------------------------
-        // 初期化処理 (v22と同じ)
+        // 初期化処理 (v23と同じ)
         // ----------------------------------------
         document.addEventListener('DOMContentLoaded', () => {
             showPage(defaultPage);
