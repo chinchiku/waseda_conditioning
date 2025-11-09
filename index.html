@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ワセダ_覇者への道のり (v36)</title>
+    <title>ワセダ_覇者への道のり (v40)</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -16,7 +16,497 @@
     <!-- Chart.js (グラフ描画ライブラリ) -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
     
-    <!-- ★ v34: Firebase ライブラリを追加 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'Noto Sans JP', 'sans-serif'],
+                        klee: ['"Klee One"', 'serif'],
+                    },
+                    colors: {
+                        waseda: {
+                            DEFAULT: '#990000', // 臙脂 (濃い)
+                            dark: '#660000',
+                            light: '#CC0000',
+                            lighter: '#FFCCCC',
+                            bg: '#FFFBFB' // ほんのり赤みのある背景
+                        }
+                    }
+                },
+            },
+        }
+    </script>
+    <style>
+        body {
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        .page-content { display: none; }
+        #page-dashboard { display: block; }
+        
+        h1, h2, h3, h4, h5, h6 {
+            @apply font-klee;
+        }
+
+        .form-input {
+            @apply w-full p-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-red-800 text-sm;
+        }
+        .form-label {
+            @apply block text-sm font-medium text-gray-700 mb-1;
+        }
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #990000;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .plan-table {
+            @apply w-full min-w-full divide-y divide-gray-200;
+        }
+        .plan-table th {
+            @apply px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider;
+        }
+        .plan-table td {
+            @apply px-4 py-3 whitespace-nowrap text-sm text-gray-700;
+        }
+        
+        details > summary {
+            list-style: none; 
+            cursor: pointer;
+        }
+        details > summary::-webkit-details-marker {
+            display: none; 
+        }
+        details > summary::after {
+            content: '▼'; 
+            float: right;
+            transition: transform 0.2s;
+        }
+        details[open] > summary::after {
+            transform: rotate(180deg); 
+        }
+        
+        .plan-button {
+            @apply p-2 rounded-lg transition-colors duration-200;
+        }
+        .plan-button:hover {
+            @apply bg-gray-200;
+        }
+    </style>
+    
+    <!-- ★ v40: スクリプトは </head> の直前から削除されました -->
+    
+</head>
+<body class="bg-gray-50 text-gray-900 font-sans">
+
+    <!-- ★ v40: ここから v33 の body を再挿入 -->
+    
+    <div class="min-h-screen flex flex-col md:flex-row">
+
+        <!-- サイド ナビゲーションバー (v33と同じ) -->
+        <nav class="bg-white shadow-lg md:w-64 flex-shrink-0">
+            <!-- ヘッダー (モバイル用) -->
+            <div class="flex justify-between items-center p-4 md:hidden">
+                <h1 class="text-xl font-bold text-red-800">ワセダ_覇者への道のり</h1>
+                <button id="mobile-menu-button" class="text-gray-600 focus:outline-none">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                </button>
+            </div>
+            
+            <!-- ナビゲーション (PC用 / モバイル用メニュー) -->
+            <div id="nav-content" class="hidden md:block md:mt-8">
+                <h1 class="hidden md:block text-2xl font-bold text-red-800 px-6 mb-10">ワセダ_覇者への道のり</h1>
+                
+                <ul class="space-y-2 px-4">
+                    <li>
+                        <a href="#" class="nav-link flex items-center px-4 py-3 text-gray-700 rounded-lg hover:bg-red-50 hover:text-red-800" data-page="page-settings">
+                            <span class="mr-3">⚙️</span> 設定
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="nav-link flex items-center px-4 py-3 text-gray-700 rounded-lg hover:bg-red-50 hover:text-red-800" data-page="page-dashboard">
+                            <span class="mr-3">📊</span> ダッシュボード
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="nav-link flex items-center px-4 py-3 text-gray-700 rounded-lg hover:bg-red-50 hover:text-red-800" data-page="page-condition">
+                            <span class="mr-3">📈</span> コンディション
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="nav-link flex items-center px-4 py-3 text-gray-700 rounded-lg hover:bg-red-50 hover:text-red-800" data-page="page-tapering">
+                            <span class="mr-3">🗓️</span> テーパリング
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <!-- メインコンテンツ -->
+        <main class="flex-grow p-6 md:p-10 overflow-auto">
+            
+            <!-- 1. ダッシュボード ページ (v33と同じ) -->
+            <div id="page-dashboard" class="page-content">
+                <h2 class="text-3xl font-semibold mb-6">ダッシュボード</h2>
+
+                <!-- 使い方マニュアル (v33と同じ) -->
+                <details class="bg-white p-6 rounded-2xl shadow-lg mb-8 border-l-4 border-red-800">
+                    <summary class="text-xl font-semibold text-gray-800">はじめに (使い方マニュアル)</summary>
+                    <div class="mt-4 pt-4 border-t border-gray-200 text-gray-700 space-y-3 text-sm">
+                        <p>このアプリは、日々の練習日誌データ（CSVまたは手動入力）を読み込み、コンディションやテーパリング計画を管理するためのツールです。</p>
+                        <ol class="list-decimal list-inside space-y-2">
+                            <li>
+                                <strong class="font-semibold text-gray-800">[設定] ページ (最重要):</strong>
+                                <ul class="list-disc list-inside ml-4 mt-1">
+                                    <li>最初に、このページでデータ入力方法（CSV連携 or 手動）を選択します。</li>
+                                    <li><strong class="font-semibold text-red-800">CSV連携:</strong> 「ウェブに公開」したCSVのURLを貼り付けます。CSV連携の場合は「列設定」でアルファベット（A, Bなど）の指定が<strong>必須</strong>です。</li>
+                                    <li><strong class="font-semibold text-red-800">手動入力:</strong> 走行距離データを「日付,距離」の形式で貼り付けます。（この場合、列設定は不要です）</li>
+                                    <li>最後に必ず「設定を保存」ボタンを押してください。データは保存後にリロードすると反映されます。</li>
+                                </ul>
+                            </li>
+                            <li>
+                                <strong class="font-semibold text-gray-800">[ダッシュボード] ページ:</strong>
+                                <ul class="list-disc list-inside ml-4 mt-1">
+                                    <li>読み込んだデータの「最新値」「前日比」「直近7日間平均」を一覧表示します。</li>
+                                </ul>
+                            </li>
+                            <li>
+                                <strong class="font-semibold text-gray-800">[コンディション] ページ:</strong>
+                                <ul class="list-disc list-inside ml-4 mt-1">
+                                    <li>データの推移をグラフで視覚化します。チェックボックスで表示項目を切り替えられます。</li>
+                                </ul>
+                            </li>
+                            <li>
+                                <strong class="font-semibold text-gray-800">[テーパリング] ページ:</strong>
+                                <ul class="list-disc list-inside ml-4 mt-1">
+                                    <li>レース日と期間から、推奨される走行距離の減衰計画を自動で計算し、保存・管理できます。</li>
+                                </ul>
+                            </li>
+                        </ol>
+                    </div>
+                </details>
+                
+                <div id="dashboard-loading" class="flex flex-col items-center justify-center h-64">
+                    <div class="loader"></div>
+                    <p class="mt-4 text-gray-600">データを読み込み中...</p>
+                </div>
+
+                <div id="dashboard-error" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg relative" role="alert">
+                    <strong class="font-bold">データ取得エラー</strong>
+                    <span class="block sm:inline" id="dashboard-error-message"></span>
+                </div>
+
+                <!-- 上段3つ (v33と同じ) -->
+                <div id="dashboard-summary-top" class="hidden grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                    <!-- 走行距離カード -->
+                    <div class="bg-white p-6 rounded-2xl shadow-lg">
+                        <h3 class="text-lg font-semibold text-gray-600 mb-2">走行距離</h3>
+                        <p id="summary-distance" class="text-4xl font-bold text-blue-600">– <span class="text-lg font-medium text-gray-500">km</span></p>
+                        <p id="avg-distance" class="text-sm text-gray-500 mt-1">週平均: – km/日</p>
+                        <div id="summary-distance-change" class="mt-2 text-sm text-gray-500 h-5">
+                            <span>–</span> (<span>–</span>)
+                        </div>
+                    </div>
+                    <!-- 朝体重カード -->
+                    <div class="bg-white p-6 rounded-2xl shadow-lg">
+                        <h3 class="text-lg font-semibold text-gray-600 mb-2">朝体重</h3>
+                        <p id="summary-morning-weight" class="text-4xl font-bold text-green-600">– <span class="text-lg font-medium text-gray-500">kg</span></p>
+                        <p id="avg-morning-weight" class="text-sm text-gray-500 mt-1">週平均: – kg</p>
+                        <div id="summary-morning-weight-change" class="mt-2 text-sm text-gray-500 h-5">
+                            <span>–</span> (<span>–</span>)
+                        </div>
+                    </div>
+                    <!-- 夜体重カード -->
+                    <div class="bg-white p-6 rounded-2xl shadow-lg">
+                        <h3 class="text-lg font-semibold text-gray-600 mb-2">夜体重</h3>
+                        <p id="summary-evening-weight" class="text-4xl font-bold text-emerald-600">– <span class="text-lg font-medium text-gray-500">kg</span></p>
+                        <p id="avg-evening-weight" class="text-sm text-gray-500 mt-1">週平均: – kg</p>
+                        <div id="summary-evening-weight-change" class="mt-2 text-sm text-gray-500 h-5">
+                            <span>–</span> (<span>–</span>)
+                        </div>
+                    </div>
+                </div>
+                <!-- 下段2つ (v33と同じ) -->
+                <div id="dashboard-summary-bottom" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-6">
+                     <!-- 起床時脈拍カード -->
+                    <div class="bg-white p-6 rounded-2xl shadow-lg">
+                        <h3 class="text-lg font-semibold text-gray-600 mb-2">起床時脈拍</h3>
+                        <p id="summary-waking-hr" class="text-4xl font-bold text-red-600">– <span class="text-lg font-medium text-gray-500">bpm</span></p>
+                        <p id="avg-waking-hr" class="text-sm text-gray-500 mt-1">週平均: – bpm</p>
+                        <div id="summary-waking-hr-change" class="mt-2 text-sm text-gray-500 h-5">
+                            <span>–</span> (<span>–</span>)
+                        </div>
+                    </div>
+                    <!-- 睡眠時間カード -->
+                    <div class="bg-white p-6 rounded-2xl shadow-lg">
+                        <h3 class="text-lg font-semibold text-gray-600 mb-2">睡眠時間</h3>
+                        <p id="summary-sleep" class="text-4xl font-bold text-purple-600">– <span class="text-lg font-medium text-gray-500">時間</span></p>
+                        <p id="avg-sleep" class="text-sm text-gray-500 mt-1">週平均: – 時間</p>
+                        <div id="summary-sleep-change" class="mt-2 text-sm text-gray-500 h-5">
+                            <span>–</span> (<span>–</span>)
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+
+            <!-- 2. コンディション記録 ページ (v33と同じ) -->
+            <div id="page-condition" class="page-content">
+                <h2 class="text-3xl font-semibold mb-6">コンディション記録</h2>
+                
+                <!-- グラフ表示切り替え -->
+                <div id="chart-controls" class="bg-white p-4 rounded-2xl shadow-lg mb-6 flex flex-wrap gap-4 items-center">
+                    <h4 class="text-lg font-semibold text-gray-700 mr-4">表示項目:</h4>
+                    <label class="flex items-center space-x-2 cursor-pointer">
+                        <input type="checkbox" id="toggle-distance" class="chart-toggle form-checkbox text-red-800 rounded focus:ring-red-700" data-dataset-index="0">
+                        <span class="text-gray-700">走行距離</span>
+                    </label>
+                    <label class="flex items-center space-x-2 cursor-pointer">
+                        <input type="checkbox" id="toggle-morning-weight" class="chart-toggle form-checkbox text-red-800 rounded focus:ring-red-700" data-dataset-index="1" checked>
+                        <span class="text-gray-700">朝体重</span>
+                    </label>
+                    <label class="flex items-center space-x-2 cursor-pointer">
+                        <input type="checkbox" id="toggle-evening-weight" class="chart-toggle form-checkbox text-red-800 rounded focus:ring-red-700" data-dataset-index="2">
+                        <span class="text-gray-700">夕体重</span>
+                    </label>
+                    <label class="flex items-center space-x-2 cursor-pointer">
+                        <input type="checkbox" id="toggle-waking-hr" class="chart-toggle form-checkbox text-red-800 rounded focus:ring-red-700" data-dataset-index="3" checked>
+                        <span class="text-gray-700">起床時脈拍</span>
+                    </label>
+                </div>
+                
+                <!-- 週平均表示エリア (v33と同じ) -->
+                <div id="chart-averages" class="bg-white p-4 rounded-2xl shadow-lg mb-6">
+                    <h4 class="text-lg font-semibold text-gray-700 mb-2">直近7日間平均</h4>
+                    <div id="chart-averages-content" class="flex flex-wrap gap-x-6 gap-y-2 text-gray-600">
+                        <p>（グラフの表示項目を選択してください）</p>
+                    </div>
+                </div>
+                
+                <div class="bg-white p-6 rounded-2xl shadow-lg">
+                    <h3 class="text-xl font-semibold mb-4">コンディションの推移</h3>
+                    <div class="w-full" style="height: 400px;">
+                        <canvas id="conditionChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. テーパリング計画 ページ (v33と同じ) -->
+            <div id="page-tapering" class="page-content">
+                <h2 class="text-3xl font-semibold mb-6">テーパリング計画</h2>
+                <div class="bg-white p-6 rounded-2xl shadow-lg">
+                    
+                    <!-- テーパリングの原則 (v33と同じ) -->
+                    <div class="mb-8 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded-lg">
+                        <h3 class="text-lg font-semibold text-yellow-800 mb-3">テーパリングの原則</h3>
+                        <div class="space-y-2 text-gray-700">
+                            <ul class="list-disc list-inside space-y-1">
+                                <li><strong>強度</strong> &rarr; 維持</li>
+                                <li><strong>量</strong> &rarr; 40-60%減らす</li>
+                                <li><strong>頻度</strong> &rarr; 維持（80%程度）</li>
+                            </ul>
+                            <div class="mt-3 pt-3 border-t border-yellow-200">
+                                <p class="font-semibold text-gray-800">💡 ポイント：</p>
+                                <ul class="list-disc list-inside space-y-1 mt-1 text-sm">
+                                    <li>練習が積めていない &rarr; 期間を短く、最終負荷を大きく</li>
+                                    <li>試合の距離が短い &rarr; 期間を短く</li>
+                                    <li>疲労が抜けにくい &rarr; 最終負荷を小さく</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 「保存された計画」セクション (v33と同じ) -->
+                    <h3 class="text-xl font-semibold text-gray-800 mb-4">保存された計画</h3>
+                    <div id="saved-plans-list" class="space-y-3 mb-6">
+                        <!-- JSによって計画がここに追加されます -->
+                        <p class="text-gray-500 text-sm">保存された計画はまだありません。</p>
+                    </div>
+
+                    <!-- 新規計画ボタン (v33と同じ) -->
+                    <div class="mb-6">
+                         <button id="new-plan-button" class="bg-red-800 hover:bg-red-900 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 w-full md:w-auto">
+                            新規テーパリング計画を作成
+                        </button>
+                    </div>
+
+                    <!-- 新規/編集フォーム (v33と同じ) -->
+                    <div id="plan-form-container" class="hidden mb-8 p-6 bg-gray-50 rounded-lg border border-gray-200">
+                        <h3 id="plan-form-title" class="text-xl font-semibold text-gray-800 mb-6">新規計画</h3>
+                        
+                        <input type="hidden" id="plan-edit-id" value="">
+                        
+                        <!-- (v33と同じ) -->
+                        <div id="plan-form-error" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-4" role="alert"></div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- レース名 -->
+                            <div>
+                                <label for="plan-race-name" class="form-label font-bold">レース名</label>
+                                <input type="text" id="plan-race-name" class="form-input" placeholder="例: ○○駅伝">
+                            </div>
+                            <!-- レース日 -->
+                            <div>
+                                <label for="plan-race-date" class="form-label font-bold">レース日</label>
+                                <input type="date" id="plan-race-date" class="form-input">
+                            </div>
+                            <!-- 平均走行距離 (自動計算) -->
+                            <div>
+                                <label class="form-label font-bold">「日平均」走行距離</label>
+                                <p class="mt-2 text-lg">
+                                    <span id="plan-avg-distance" class="font-bold text-red-800">--</span>
+                                    <span class="text-sm text-gray-600"> km/日</span>
+                                </p>
+                                <p class="text-xs text-gray-500">（レース日・期間から自動計算。10km未満除外）</p>
+                            </div>
+                            <div></div> <!-- 空のセル -->
+                            <!-- テーパリング期間 -->
+                            <div>
+                                <label for="plan-duration" class="form-label font-bold">テーパリング期間 (日数)</label>
+                                <input type="number" id="plan-duration" class="form-input" placeholder="例: 10 (10日前から調整開始)" min="1">
+                            </div>
+                            <!-- 最終日の負荷 -->
+                            <div>
+                                <label for="plan-final-load" class="form-label font-bold">最終日の負荷 (%)</label>
+                                <input type="number" id="plan-final-load" class="form-input" placeholder="例: 50 (1〜99)" min="1" max="99">
+                            </div>
+                        </div>
+                        
+                        <!-- ボタン (v33と同じ) -->
+                        <div class="mt-8 flex space-x-4">
+                            <button id="save-plan-button" class="bg-red-700 hover:bg-red-800 text-white font-bold py-2 px-5 rounded-lg shadow-md transition duration-300">
+                                計画を保存
+                            </button>
+                            <button type="button" id="cancel-plan-button" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-5 rounded-lg transition duration-300">
+                                キャンセル
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 計画表示エリア (v33と同じ) -->
+                    <div id="plan-output-container">
+                        <!-- JSによって計算結果がここに追加されます -->
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- 4. 設定 ページ (v33と同じ) -->
+            <div id="page-settings" class="page-content">
+                <h2 class="text-3xl font-semibold mb-6">設定</h2>
+                
+                <!-- 1. データ入力方法の選択 -->
+                <div class="bg-white p-6 rounded-2xl shadow-lg mb-8">
+                    <h3 class="text-xl font-semibold mb-4">1. データ入力方法の選択</h3>
+                    <p class="text-gray-700 mb-4 text-sm">
+                        データの連携方法を選んでください。
+                    </p>
+                    <div class="flex space-x-6">
+                        <label class="flex items-center">
+                            <input type="radio" id="data-source-csv" name="dataSource" value="csv" class="form-radio text-red-800 focus:ring-red-700" checked>
+                            <span class="ml-2 text-gray-700">CSV自動連携</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="radio" id="data-source-manual" name="dataSource" value="manual" class="form-radio text-red-800 focus:ring-red-700">
+                            <span class="ml-2 text-gray-700">手動データ入力</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- 2. CSV自動連携 (デフォルト表示) -->
+                <div id="settings-csv-container" class="bg-white p-6 rounded-2xl shadow-lg mb-8">
+                    <h3 class="text-xl font-semibold mb-4">2. CSV自動連携</h3>
+                    <p class="text-gray-700 mb-6 text-sm">
+                        各月のシートを「ファイル > 共有 > ウェブに公開」で <strong class="text-red-600">CSV形式</strong> で公開し、
+                        発行されたURLを <strong class="text-red-800">1行に1つずつ</strong>、すべて貼り付けてください。
+                    </p>
+                    <div>
+                        <label for="csv-urls" class="form-label font-bold">公開CSVのURL一覧 (1行に1URL)</label>
+                        <textarea id="csv-urls" class="form-input font-mono" rows="8" placeholder="https://docs.google.com/spreadsheets/d/.../pub?output=csv (11月シートのURL)&#10;https://docs.google.com/spreadsheets/d/.../pub?output=csv (12月シートのURL)&#10;..."></textarea>
+                    </div>
+                </div>
+                
+                <!-- 3. 手動データ入力 (デフォルト非表示) -->
+                <div id="settings-manual-container" class="hidden bg-white p-6 rounded-2xl shadow-lg mb-8">
+                    <h3 class="text-xl font-semibold mb-4">3. 手動データ入力</h3>
+                    <p class="text-gray-700 mb-6 text-sm">
+                        CSV連携を使わない場合、ここに走行距離データを貼り付けてください。<br>
+                        形式: <code class="text-xs bg-gray-200 p-1 rounded">日付,走行距離</code> (半角カンマ区切り、<strong class="text-red-600">スペースなし</strong>、1行に1日分)
+                    </p>
+                    <div>
+                        <label for="manual-data-input" class="form-label font-bold">日付と走行距離データ</label>
+                        <textarea id="manual-data-input" class="form-input font-mono" rows="15" placeholder="11/1,15.2&#10;11/2,10.0&#10;11/3,0&#10;11/4,12.5&#10;..."></textarea>
+                    </div>
+                </div>
+
+                <!-- 4. 列マッピング (v33と同じ) -->
+                <div class="bg-white p-6 rounded-2xl shadow-lg mb-8">
+                    <h3 class="text-xl font-semibold mb-4">4. 列設定 (CSV連携のみ)</h3>
+                    <p class="text-gray-700 mb-6 text-sm">
+                        <strong class="text-red-800">CSV自動連携</strong> を使う場合、シートの「何列目」にどのデータが入っているか <strong class="text-red-800">アルファベット (A, B, G など)</strong> で設定してください。<br>
+                        <span class="text-gray-500">※ 手動入力の場合は、この列設定は無視されます。</span>
+                    </p>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div>
+                            <label for="col-date" class="form-label font-bold">日付</label>
+                            <input type="text" id="col-date" class="form-input uppercase" placeholder="例: B">
+                        </div>
+                        <div>
+                            <label for="col-distance" class="form-label">走行距離</label>
+                            <input type="text" id="col-distance" class="form-input uppercase" placeholder="例: J">
+                        </div>
+                        <div>
+                            <label for="col-morning-weight" class="form-label">朝体重</label>
+                            <input type="text" id="col-morning-weight" class="form-input uppercase" placeholder="例: L">
+                        </div>
+                        <div>
+                            <label for="col-evening-weight" class="form-label">夕体重</label>
+                            <input type="text" id="col-evening-weight" class="form-input uppercase">
+                        </div>
+                        <div>
+                            <label for="col-waking-hr" class="form-label">起床時脈拍</label>
+                            <input type="text" id="col-waking-hr" class="form-input uppercase" placeholder="例: M">
+                        </div>
+                        <div>
+                            <label for="col-practice-hr" class="form-label">本練脈拍</label>
+                            <input type="text" id="col-practice-hr" class="form-input uppercase">
+                        </div>
+                        <div>
+                            <label for="col-sleep" class="form-label">睡眠時間</label>
+                            <input type="text" id="col-sleep" class="form-input uppercase" placeholder="例: O">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 5. 保存ボタン -->
+                <div class="bg-white p-6 rounded-2xl shadow-lg">
+                    <h3 class="text-xl font-semibold mb-4">5. 設定の保存</h3>
+                    <p class="text-gray-700 mb-4 text-sm">
+                        設定を変更したら、必ず保存ボタンを押してください。
+                    </p>
+                    <button id="save-settings-button" class="bg-red-800 hover:bg-red-900 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300">
+                        設定を保存
+                    </button>
+                    <span id="save-status" class="ml-4 text-green-600"></span>
+                    <!-- (v33と同じ) -->
+                    <p class="text-gray-700 mt-6 text-sm">
+                        保存後、ダッシュボードに戻るか、ページをリロードするとデータが自動で読み込まれます。
+                    </p>
+                </div>
+
+            </div>
+
+        </main>
+    </div>
+    
+    <!-- ★ v40: スクリプトを </body> の直前に移動 -->
     <script type="module">
         // Firebase v11 (モジュール版) をインポート
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
@@ -733,9 +1223,15 @@
 
 
         // ----------------------------------------
-        // Chart.js (v33と同じ)
+        // Chart.js (v38: グラフ破棄処理を追加)
         // ----------------------------------------
         function initializeChart() {
+            // ★ v38: 既存チャートの破棄
+            if (conditionChart) {
+                console.warn("Destroying existing chart instance before recreation.");
+                conditionChart.destroy();
+                conditionChart = null;
+            }
             try {
                 const ctx = document.getElementById('conditionChart');
                 if (!ctx) {
@@ -824,7 +1320,10 @@
 
         // v33と同じ
         function updateConditionChart(data) {
-            if (!conditionChart) return;
+            if (!conditionChart) {
+                console.warn("updateConditionChart called but chart is not initialized.");
+                return;
+            }
             
             const avgContentEl = document.getElementById('chart-averages-content');
             
@@ -1482,6 +1981,7 @@
             
             // ★ v34: Firebase 初期化
             try {
+                // __firebase_config は環境変数として提供される
                 const firebaseConfig = JSON.parse(__firebase_config);
                 const app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
@@ -1489,7 +1989,8 @@
                 setLogLevel('Debug'); // Firestoreのデバッグログを有効化
 
                 // ★ v34: 認証
-                if (typeof __initial_auth_token !== 'undefined') {
+                // __initial_auth_token は環境変数として提供される
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                     await signInWithCustomToken(auth, __initial_auth_token);
                 } else {
                     await signInAnonymously(auth);
@@ -1513,418 +2014,6 @@
             
         });
 
-    </script>
-</head>
-<body class="bg-gray-50 text-gray-900 font-sans">
-
-    <!-- ★ v36: ここから v33 の body を再挿入 -->
-    
-    <div class="min-h-screen flex flex-col md:flex-row">
-
-        <!-- サイド ナビゲーションバー (v33と同じ) -->
-        <nav class="bg-white shadow-lg md:w-64 flex-shrink-0">
-            <!-- ヘッダー (モバイル用) -->
-            <div class="flex justify-between items-center p-4 md:hidden">
-                <h1 class="text-xl font-bold text-red-800">ワセダ_覇者への道のり</h1>
-                <button id="mobile-menu-button" class="text-gray-600 focus:outline-none">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
-                </button>
-            </div>
-            
-            <!-- ナビゲーション (PC用 / モバイル用メニュー) -->
-            <div id="nav-content" class="hidden md:block md:mt-8">
-                <h1 class="hidden md:block text-2xl font-bold text-red-800 px-6 mb-10">ワセダ_覇者への道のり</h1>
-                
-                <ul class="space-y-2 px-4">
-                    <li>
-                        <a href="#" class="nav-link flex items-center px-4 py-3 text-gray-700 rounded-lg hover:bg-red-50 hover:text-red-800" data-page="page-settings">
-                            <span class="mr-3">⚙️</span> 設定
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#" class="nav-link flex items-center px-4 py-3 text-gray-700 rounded-lg hover:bg-red-50 hover:text-red-800" data-page="page-dashboard">
-                            <span class="mr-3">📊</span> ダッシュボード
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#" class="nav-link flex items-center px-4 py-3 text-gray-700 rounded-lg hover:bg-red-50 hover:text-red-800" data-page="page-condition">
-                            <span class="mr-3">📈</span> コンディション
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#" class="nav-link flex items-center px-4 py-3 text-gray-700 rounded-lg hover:bg-red-50 hover:text-red-800" data-page="page-tapering">
-                            <span class="mr-3">🗓️</span> テーパリング
-                        </a>
-                    </li>
-                </ul>
-            </div>
-        </nav>
-
-        <!-- メインコンテンツ -->
-        <main class="flex-grow p-6 md:p-10 overflow-auto">
-            
-            <!-- 1. ダッシュボード ページ (v33と同じ) -->
-            <div id="page-dashboard" class="page-content">
-                <h2 class="text-3xl font-semibold mb-6">ダッシュボード</h2>
-
-                <!-- 使い方マニュアル (v33と同じ) -->
-                <details class="bg-white p-6 rounded-2xl shadow-lg mb-8 border-l-4 border-red-800">
-                    <summary class="text-xl font-semibold text-gray-800">はじめに (使い方マニュアル)</summary>
-                    <div class="mt-4 pt-4 border-t border-gray-200 text-gray-700 space-y-3 text-sm">
-                        <p>このアプリは、日々の練習日誌データ（CSVまたは手動入力）を読み込み、コンディションやテーパリング計画を管理するためのツールです。</p>
-                        <ol class="list-decimal list-inside space-y-2">
-                            <li>
-                                <strong class="font-semibold text-gray-800">[設定] ページ (最重要):</strong>
-                                <ul class="list-disc list-inside ml-4 mt-1">
-                                    <li>最初に、このページでデータ入力方法（CSV連携 or 手動）を選択します。</li>
-                                    <li><strong class="font-semibold text-red-800">CSV連携:</strong> 「ウェブに公開」したCSVのURLを貼り付けます。CSV連携の場合は「列設定」でアルファベット（A, Bなど）の指定が<strong>必須</strong>です。</li>
-                                    <li><strong class="font-semibold text-red-800">手動入力:</strong> 走行距離データを「日付,距離」の形式で貼り付けます。（この場合、列設定は不要です）</li>
-                                    <li>最後に必ず「設定を保存」ボタンを押してください。データは保存後にリロードすると反映されます。</li>
-                                </ul>
-                            </li>
-                            <li>
-                                <strong class="font-semibold text-gray-800">[ダッシュボード] ページ:</strong>
-                                <ul class="list-disc list-inside ml-4 mt-1">
-                                    <li>読み込んだデータの「最新値」「前日比」「直近7日間平均」を一覧表示します。</li>
-                                </ul>
-                            </li>
-                            <li>
-                                <strong class="font-semibold text-gray-800">[コンディション] ページ:</strong>
-                                <ul class="list-disc list-inside ml-4 mt-1">
-                                    <li>データの推移をグラフで視覚化します。チェックボックスで表示項目を切り替えられます。</li>
-                                </ul>
-                            </li>
-                            <li>
-                                <strong class="font-semibold text-gray-800">[テーパリング] ページ:</strong>
-                                <ul class="list-disc list-inside ml-4 mt-1">
-                                    <li>レース日と期間から、推奨される走行距離の減衰計画を自動で計算し、保存・管理できます。</li>
-                                </ul>
-                            </li>
-                        </ol>
-                    </div>
-                </details>
-                
-                <div id="dashboard-loading" class="flex flex-col items-center justify-center h-64">
-                    <div class="loader"></div>
-                    <p class="mt-4 text-gray-600">データを読み込み中...</p>
-                </div>
-
-                <div id="dashboard-error" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg relative" role="alert">
-                    <strong class="font-bold">データ取得エラー</strong>
-                    <span class="block sm:inline" id="dashboard-error-message"></span>
-                </div>
-
-                <!-- 上段3つ (v33と同じ) -->
-                <div id="dashboard-summary-top" class="hidden grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                    <!-- 走行距離カード -->
-                    <div class="bg-white p-6 rounded-2xl shadow-lg">
-                        <h3 class="text-lg font-semibold text-gray-600 mb-2">走行距離</h3>
-                        <p id="summary-distance" class="text-4xl font-bold text-blue-600">– <span class="text-lg font-medium text-gray-500">km</span></p>
-                        <p id="avg-distance" class="text-sm text-gray-500 mt-1">週平均: – km/日</p>
-                        <div id="summary-distance-change" class="mt-2 text-sm text-gray-500 h-5">
-                            <span>–</span> (<span>–</span>)
-                        </div>
-                    </div>
-                    <!-- 朝体重カード -->
-                    <div class="bg-white p-6 rounded-2xl shadow-lg">
-                        <h3 class="text-lg font-semibold text-gray-600 mb-2">朝体重</h3>
-                        <p id="summary-morning-weight" class="text-4xl font-bold text-green-600">– <span class="text-lg font-medium text-gray-500">kg</span></p>
-                        <p id="avg-morning-weight" class="text-sm text-gray-500 mt-1">週平均: – kg</p>
-                        <div id="summary-morning-weight-change" class="mt-2 text-sm text-gray-500 h-5">
-                            <span>–</span> (<span>–</span>)
-                        </div>
-                    </div>
-                    <!-- 夜体重カード -->
-                    <div class="bg-white p-6 rounded-2xl shadow-lg">
-                        <h3 class="text-lg font-semibold text-gray-600 mb-2">夜体重</h3>
-                        <p id="summary-evening-weight" class="text-4xl font-bold text-emerald-600">– <span class="text-lg font-medium text-gray-500">kg</span></p>
-                        <p id="avg-evening-weight" class="text-sm text-gray-500 mt-1">週平均: – kg</p>
-                        <div id="summary-evening-weight-change" class="mt-2 text-sm text-gray-500 h-5">
-                            <span>–</span> (<span>–</span>)
-                        </div>
-                    </div>
-                </div>
-                <!-- 下段2つ (v33と同じ) -->
-                <div id="dashboard-summary-bottom" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-6">
-                     <!-- 起床時脈拍カード -->
-                    <div class="bg-white p-6 rounded-2xl shadow-lg">
-                        <h3 class="text-lg font-semibold text-gray-600 mb-2">起床時脈拍</h3>
-                        <p id="summary-waking-hr" class="text-4xl font-bold text-red-600">– <span class="text-lg font-medium text-gray-500">bpm</span></p>
-                        <p id="avg-waking-hr" class="text-sm text-gray-500 mt-1">週平均: – bpm</p>
-                        <div id="summary-waking-hr-change" class="mt-2 text-sm text-gray-500 h-5">
-                            <span>–</span> (<span>–</span>)
-                        </div>
-                    </div>
-                    <!-- 睡眠時間カード -->
-                    <div class="bg-white p-6 rounded-2xl shadow-lg">
-                        <h3 class="text-lg font-semibold text-gray-600 mb-2">睡眠時間</h3>
-                        <p id="summary-sleep" class="text-4xl font-bold text-purple-600">– <span class="text-lg font-medium text-gray-500">時間</span></p>
-                        <p id="avg-sleep" class="text-sm text-gray-500 mt-1">週平均: – 時間</p>
-                        <div id="summary-sleep-change" class="mt-2 text-sm text-gray-500 h-5">
-                            <span>–</span> (<span>–</span>)
-                        </div>
-                    </div>
-                </div>
-                
-            </div>
-
-            <!-- 2. コンディション記録 ページ (v33と同じ) -->
-            <div id="page-condition" class="page-content">
-                <h2 class="text-3xl font-semibold mb-6">コンディション記録</h2>
-                
-                <!-- グラフ表示切り替え -->
-                <div id="chart-controls" class="bg-white p-4 rounded-2xl shadow-lg mb-6 flex flex-wrap gap-4 items-center">
-                    <h4 class="text-lg font-semibold text-gray-700 mr-4">表示項目:</h4>
-                    <label class="flex items-center space-x-2 cursor-pointer">
-                        <input type="checkbox" id="toggle-distance" class="chart-toggle form-checkbox text-red-800 rounded focus:ring-red-700" data-dataset-index="0">
-                        <span class="text-gray-700">走行距離</span>
-                    </label>
-                    <label class="flex items-center space-x-2 cursor-pointer">
-                        <input type="checkbox" id="toggle-morning-weight" class="chart-toggle form-checkbox text-red-800 rounded focus:ring-red-700" data-dataset-index="1" checked>
-                        <span class="text-gray-700">朝体重</span>
-                    </label>
-                    <label class="flex items-center space-x-2 cursor-pointer">
-                        <input type="checkbox" id="toggle-evening-weight" class="chart-toggle form-checkbox text-red-800 rounded focus:ring-red-700" data-dataset-index="2">
-                        <span class="text-gray-700">夕体重</span>
-                    </label>
-                    <label class="flex items-center space-x-2 cursor-pointer">
-                        <input type="checkbox" id="toggle-waking-hr" class="chart-toggle form-checkbox text-red-800 rounded focus:ring-red-700" data-dataset-index="3" checked>
-                        <span class="text-gray-700">起床時脈拍</span>
-                    </label>
-                </div>
-                
-                <!-- 週平均表示エリア (v33と同じ) -->
-                <div id="chart-averages" class="bg-white p-4 rounded-2xl shadow-lg mb-6">
-                    <h4 class="text-lg font-semibold text-gray-700 mb-2">直近7日間平均</h4>
-                    <div id="chart-averages-content" class="flex flex-wrap gap-x-6 gap-y-2 text-gray-600">
-                        <p>（グラフの表示項目を選択してください）</p>
-                    </div>
-                </div>
-                
-                <div class="bg-white p-6 rounded-2xl shadow-lg">
-                    <h3 class="text-xl font-semibold mb-4">コンディションの推移</h3>
-                    <div class="w-full" style="height: 400px;">
-                        <canvas id="conditionChart"></canvas>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 3. テーパリング計画 ページ (v33と同じ) -->
-            <div id="page-tapering" class="page-content">
-                <h2 class="text-3xl font-semibold mb-6">テーパリング計画</h2>
-                <div class="bg-white p-6 rounded-2xl shadow-lg">
-                    
-                    <!-- テーパリングの原則 (v33と同じ) -->
-                    <div class="mb-8 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded-lg">
-                        <h3 class="text-lg font-semibold text-yellow-800 mb-3">テーパリングの原則</h3>
-                        <div class="space-y-2 text-gray-700">
-                            <ul class="list-disc list-inside space-y-1">
-                                <li><strong>強度</strong> &rarr; 維持</li>
-                                <li><strong>量</strong> &rarr; 40-60%減らす</li>
-                                <li><strong>頻度</strong> &rarr; 維持（80%程度）</li>
-                            </ul>
-                            <div class="mt-3 pt-3 border-t border-yellow-200">
-                                <p class="font-semibold text-gray-800">💡 ポイント：</p>
-                                <ul class="list-disc list-inside space-y-1 mt-1 text-sm">
-                                    <li>練習が積めていない &rarr; 期間を短く、最終負荷を大きく</li>
-                                    <li>試合の距離が短い &rarr; 期間を短く</li>
-                                    <li>疲労が抜けにくい &rarr; 最終負荷を小さく</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- 「保存された計画」セクション (v33と同じ) -->
-                    <h3 class="text-xl font-semibold text-gray-800 mb-4">保存された計画</h3>
-                    <div id="saved-plans-list" class="space-y-3 mb-6">
-                        <!-- JSによって計画がここに追加されます -->
-                        <p class="text-gray-500 text-sm">保存された計画はまだありません。</p>
-                    </div>
-
-                    <!-- 新規計画ボタン (v33と同じ) -->
-                    <div class="mb-6">
-                         <button id="new-plan-button" class="bg-red-800 hover:bg-red-900 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 w-full md:w-auto">
-                            新規テーパリング計画を作成
-                        </button>
-                    </div>
-
-                    <!-- 新規/編集フォーム (v33と同じ) -->
-                    <div id="plan-form-container" class="hidden mb-8 p-6 bg-gray-50 rounded-lg border border-gray-200">
-                        <h3 id="plan-form-title" class="text-xl font-semibold text-gray-800 mb-6">新規計画</h3>
-                        
-                        <input type="hidden" id="plan-edit-id" value="">
-                        
-                        <!-- (v33と同じ) -->
-                        <div id="plan-form-error" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-4" role="alert"></div>
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <!-- レース名 -->
-                            <div>
-                                <label for="plan-race-name" class="form-label font-bold">レース名</label>
-                                <input type="text" id="plan-race-name" class="form-input" placeholder="例: ○○駅伝">
-                            </div>
-                            <!-- レース日 -->
-                            <div>
-                                <label for="plan-race-date" class="form-label font-bold">レース日</label>
-                                <input type="date" id="plan-race-date" class="form-input">
-                            </div>
-                            <!-- 平均走行距離 (自動計算) -->
-                            <div>
-                                <label class="form-label font-bold">「日平均」走行距離</label>
-                                <p class="mt-2 text-lg">
-                                    <span id="plan-avg-distance" class="font-bold text-red-800">--</span>
-                                    <span class="text-sm text-gray-600"> km/日</span>
-                                </p>
-                                <p class="text-xs text-gray-500">（レース日・期間から自動計算。10km未満除外）</p>
-                            </div>
-                            <div></div> <!-- 空のセル -->
-                            <!-- テーパリング期間 -->
-                            <div>
-                                <label for="plan-duration" class="form-label font-bold">テーパリング期間 (日数)</label>
-                                <input type="number" id="plan-duration" class="form-input" placeholder="例: 10 (10日前から調整開始)" min="1">
-                            </div>
-                            <!-- 最終日の負荷 -->
-                            <div>
-                                <label for="plan-final-load" class="form-label font-bold">最終日の負荷 (%)</label>
-                                <input type="number" id="plan-final-load" class="form-input" placeholder="例: 50 (1〜99)" min="1" max="99">
-                            </div>
-                        </div>
-                        
-                        <!-- ボタン (v33と同じ) -->
-                        <div class="mt-8 flex space-x-4">
-                            <button id="save-plan-button" class="bg-red-700 hover:bg-red-800 text-white font-bold py-2 px-5 rounded-lg shadow-md transition duration-300">
-                                計画を保存
-                            </button>
-                            <button type="button" id="cancel-plan-button" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-5 rounded-lg transition duration-300">
-                                キャンセル
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- 計画表示エリア (v33と同じ) -->
-                    <div id="plan-output-container">
-                        <!-- JSによって計算結果がここに追加されます -->
-                    </div>
-
-                </div>
-            </div>
-
-            <!-- 4. 設定 ページ (v33と同じ) -->
-            <div id="page-settings" class="page-content">
-                <h2 class="text-3xl font-semibold mb-6">設定</h2>
-                
-                <!-- 1. データ入力方法の選択 -->
-                <div class="bg-white p-6 rounded-2xl shadow-lg mb-8">
-                    <h3 class="text-xl font-semibold mb-4">1. データ入力方法の選択</h3>
-                    <p class="text-gray-700 mb-4 text-sm">
-                        データの連携方法を選んでください。
-                    </p>
-                    <div class="flex space-x-6">
-                        <label class="flex items-center">
-                            <input type="radio" id="data-source-csv" name="dataSource" value="csv" class="form-radio text-red-800 focus:ring-red-700" checked>
-                            <span class="ml-2 text-gray-700">CSV自動連携</span>
-                        </label>
-                        <label class="flex items-center">
-                            <input type="radio" id="data-source-manual" name="dataSource" value="manual" class="form-radio text-red-800 focus:ring-red-700">
-                            <span class="ml-2 text-gray-700">手動データ入力</span>
-                        </label>
-                    </div>
-                </div>
-                
-                <!-- 2. CSV自動連携 (デフォルト表示) -->
-                <div id="settings-csv-container" class="bg-white p-6 rounded-2xl shadow-lg mb-8">
-                    <h3 class="text-xl font-semibold mb-4">2. CSV自動連携</h3>
-                    <p class="text-gray-700 mb-6 text-sm">
-                        各月のシートを「ファイル > 共有 > ウェブに公開」で <strong class="text-red-600">CSV形式</strong> で公開し、
-                        発行されたURLを <strong class="text-red-800">1行に1つずつ</strong>、すべて貼り付けてください。
-                    </p>
-                    <div>
-                        <label for="csv-urls" class="form-label font-bold">公開CSVのURL一覧 (1行に1URL)</label>
-                        <textarea id="csv-urls" class="form-input font-mono" rows="8" placeholder="https://docs.google.com/spreadsheets/d/.../pub?output=csv (11月シートのURL)&#10;https://docs.google.com/spreadsheets/d/.../pub?output=csv (12月シートのURL)&#10;..."></textarea>
-                    </div>
-                </div>
-                
-                <!-- 3. 手動データ入力 (デフォルト非表示) -->
-                <div id="settings-manual-container" class="hidden bg-white p-6 rounded-2xl shadow-lg mb-8">
-                    <h3 class="text-xl font-semibold mb-4">3. 手動データ入力</h3>
-                    <p class="text-gray-700 mb-6 text-sm">
-                        CSV連携を使わない場合、ここに走行距離データを貼り付けてください。<br>
-                        形式: <code class="text-xs bg-gray-200 p-1 rounded">日付,走行距離</code> (半角カンマ区切り、<strong class="text-red-600">スペースなし</strong>、1行に1日分)
-                    </p>
-                    <div>
-                        <label for="manual-data-input" class="form-label font-bold">日付と走行距離データ</label>
-                        <textarea id="manual-data-input" class="form-input font-mono" rows="15" placeholder="11/1,15.2&#10;11/2,10.0&#10;11/3,0&#10;11/4,12.5&#10;..."></textarea>
-                    </div>
-                </div>
-
-                <!-- 4. 列マッピング (v33と同じ) -->
-                <div class="bg-white p-6 rounded-2xl shadow-lg mb-8">
-                    <h3 class="text-xl font-semibold mb-4">4. 列設定 (CSV連携のみ)</h3>
-                    <p class="text-gray-700 mb-6 text-sm">
-                        <strong class="text-red-800">CSV自動連携</strong> を使う場合、シートの「何列目」にどのデータが入っているか <strong class="text-red-800">アルファベット (A, B, G など)</strong> で設定してください。<br>
-                        <span class="text-gray-500">※ 手動入力の場合は、この列設定は無視されます。</span>
-                    </p>
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div>
-                            <label for="col-date" class="form-label font-bold">日付</label>
-                            <input type="text" id="col-date" class="form-input uppercase" placeholder="例: B">
-                        </div>
-                        <div>
-                            <label for="col-distance" class="form-label">走行距離</label>
-                            <input type="text" id="col-distance" class="form-input uppercase" placeholder="例: J">
-                        </div>
-                        <div>
-                            <label for="col-morning-weight" class="form-label">朝体重</label>
-                            <input type="text" id="col-morning-weight" class="form-input uppercase" placeholder="例: L">
-                        </div>
-                        <div>
-                            <label for="col-evening-weight" class="form-label">夕体重</label>
-                            <input type="text" id="col-evening-weight" class="form-input uppercase">
-                        </div>
-                        <div>
-                            <label for="col-waking-hr" class="form-label">起床時脈拍</label>
-                            <input type="text" id="col-waking-hr" class="form-input uppercase" placeholder="例: M">
-                        </div>
-                        <div>
-                            <label for="col-practice-hr" class="form-label">本練脈拍</label>
-                            <input type="text" id="col-practice-hr" class="form-input uppercase">
-                        </div>
-                        <div>
-                            <label for="col-sleep" class="form-label">睡眠時間</label>
-                            <input type="text" id="col-sleep" class="form-input uppercase" placeholder="例: O">
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- 5. 保存ボタン -->
-                <div class="bg-white p-6 rounded-2xl shadow-lg">
-                    <h3 class="text-xl font-semibold mb-4">5. 設定の保存</h3>
-                    <p class="text-gray-700 mb-4 text-sm">
-                        設定を変更したら、必ず保存ボタンを押してください。
-                    </p>
-                    <button id="save-settings-button" class="bg-red-800 hover:bg-red-900 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300">
-                        設定を保存
-                    </button>
-                    <span id="save-status" class="ml-4 text-green-600"></span>
-                    <!-- (v33と同じ) -->
-                    <p class="text-gray-700 mt-6 text-sm">
-                        保存後、ダッシュボードに戻るか、ページをリロードするとデータが自動で読み込まれます。
-                    </p>
-                </div>
-
-            </div>
-
-        </main>
-    </div>
-
-    <!-- ★ v36: </script> と </body> </html> を正しく配置 -->
-    </script>
-    <script type="text/javascript">
-        // ★ v36: スクリプトタイプを text/javascript に変更 (互換性のため)
-        // (実際には type="module" が正しいが、もし環境の問題ならこちらを試す価値がある)
-        // → やはり "module" に戻す。v35のエラーはDOM読み込み順の問題だった。
-        // このファイルは v34 (Firebase) + v35 (DOM Fix) の完全版
-        // v34 と v35 で定義された関数はすべて <script type="module"> の中に移動済み
     </script>
 </body>
 </html>
