@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ワセダ_覇者への道のり (v58)</title>
+    <title>ワセダ_覇者への道のり (v59)</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -162,54 +162,38 @@
             <div id="page-dashboard" class="page-content">
                 <h2 class="text-3xl font-semibold mb-6">ダッシュボード</h2>
 
-                <!-- ★ v58: 使い方マニュアルを更新 -->
+                <!-- 使い方マニュアル (★ v59: 修正) -->
                 <details class="bg-white p-6 rounded-2xl shadow-lg mb-8 border-l-4 border-red-800">
-                    <summary class="text-xl font-semibold text-gray-800">はじめに (アプリの使い方)</summary>
+                    <summary class="text-xl font-semibold text-gray-800">はじめに (使い方マニュアル)</summary>
                     <div class="mt-4 pt-4 border-t border-gray-200 text-gray-700 space-y-3 text-sm">
-                        <p>このアプリは、日々の練習日誌（走行距離や体重など）のデータを読み込み、コンディションの確認や、レースに向けた練習量の調整（テーパリング）計画を立てるためのお手伝いをするツールです。</p>
-                        
-                        <ol class="list-decimal list-inside space-y-4">
+                        <p>このアプリは、日々の練習日誌データ（CSVまたは手動入力）を読み込み、コンディションやテーパリング計画を管理するためのツールです。</p>
+                        <ol class="list-decimal list-inside space-y-2">
                             <li>
-                                <strong class="font-semibold text-gray-800">1. [設定] ページ (最初に必ず行ってください)</strong>
-                                <ul class="list-disc list-inside ml-4 mt-2 space-y-2">
-                                    <li>まず、練習日誌のデータをどのように読み込むかを選びます。Googleスプレッドシート（Excelのような表計算ソフト）との連携がおすすめです。</li>
-                                    <li>
-                                        <strong class="font-semibold text-red-800">Google連携 (推奨):</strong>
-                                        <ul class="list-disc list-inside ml-4 mt-1 space-y-1">
-                                            <li>Googleスプレッドシートをお使いの場合、このアプリと連携できます。</li>
-                                            <li>連携には、いくつかの情報（クライアントID、スプレッドシートID、シート名）の入力が必要です。これらの情報の取得方法は、別途お渡しする `google_setup_guide.md` というマニュアルを参照してください。</li>
-                                            <li>必要な情報を入力したら、左下にある「Google サインイン」ボタンを押して、ご自身のGoogleアカウントでログインしてください。</li>
-                                        </ul>
-                                    </li>
-                                    <li>
-                                        <strong class="font-semibold text-red-800">手動入力:</strong>
-                                        <ul class="list-disc list-inside ml-4 mt-1 space-y-1">
-                                            <li>Google連携を使わない場合は、練習データを直接テキストで貼り付けることもできます。</li>
-                                            <li>データは「日付,走行距離」（例: `11/1,15.2`）の形式で入力してください。（※手動入力の場合、走行距離以外のデータ（体重など）は現在サポートされていません）</li>
-                                        </ul>
-                                    </li>
-                                    <li>入力方法を選んだら、必ずページ一番下の「設定を保存」ボタンを押してください。保存後、データが自動的に読み込まれます。</li>
+                                <strong class="font-semibold text-gray-800">[設定] ページ (最重要):</strong>
+                                <ul class="list-disc list-inside ml-4 mt-1">
+                                    <li>最初に、このページでデータ入力方法（Google連携 or 手動）を選択します。</li>
+                                    <li><strong class="font-semibold text-red-800">Google連携 (上級者向け):</strong> ご自身の「クライアントID」「スプレッドシートID」の入力が必要です。入力後、左下の「Google サインイン」ボタンを押してください。</li>
+                                    <li><strong class="font-semibold text-red-800">手動入力 (推奨):</strong> 走行距離データを「日付,距離」の形式で貼り付けます。こちらが簡単です。</li>
+                                    <li>最後に必ず「設定を保存」ボタンを押してください。データは保存後にリロードすると反映されます。</li>
                                 </ul>
                             </li>
                             <li>
-                                <strong class="font-semibold text-gray-800">2. [ダッシュボード] ページ (現在の状況)</strong>
-                                <ul class="list-disc list-inside ml-4 mt-2 space-y-1">
-                                    <li>読み込んだ練習日誌のデータのうち、一番新しい日の情報（最新値）や、前日との比較、最近1週間の平均値などを一覧で確認できます。</li>
+                                <strong class="font-semibold text-gray-800">[ダッシュボード] ページ:</strong>
+                                <ul class="list-disc list-inside ml-4 mt-1">
+                                    <li>読み込んだデータの「最新値」「前日比」「直近7日間平均」を一覧表示します。</li>
                                 </ul>
                             </li>
                             <li>
-                                <strong class="font-semibold text-gray-800">3. [コンディション] ページ (データの推移)</strong>
-                                <ul class="list-disc list-inside ml-4 mt-2 space-y-1">
-                                    <li>体重や走行距離、脈拍などのデータが、グラフでどのように変化しているかを確認できます。<strong>（※グラフは直近3週間（21日間）のデータを表示します）</strong></li>
-                                    <li>グラフの上にあるチェックボックス（□）で、グラフに表示したい項目（例: 「朝体重」だけ見る）を選ぶことができます。</li>
+                                <strong class="font-semibold text-gray-800">[コンディション] ページ:</strong>
+                                <ul class="list-disc list-inside ml-4 mt-1">
+                                    <li>データの推移をグラフで視覚化します。チェックボックスで表示項目を切り替えられます。</li>
+                                    <li>（★ v58: グラフは直近3週間のデータを表示します）</li>
                                 </ul>
                             </li>
                             <li>
-                                <strong class="font-semibold text-gray-800">4. [テーパリング] ページ (レース前の調整計画)</strong>
-                                <ul class="list-disc list-inside ml-4 mt-2 space-y-1">
-                                    <li>大事なレースに向けて、練習量を計画的に減らしていく（テーパリング）計画を立てることができます。</li>
-                                    <li>「レース日」と「何日前から調整するか（期間）」を入力すると、過去の練習データ（直近3週間の平均走行距離）を基に、推奨される練習距離の目安を自動で計算します。</li>
-                                    <li>作成した計画は、名前をつけて保存しておくことができます。</li>
+                                <strong class="font-semibold text-gray-800">[テーパリング] ページ:</strong>
+                                <ul class="list-disc list-inside ml-4 mt-1">
+                                    <li>レース日と期間から、推奨される走行距離の減衰計画を自動で計算し、保存・管理できます。</li>
                                 </ul>
                             </li>
                         </ol>
@@ -320,7 +304,6 @@
                 </div>
                 
                 <div class="bg-white p-6 rounded-2xl shadow-lg">
-                    <!-- ★ v58: タイトル変更 -->
                     <h3 class="text-xl font-semibold mb-4">コンディションの推移 (直近3週間)</h3>
                     <div class="w-full" style="height: 400px;">
                         <canvas id="conditionChart"></canvas>
@@ -428,7 +411,7 @@
                 </div>
             </div>
 
-            <!-- 4. 設定 ページ (★ v44: Google連携UI) -->
+            <!-- 4. 設定 ページ (★ v59: 修正) -->
             <div id="page-settings" class="page-content">
                 <h2 class="text-3xl font-semibold mb-6">設定</h2>
                 
@@ -436,34 +419,33 @@
                 <div class="bg-white p-6 rounded-2xl shadow-lg mb-8">
                     <h3 class="text-xl font-semibold mb-4">1. データ入力方法の選択</h3>
                     <p class="text-gray-700 mb-4 text-sm">
-                        データの連携方法を選んでください。
+                        データの連携方法を選んでください。（手動入力を推奨します）
                     </p>
                     <div class="flex space-x-6">
                         <label class="flex items-center">
-                            <input type="radio" id="data-source-google" name="dataSource" value="google" class="form-radio text-red-800 focus:ring-red-700" checked>
-                            <span class="ml-2 text-gray-700">Google アカウント連携</span>
+                            <input type="radio" id="data-source-google" name="dataSource" value="google" class="form-radio text-red-800 focus:ring-red-700">
+                            <span class="ml-2 text-gray-700">Google 連携 (上級者向け)</span>
                         </label>
                         <label class="flex items-center">
-                            <input type="radio" id="data-source-manual" name="dataSource" value="manual" class="form-radio text-red-800 focus:ring-red-700">
+                            <input type="radio" id="data-source-manual" name="dataSource" value="manual" class="form-radio text-red-800 focus:ring-red-700" checked>
                             <span class="ml-2 text-gray-700">手動データ入力</span>
                         </label>
                     </div>
                 </div>
                 
-                <!-- 2. Google アカウント連携 (デフォルト表示) -->
-                <div id="settings-google-container" class="bg-white p-6 rounded-2xl shadow-lg mb-8">
-                    <h3 class="text-xl font-semibold mb-4">2. Google アカウント連携</h3>
+                <!-- 2. Google アカウント連携 (★ v59: 説明文修正、デフォルト非表示) -->
+                <div id="settings-google-container" class="hidden bg-white p-6 rounded-2xl shadow-lg mb-8">
+                    <h3 class="text-xl font-semibold mb-4">2. Google アカウント連携 (上級者向け)</h3>
                     <p class="text-gray-700 mb-6 text-sm">
-                        <strong class="text-red-800">Google アカウント連携</strong> を使うには、`google_setup_guide.md` の手順に従ってキーを取得し、以下を設定してください。
+                        この機能を利用するには、ご自身でGoogle APIの「クライアントID」を取得し、読み取りたい「スプレッドシートID」と「シート名」を設定する必要があります。
                     </p>
                     <div class="space-y-4">
                         <div>
                             <label for="google-client-id" class="form-label font-bold">クライアント ID</label>
-                            <input type="text" id="google-client-id" class="form-input" placeholder="123456...-abcde...apps.googleusercontent.com">
+                            <input type="text" id="google-client-id" class="form-input" placeholder="ご自身で取得したクライアントIDを入力...">
                         </div>
                         <div>
                             <label for="google-spreadsheet-id" class="form-label font-bold">スプレッドシート URL または ID</label>
-                            <!-- ★ v49: プレースホルダーを URL に変更 -->
                             <input type="text" id="google-spreadsheet-id" class="form-input" placeholder="https://docs.google.com/spreadsheets/d/...">
                         </div>
                         <div>
@@ -473,8 +455,8 @@
                     </div>
                 </div>
                 
-                <!-- 3. 手動データ入力 (デフォルト非表示) -->
-                <div id="settings-manual-container" class="hidden bg-white p-6 rounded-2xl shadow-lg mb-8">
+                <!-- 3. 手動データ入力 (★ v59: デフォルト表示) -->
+                <div id="settings-manual-container" class="bg-white p-6 rounded-2xl shadow-lg mb-8">
                     <h3 class="text-xl font-semibold mb-4">3. 手動データ入力</h3>
                     <p class="text-gray-700 mb-6 text-sm">
                         Google連携を使わない場合、ここに走行距離データを貼り付けてください。<br>
@@ -932,6 +914,7 @@
                 const extractedId = extractSpreadsheetId(rawSpreadsheetInput); // ★ v49
                 
                 const settings = {
+                    // ★ v59: dataSourceGoogle を参照するように修正
                     dataSource: dataSourceManual.checked ? 'manual' : 'google',
                     // Google
                     clientId: googleClientIdInput.value,
@@ -1014,9 +997,11 @@
                     
                     if (settings.dataSource === 'manual') {
                         if (dataSourceManual) dataSourceManual.checked = true;
+                        if (dataSourceGoogle) dataSourceGoogle.checked = false; // ★ v59: Googleのチェックを外す
                         toggleDataSourceView('manual');
                     } else {
                         if (dataSourceGoogle) dataSourceGoogle.checked = true;
+                        if (dataSourceManual) dataSourceManual.checked = false; // ★ v59: Manualのチェックを外す
                         toggleDataSourceView('google');
                     }
                     
@@ -1037,7 +1022,10 @@
                     }
                 } else {
                     console.log("No settings found, using defaults.");
-                    toggleDataSourceView('google');
+                    // ★ v59: デフォルトを 'manual' に変更
+                    if (dataSourceManual) dataSourceManual.checked = true;
+                    if (dataSourceGoogle) dataSourceGoogle.checked = false;
+                    toggleDataSourceView('manual');
                 }
                 
                 return settings; // 読み込んだ設定を返す
@@ -1045,7 +1033,10 @@
             } catch (error) {
                 console.error("Failed to load settings:", error);
                 showError(`設定の読み込みに失敗しました: ${error.message}`);
-                toggleDataSourceView('google'); // エラー時はデフォルト表示
+                 // ★ v59: デフォルトを 'manual' に変更
+                if (dataSourceManual) dataSourceManual.checked = true;
+                if (dataSourceGoogle) dataSourceGoogle.checked = false;
+                toggleDataSourceView('manual');
                 return null;
             }
         }
@@ -2275,16 +2266,16 @@
                     }
                 }, 500); // 0.5秒ごとにチェック
                 
-                // ★ v56: 読み込みロジックを修正
-                if (settings && settings.dataSource === 'manual') {
-                    // 手動データの場合はすぐにロード
-                    await loadAndDisplayData(settings);
-                } else {
+                // ★ v59: 読み込みロジックを修正 (デフォルトが手動)
+                if (settings && settings.dataSource === 'google') {
                     // Google連携の場合は、まだデータをロードせず、サインインを待つ
                     showError('「Google サインイン」ボタンを押して、スプレッドシートへのアクセスを許可してください。');
                     // ローダーを隠す
                     const loadingEl = document.getElementById('dashboard-loading');
                     if (loadingEl) loadingEl.style.display = 'none';
+                } else {
+                    // 手動データの場合はすぐにロード (設定がnullの場合もこちら)
+                    await loadAndDisplayData(settings);
                 }
                 
             } catch(e) {
