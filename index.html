@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ワセダ_覇者への道のり (v45)</title>
+    <title>ワセダ_覇者への道のり (v46)</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -16,11 +16,9 @@
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
     
-    <!-- ★ v44: Google API & Sign-In (GSI) -->
-    <!-- GSI (Sign-In) -->
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <!-- GAPI (Sheets API) - ★ v45: コールバックを script タグから削除 -->
-    <script src="https://apis.google.com/js/api.js" async defer></script>
+    <!-- ★ v46: Google API & Sign-In (GSI) を <head> に配置 -->
+    <script src="https://accounts.google.com/gsi/client" async defer onload="gisLoadedCallback()"></script>
+    <script src="https://apis.google.com/js/api.js" async defer onload="gapiLoadedCallback()"></script>
     
     <script>
         tailwind.config = {
@@ -727,8 +725,7 @@
         // ★ v45: グローバルコールバックを window オブジェクトにアタッチ
         window.gapiLoadedCallback = () => {
             console.log("GAPI client loaded.");
-            gapiReady = true;
-            tryInitClient();
+            gapi.load('client', tryInitClient); // GAPI clientをロード
         };
         
         window.gisLoadedCallback = () => {
@@ -738,37 +735,38 @@
         };
 
         async function tryInitClient() {
-            // ★ v45: gapi, google がロードされるまで待機
-            if (typeof gapi === 'undefined' || typeof google === 'undefined') {
-                console.log("GAPI or GIS not fully loaded yet, retrying...");
-                setTimeout(tryInitClient, 100);
+            // ★ v45: gapi.client がロードされるまで待機
+            if (!gisReady || typeof gapi === 'undefined' || !gapi.client) {
+                console.log("GAPI client or GIS not fully loaded yet, retrying...");
+                // GAPI がロード完了すると gapi.client が定義される
+                if (!gapiReady && typeof gapi !== 'undefined' && gapi.load) {
+                     gapiReady = true; // GAPI 自体はロードされた
+                     gapi.load('client', tryInitClient); // GAPI client をロード
+                }
                 return;
             }
             
-            if (gapiReady && gisReady) {
-                console.log("Both GAPI and GIS ready. Initializing clients...");
-                try {
-                    // 1. GAPI (Sheets API)
-                    await gapi.load('client');
-                    await gapi.client.load('https://sheets.googleapis.com/$discovery/rest?version=v4');
-                    console.log("GAPI Sheets API client initialized.");
+            console.log("Both GAPI client and GIS ready. Initializing clients...");
+            try {
+                // 1. GAPI (Sheets API)
+                await gapi.client.load('https://sheets.googleapis.com/$discovery/rest?version=v4');
+                console.log("GAPI Sheets API client initialized.");
 
-                    // 2. GIS (Token Client)
-                    if (appSettings.clientId) {
-                        tokenClient = google.accounts.oauth2.initTokenClient({
-                            client_id: appSettings.clientId,
-                            scope: 'https://www.googleapis.com/auth/spreadsheets.readonly',
-                            callback: handleTokenResponse, // トークン取得時のコールバック
-                        });
-                        console.log("GIS Token Client initialized.");
-                    } else {
-                        console.warn("CLIENT_ID is not set. Google Sign-In will not work.");
-                        updateAuthStatus(false, "クライアントID未設定");
-                    }
-                } catch (e) {
-                    console.error("Error initializing GAPI/GIS clients:", e);
-                    showError("Google APIの初期化に失敗: " + (e.message || ""));
+                // 2. GIS (Token Client)
+                if (appSettings.clientId) {
+                    tokenClient = google.accounts.oauth2.initTokenClient({
+                        client_id: appSettings.clientId,
+                        scope: 'https://www.googleapis.com/auth/spreadsheets.readonly',
+                        callback: handleTokenResponse, // トークン取得時のコールバック
+                    });
+                    console.log("GIS Token Client initialized.");
+                } else {
+                    console.warn("CLIENT_ID is not set. Google Sign-In will not work.");
+                    updateAuthStatus(false, "クライアントID未設定");
                 }
+            } catch (e) {
+                console.error("Error initializing GAPI/GIS clients:", e);
+                showError("Google APIの初期化に失敗: " + (e.message || ""));
             }
         }
         
@@ -1985,7 +1983,7 @@
         // ----------------------------------------
         document.addEventListener('DOMContentLoaded', async () => {
             
-            // DOM 要素をすべて取得
+            // ★ v35: ここで DOM 要素をすべて取得
             navLinks = document.querySelectorAll('.nav-link');
             pages = document.querySelectorAll('.page-content');
             mobileMenuButton = document.getElementById('mobile-menu-button');
@@ -2028,7 +2026,7 @@
             planFinalLoad = document.getElementById('plan-final-load');
             planEditId = document.getElementById('plan-edit-id');
 
-            // イベントリスナーをすべて登録
+            // ★ v35: ここでイベントリスナーをすべて登録
             try {
                 // ページ切り替え
                 navLinks.forEach(link => {
@@ -2104,18 +2102,8 @@
                 // ★ v44: GSI/GAPIのロードを開始
                 // コールバックが設定を読み取れるよう、loadSettings() の *後* でロードする
                 if (settings && settings.clientId) {
-                    // <script> タグを動的に追加してロードを開始
-                    const gapiScript = document.createElement('script');
-                    gapiScript.src = 'https://apis.google.com/js/api.js?onload=gapiLoadedCallback';
-                    gapiScript.async = true;
-                    gapiScript.defer = true;
-                    document.head.appendChild(gapiScript);
-
-                    const gisScript = document.createElement('script');
-                    gisScript.src = 'https://accounts.google.com/gsi/client?onload=gisLoadedCallback';
-                    gisScript.async = true;
-                    gisScript.defer = true;
-                    document.head.appendChild(gisScript);
+                    // gapiLoadedCallback と gisLoadedCallback は <head> の script タグで
+                    // window オブジェクトにアタッチされている
                 } else {
                     updateAuthStatus(false, "クライアントID未設定");
                 }
