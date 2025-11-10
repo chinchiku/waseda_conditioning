@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ワセダ_覇者への道のり (v46)</title>
+    <title>ワセダ_覇者への道のり (v48)</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -15,6 +15,29 @@
     
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+    
+    <!-- ★ v48: GAPI/GSI コールバックをグローバルスコープの <script> に移動 -->
+    <script>
+        let gapiReady = false;
+        let gisReady = false;
+        let tryInitClient; // 本体はモジュールスクリプトで定義
+
+        function gapiLoadedCallback() {
+            console.log("GAPI client script loaded.");
+            gapiReady = true;
+            if (typeof gapi !== 'undefined' && gapi.load) {
+                gapi.load('client', tryInitClient); // client ライブラリのロードを開始
+            }
+        }
+        
+        function gisLoadedCallback() {
+            console.log("GIS client script loaded.");
+            gisReady = true;
+            if (tryInitClient) {
+                tryInitClient(); // tryInitClient が定義済みなら実行
+            }
+        }
+    </script>
     
     <!-- ★ v46: Google API & Sign-In (GSI) を <head> に配置 -->
     <script src="https://accounts.google.com/gsi/client" async defer onload="gisLoadedCallback()"></script>
@@ -541,8 +564,8 @@
         let gapiClient;
         let tokenClient;
         let googleTokenResponse;
-        let gapiReady = false;
-        let gisReady = false;
+        // let gapiReady = false; // ★ v48: <head> のグローバルスコープに移動
+        // let gisReady = false; // ★ v48: <head> のグローバルスコープに移動
         let appSettings = {}; // v44: 設定はグローバルに保持
         
         // ★ v44: 保存キー (localStorage)
@@ -722,27 +745,15 @@
         // ★ v44: Google API / GSI 認証
         // ----------------------------------------
         
-        // ★ v45: グローバルコールバックを window オブジェクトにアタッチ
-        window.gapiLoadedCallback = () => {
-            console.log("GAPI client loaded.");
-            gapi.load('client', tryInitClient); // GAPI clientをロード
-        };
-        
-        window.gisLoadedCallback = () => {
-            console.log("GIS client loaded.");
-            gisReady = true;
-            tryInitClient();
-        };
+        // ★ v48: コールバックは <head> でグローバルに定義済み
+        // window.gapiLoadedCallback = () => { ... };
+        // window.gisLoadedCallback = () => { ... };
 
-        async function tryInitClient() {
-            // ★ v45: gapi.client がロードされるまで待機
-            if (!gisReady || typeof gapi === 'undefined' || !gapi.client) {
-                console.log("GAPI client or GIS not fully loaded yet, retrying...");
-                // GAPI がロード完了すると gapi.client が定義される
-                if (!gapiReady && typeof gapi !== 'undefined' && gapi.load) {
-                     gapiReady = true; // GAPI 自体はロードされた
-                     gapi.load('client', tryInitClient); // GAPI client をロード
-                }
+        // ★ v48: tryInitClient の「本体」をモジュールスコープで定義
+        tryInitClient = async function() {
+            // gapiReady と gisReady は <head> のグローバルスコープで設定される
+            if (!gisReady || !gapiReady || typeof gapi === 'undefined' || !gapi.client) {
+                console.log("GAPI client lib or GIS not fully loaded yet, skipping init...");
                 return;
             }
             
@@ -795,7 +806,8 @@
             }
         }
 
-        function handleTokenResponse(response) {
+        // ★ v47: サインインロジック修正
+        async function handleTokenResponse(response) {
             if (response.error) {
                 console.error("Google Auth Error:", response.error);
                 showError(`サインイン失敗: ${response.error}`);
@@ -804,11 +816,23 @@
             }
             googleTokenResponse = response;
             if (gapi.client) gapi.client.setToken(response);
-            console.log("Google Sign-In successful.");
-            updateAuthStatus(true, "サインイン済み");
             
-            // ★ サインイン成功後、データを再読み込み
-            loadAndDisplayData(appSettings);
+            try {
+                // ★ v47: まずデータ読み込みを試行
+                await loadAndDisplayData(appSettings);
+                // ★ v47: データ読み込み成功時のみ「サインイン済み」
+                console.log("Google Sign-In and data fetch successful.");
+                updateAuthStatus(true, "サインイン済み");
+            } catch (e) {
+                // ★ v47: データ読み込み失敗時
+                console.error("Sign-In OK, but data fetch failed:", e);
+                // showError は loadAndDisplayData 内部で呼ばれている
+                updateAuthStatus(false, "サインイン失敗 (データ読込不可)");
+                // トークンを破棄
+                google.accounts.oauth2.revoke(googleTokenResponse.access_token, () => {});
+                googleTokenResponse = null;
+                if (gapi.client) gapi.client.setToken(null);
+            }
         }
         
         function updateAuthStatus(isSignedIn, message) {
@@ -1120,11 +1144,14 @@
 
             } catch (error) {
                 console.error("Failed to load and display data:", error);
-                showError(error.message || "データ取得に失敗しました。");
+                // ★ v47: エラーオブジェクト全体を渡す
+                showError(error); 
+                // ★ v47: loadAndDisplayData が失敗したことを呼び出し元に伝える
+                throw error;
             }
         }
 
-        function showError(message) {
+        function showError(error) {
             const loadingEl = document.getElementById('dashboard-loading');
             const errorEl = document.getElementById('dashboard-error');
             const errorMsgEl = document.getElementById('dashboard-error-message');
@@ -1135,6 +1162,19 @@
             if (summaryTopEl) summaryTopEl.style.display = 'none'; 
             if (summaryBottomEl) summaryBottomEl.style.display = 'none'; 
             if (errorEl) errorEl.style.display = 'block';
+            
+            // ★ v47: エラーオブジェクトを解析
+            let message = "不明なエラーが発生しました。";
+            if (typeof error === 'string') {
+                message = error;
+            } else if (error.message) {
+                message = error.message;
+            }
+            // GAPI/GSI 特有のエラー
+            if (error.result && error.result.error) {
+                message = `Google API エラー: ${error.result.error.message}`;
+            }
+            
             if (errorMsgEl) errorMsgEl.textContent = message;
         }
         
