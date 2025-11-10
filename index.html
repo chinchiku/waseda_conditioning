@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ワセダ_覇者への道のり (v60)</title>
+    <title>ワセダ_覇者への道のり</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -361,4 +361,2225 @@
 <!-- 3. テーパリング計画 ページ (v44と同じ) -->
             <div id="page-tapering" class="page-content">
                 <h2 class="text-3xl font-semibold mb-6">テーパリング計画</h2>
-                <div class="bg-white p-
+                <div class="bg-white p-6 rounded-2xl shadow-lg">
+                    
+                    <!-- テーパリングの原則 (v44と同じ) -->
+                    <div class="mb-8 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded-lg">
+                        <h3 class="text-lg font-semibold text-yellow-800 mb-3">テーパリングの原則</h3>
+                        <div class="space-y-2 text-gray-700">
+                            <ul class="list-disc list-inside space-y-1">
+                                <li><strong>強度</strong> &rarr; 維持</li>
+                                <li><strong>量</strong> &rarr; 40-60%減らす</li>
+                                <li><strong>頻度</strong> &rarr; 維持（80%程度）</li>
+                            </ul>
+                            <div class="mt-3 pt-3 border-t border-yellow-200">
+                                <p class="font-semibold text-gray-800">💡 ポイント：</p>
+                                <ul class="list-disc list-inside space-y-1 mt-1 text-sm">
+                                    <li>練習が積めていない &rarr; 期間を短く、最終負荷を大きく</li>
+                                    <li>試合の距離が短い &rarr; 期間を短く</li>
+                                    <li>疲労が抜けにくい &rarr; 最終負荷を小さく</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 「保存された計画」セクション (v44と同じ) -->
+                    <h3 class="text-xl font-semibold text-gray-800 mb-4">保存された計画</h3>
+                    <div id="saved-plans-list" class="space-y-3 mb-6">
+                        <!-- JSによって計画がここに追加されます -->
+                        <p class="text-gray-500 text-sm">保存された計画はまだありません。</p>
+                    </div>
+
+                    <!-- 新規計画ボタン (v44と同じ) -->
+                    <div class="mb-6">
+                         <button id="new-plan-button" class="bg-red-800 hover:bg-red-900 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 w-full md:w-auto">
+                             新規テーパリング計画を作成
+                         </button>
+                    </div>
+
+                    <!-- 新規/編集フォーム (v44と同じ) -->
+                    <div id="plan-form-container" class="hidden mb-8 p-6 bg-gray-50 rounded-lg border border-gray-200">
+                        <h3 id="plan-form-title" class="text-xl font-semibold text-gray-800 mb-6">新規計画</h3>
+                        
+                        <input type="hidden" id="plan-edit-id" value="">
+                        
+                        <!-- (v44と同じ) -->
+                        <div id="plan-form-error" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-4" role="alert"></div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- レース名 -->
+                            <div>
+                                <label for="plan-race-name" class="form-label font-bold">レース名</label>
+                                <input type="text" id="plan-race-name" class="form-input" placeholder="例: ○○駅伝">
+                            </div>
+                            <!-- レース日 -->
+                            <div>
+                                <label for="plan-race-date" class="form-label font-bold">レース日</label>
+                                <input type="date" id="plan-race-date" class="form-input">
+                            </div>
+                            <!-- 平均走行距離 (自動計算) -->
+                            <div>
+                                <label class="form-label font-bold">「日平均」走行距離</label>
+                                <p class="mt-2 text-lg">
+                                    <span id="plan-avg-distance" class="font-bold text-red-800">--</span>
+                                    <span class="text-sm text-gray-600"> km/日</span>
+                                </p>
+                                <p class="text-xs text-gray-500">（レース日・期間から自動計算。10km未満除外）</p>
+                            </div>
+                            <div></div> <!-- 空のセル -->
+                            <!-- テーパリング期間 -->
+                            <div>
+                                <label for="plan-duration" class="form-label font-bold">テーパリング期間 (日数)</label>
+                                <input type="number" id="plan-duration" class="form-input" placeholder="例: 10 (10日前から調整開始)" min="1">
+                            </div>
+                            <!-- 最終日の負荷 -->
+                            <div>
+                                <label for="plan-final-load" class="form-label font-bold">最終日の負荷 (%)</label>
+                                <input type="number" id="plan-final-load" class="form-input" placeholder="例: 50 (1〜99)" min="1" max="99">
+                            </div>
+                        </div>
+                        
+                        <!-- ボタン (v44と同じ) -->
+                        <div class="mt-8 flex space-x-4">
+                            <button id="save-plan-button" class="bg-red-700 hover:bg-red-800 text-white font-bold py-2 px-5 rounded-lg shadow-md transition duration-300">
+                                計画を保存
+                            </button>
+                            <button type="button" id="cancel-plan-button" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-5 rounded-lg transition duration-300">
+                                キャンセル
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 計画表示エリア (v44と同じ) -->
+                    <div id="plan-output-container">
+                        <!-- JSによって計算結果がここに追加されます -->
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- 4. 設定 ページ (★ v60: Googleをデフォルトに戻す) -->
+            <div id="page-settings" class="page-content">
+                <h2 class="text-3xl font-semibold mb-6">設定</h2>
+                
+                <!-- 1. データ入力方法の選択 -->
+                <div class="bg-white p-6 rounded-2xl shadow-lg mb-8">
+                    <h3 class="text-xl font-semibold mb-4">1. データ入力方法の選択</h3>
+                    <p class="text-gray-700 mb-4 text-sm">
+                        データの連携方法を選んでください。（手動入力も可能です）
+                    </p>
+                    <div class="flex space-x-6">
+                        <label class="flex items-center">
+                            <input type="radio" id="data-source-google" name="dataSource" value="google" class="form-radio text-red-800 focus:ring-red-700" checked>
+                            <span class="ml-2 text-gray-700">Google 連携 (上級者向け)</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="radio" id="data-source-manual" name="dataSource" value="manual" class="form-radio text-red-800 focus:ring-red-700">
+                            <span class="ml-2 text-gray-700">手動データ入力</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- 2. Google アカウント連携 (★ v59: 説明文修正) -->
+                <div id="settings-google-container" class="bg-white p-6 rounded-2xl shadow-lg mb-8">
+                    <h3 class="text-xl font-semibold mb-4">2. Google アカウント連携 (上級者向け)</h3>
+                    <p class="text-gray-700 mb-6 text-sm">
+                        この機能を利用するには、ご自身でGoogle APIの「クライアントID」を取得し、読み取りたい「スプレッドシートID」と「シート名」を設定する必要があります。
+                    </p>
+                    <div class="space-y-4">
+                        <div>
+                            <label for="google-client-id" class="form-label font-bold">クライアント ID</label>
+                            <input type="text" id="google-client-id" class="form-input" placeholder="ご自身で取得したクライアントIDを入力...">
+                        </div>
+                        <div>
+                            <label for="google-spreadsheet-id" class="form-label font-bold">スプレッドシート URL または ID</label>
+                            <input type="text" id="google-spreadsheet-id" class="form-input" placeholder="https://docs.google.com/spreadsheets/d/...">
+                        </div>
+                        <div>
+                            <label for="google-sheet-names" class="form-label font-bold">シート名 (タブ名) (1行に1つ)</label>
+                            <textarea id="google-sheet-names" class="form-input font-mono" rows="5" placeholder="11月&#10;12月&#10;1月"></textarea>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 3. 手動データ入力 (★ v60: デフォルト非表示) -->
+                <div id="settings-manual-container" class="hidden bg-white p-6 rounded-2xl shadow-lg mb-8">
+                    <h3 class="text-xl font-semibold mb-4">3. 手動データ入力</h3>
+                    <p class="text-gray-700 mb-6 text-sm">
+                        Google連携を使わない場合、ここに走行距離データを貼り付けてください。<br>
+                        形式: <code class="text-xs bg-gray-200 p-1 rounded">日付,走行距離</code> (半角カンマ区切り、<strong class="text-red-600">スペースなし</strong>、1行に1日分)
+                    </p>
+                    <div>
+                        <label for="manual-data-input" class="form-label font-bold">日付と走行距離データ</label>
+                        <textarea id="manual-data-input" class="form-input font-mono" rows="15" placeholder="11/1,15.2&#10;11/2,10.0&#10;11/3,0&#10;11/4,12.5&#10;..."></textarea>
+                    </div>
+                </div>
+
+                <!-- 4. 列マッピング (★ v58: デフォルト値を変更) -->
+                <div class="bg-white p-6 rounded-2xl shadow-lg mb-8">
+                    <h3 class="text-xl font-semibold mb-4">4. 列設定 (Google連携のみ)</h3>
+                    <p class="text-gray-700 mb-6 text-sm">
+                        <strong class="text-red-800">Google アカウント連携</strong> を使う場合、シートの「何列目」にどのデータが入っているか <strong class="text-red-800">アルファベット (A, B, G など)</strong> で設定してください。<br>
+                        <span class="text-gray-500">※ 手動入力の場合は、この列設定は無視されます。</span>
+                    </p>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div>
+                            <label for="col-date" class="form-label font-bold">日付</label>
+                            <input type="text" id="col-date" class="form-input uppercase" placeholder="例: C">
+                        </div>
+                        <div>
+                            <label for="col-distance" class="form-label">走行距離</label>
+                            <input type="text" id="col-distance" class="form-input uppercase" placeholder="例: K">
+                        </div>
+                        <div>
+                            <label for="col-morning-weight" class="form-label">朝体重</label>
+                            <input type="text" id="col-morning-weight" class="form-input uppercase" placeholder="例: M">
+                        </div>
+                        <div>
+                            <label for="col-evening-weight" class="form-label">夕体重</label>
+                            <input type="text" id="col-evening-weight" class="form-input uppercase" placeholder="例: N">
+                        </div>
+                        <div>
+                            <label for="col-waking-hr" class="form-label">起床時脈拍</label>
+                            <input type="text" id="col-waking-hr" class="form-input uppercase" placeholder="例: O">
+                        </div>
+                        <div>
+                            <label for="col-practice-hr" class="form-label">本練脈拍</label>
+                            <input type="text" id="col-practice-hr" class="form-input uppercase" placeholder="例: P">
+                        </div>
+                        <div>
+                            <label for="col-sleep" class="form-label">睡眠時間</label>
+                            <input type="text" id="col-sleep" class="form-input uppercase" placeholder="例: Q">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 5. 保存ボタン -->
+                <div class="bg-white p-6 rounded-2xl shadow-lg">
+                    <h3 class="text-xl font-semibold mb-4">5. 設定の保存</h3>
+                    <p class="text-gray-700 mb-4 text-sm">
+                        設定を変更したら、必ず保存ボタンを押してください。
+                    </p>
+                    <button id="save-settings-button" class="bg-red-800 hover:bg-red-900 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300">
+                        設定を保存
+                    </button>
+                    <span id="save-status" class="ml-4 text-green-600"></span>
+                    <p class="text-gray-700 mt-6 text-sm">
+                        保存後、ダッシュボードに戻るか、ページをリロードするとデータが自動で読み込まれます。
+                    </p>
+                </div>
+
+            </div>
+
+        </main>
+    </div>
+    
+    <!-- ★ v47: スクリプトを </body> の直前に移動 -->
+    <script type="module">
+        // ----------------------------------------
+        // グローバル変数
+        // ----------------------------------------
+        let conditionChart = null;
+        let appData = []; // ★ v60: マージ済みの最終データ
+        let baseData = []; // ★ v60: Google/手動(TextArea)から読み込んだ素のデータ
+        let quickLogs = {}; // ★ v60: クイックログデータ (日付 'MM/DD' をキー)
+        let savedTaperPlans = [];
+        
+        // ★ v44: Google API 用の変数
+        let gapiClient;
+        let tokenClient;
+        let googleTokenResponse;
+        let appSettings = {}; // v44: 設定はグローバルに保持
+        
+        // ★ v57: GAPI/GIS のロード状態フラグ (v56と同じ)
+        let gapiReady = false;
+        let gisReady = false;
+        let gapiSheetsReady = false; // ★ v56: Sheets API 自体のロード完了
+        
+        // ★ v44: 保存キー (localStorage)
+        const SETTINGS_STORAGE_KEY = 'practiceLogSettings_v44';
+        const MANUAL_DATA_STORAGE_KEY = 'practiceLogManualData_v44'; // ★ v48: 修正
+        const TAPER_PLANS_STORAGE_KEY = 'taperPlansV1_v44'; // v31のロジックを流用
+        const QUICK_LOGS_STORAGE_KEY = 'practiceLogQuickLogs_v60'; // ★ v60: 新規
+
+        // ★ v35: DOM要素の「宣言」をグローバルスコープに移動
+        // ページ切り替え
+        let navLinks;
+        let pages;
+        let mobileMenuButton;
+        
+        // ★ v44: Google Auth
+        let googleAuthButton;
+        let googleAuthStatus;
+
+        // 設定ページ
+        let csvUrlsInput, manualDataInput, saveButton, saveStatus;
+        let dataSourceGoogle, dataSourceManual, settingsGoogleContainer, settingsManualContainer;
+        let mappingInputs = {}; // mappingInputsはオブジェクトなので初期化
+        // ★ v44: Google設定用
+        let googleClientIdInput, googleSpreadsheetIdInput, googleSheetNamesInput;
+
+        // ★ v60: クイックログフォーム
+        let logDateInput, logDistanceInput, logMorningWeightInput, logEveningWeightInput, logWakingHrInput, logSleepInput, saveLogButton;
+        let quickLogSuccess, quickLogError;
+
+        // テーパリング計画ページ
+        let newPlanButton, planFormContainer, planAvgDistanceSpan, savePlanButton;
+        let cancelPlanButton, planOutputContainer, savedPlansList, planFormTitle;
+        let planRaceName, planRaceDate, planDuration, planFinalLoad, planEditId;
+
+        // ----------------------------------------
+        // 列アルファベット <-> 数字 変換 (v33と同じ)
+        // ----------------------------------------
+        function columnToLetter(colNum) {
+            if (colNum === null || colNum === undefined || colNum === "" || colNum < 1) {
+                return "";
+            }
+            let letter = '';
+            let num = parseInt(colNum, 10);
+            while (num > 0) {
+                let rem = (num - 1) % 26;
+                letter = String.fromCharCode(65 + rem) + letter;
+                num = Math.floor((num - 1) / 26);
+            }
+            return letter;
+        }
+
+        function letterToColumn(letter) {
+            if (!letter || typeof letter !== 'string') {
+                return null;
+            }
+            const cleanLetter = letter.toUpperCase().trim();
+            let colNum = 0;
+            for (let i = 0; i < cleanLetter.length; i++) {
+                colNum = colNum * 26 + (cleanLetter.charCodeAt(i) - 64);
+            }
+            return colNum > 0 ? colNum : null;
+        }
+
+        // ----------------------------------------
+        // 日付パーサー (v33と同じ)
+        // ----------------------------------------
+        
+        // 「ソート用」
+        function parseDateToSort(dateStr) {
+            try {
+                let month, day;
+                let dateObj;
+                // ★ v60: YYYY-MM-DD 形式も mdMatch の前に処理
+                const ymdMatch = dateStr.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})$/);
+                const mdMatch = dateStr.match(/^(\d{1,2})\/(\d{1,2})$/);
+
+                if (ymdMatch) {
+                    const parsableDateStr = dateStr.replace(/-/g, '/') + "T00:00:00";
+                    dateObj = new Date(parsableDateStr); 
+                    if (isNaN(dateObj.getTime())) return null;
+                    month = dateObj.getMonth() + 1;
+                    day = dateObj.getDate();
+                } else if (mdMatch) {
+                    month = parseInt(mdMatch[1], 10);
+                    day = parseInt(mdMatch[2], 10);
+                    if (month < 1 || month > 12 || day < 1 || day > 31) return null;
+                    const yearOffset = (month < 4) ? 1 : 0;
+                    return new Date(2000 + yearOffset, month - 1, day);
+                } else {
+                    return null;
+                }
+                const sortYear = (month < 4) ? 2001 : 2000;
+                return new Date(sortYear, month - 1, day);
+            } catch (error) {
+                console.error(`Failed to parse sort date string: ${dateStr}`, error);
+                return null;
+            }
+        }
+        
+        // 「実日付用」
+        function parseDateToReal(dateStr) {
+            try {
+                const ymdMatch = dateStr.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})$/);
+                if (ymdMatch) {
+                    const parsableDateStr = dateStr.replace(/-/g, '/') + "T00:00:00";
+                    const dateObj = new Date(parsableDateStr);
+                    if (isNaN(dateObj.getTime())) return null;
+                    return dateObj;
+                }
+                
+                const mdMatch = dateStr.match(/^(\d{1,2})\/(\d{1,2})$/);
+                if (mdMatch) {
+                    const month = parseInt(mdMatch[1], 10);
+                    const day = parseInt(mdMatch[2], 10);
+                    if (month < 1 || month > 12 || day < 1 || day > 31) return null;
+
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0); 
+                    const currentYear = today.getFullYear();
+                    const currentMonth = today.getMonth() + 1;
+                    
+                    let targetYear = currentYear;
+                    
+                    if (currentMonth < 4) { 
+                        if (month < 4) { 
+                            targetYear = currentYear;
+                        } else { 
+                            targetYear = currentYear - 1;
+                        }
+                    } else { 
+                        if (month < 4) { 
+                            targetYear = currentYear + 1;
+                        } else { 
+                            targetYear = currentYear;
+                        }
+                    }
+                    
+                    const dateObj = new Date(targetYear, month - 1, day);
+                    if (isNaN(dateObj.getTime())) return null;
+                    
+                    if (dateObj > today) {
+                        dateObj.setFullYear(dateObj.getFullYear() - 1);
+                    }
+                    
+                    return dateObj;
+                }
+                
+                return null; // 不明な形式
+            
+            } catch (error) {
+                console.error(`Failed to parse real date string: ${dateStr}`, error);
+                return null;
+            }
+        }
+        
+        // ★ v60: YYYY-MM-DD を MM/DD に変換 (クイックログのキーとして使用)
+        function convertDateToMMDD(dateStr) {
+             try {
+                // YYYY-MM-DD
+                const ymdMatch = dateStr.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})$/);
+                if (ymdMatch) {
+                    return `${parseInt(ymdMatch[2], 10)}/${parseInt(ymdMatch[3], 10)}`;
+                }
+                // MM/DD
+                const mdMatch = dateStr.match(/^(\d{1,2})\/(\d{1,2})$/);
+                if (mdMatch) {
+                     return `${parseInt(mdMatch[1], 10)}/${parseInt(mdMatch[2], 10)}`;
+                }
+                // Dateオブジェクト
+                if (dateStr instanceof Date) {
+                    return `${dateStr.getMonth() + 1}/${dateStr.getDate()}`;
+                }
+                return null;
+             } catch (e) {
+                return null;
+             }
+        }
+
+        // ★ v60: YYYY-MM-DD 形式の文字列を取得 (Dateオブジェクトから)
+        function getYYYYMMDD(date) {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
+
+        // ★ v49: スプレッドシートID抽出
+        function extractSpreadsheetId(input) {
+            if (!input) return "";
+            input = input.trim();
+            // URLからIDを抽出 (例: .../d/THIS_IS_THE_ID/edit...)
+            const urlMatch = input.match(/\/d\/([a-zA-Z0-9_-]{44})\//);
+            if (urlMatch && urlMatch[1]) {
+                console.log("Extracted ID from URL:", urlMatch[1]);
+                return urlMatch[1];
+            }
+            // IDがそのまま貼られたか (簡単なチェック)
+            if (input.length === 44 && !input.includes('/') && !input.includes(':')) {
+                console.log("Input appears to be an ID:", input);
+                return input;
+            }
+            // 抽出失敗 (または既にIDだった)
+            console.warn("Could not extract Spreadsheet ID. Using raw input.");
+            // ★ v49: 抽出失敗時は元の入力（おそらく不正）をそのまま返し、GAPIエラーで失敗させる
+            return input; 
+        }
+
+
+        // ----------------------------------------
+        // ページ切り替えロジック
+        // ----------------------------------------
+        const defaultPage = 'page-dashboard'; 
+
+        function showPage(pageId) {
+            if (!pages) pages = document.querySelectorAll('.page-content');
+            pages.forEach(page => { page.style.display = 'none'; });
+            const targetPage = document.getElementById(pageId);
+            if (targetPage) { 
+                targetPage.style.display = 'block'; 
+            } else {
+                console.error(`Page with id ${pageId} not found.`);
+            }
+            
+            if (!navLinks) navLinks = document.querySelectorAll('.nav-link');
+            navLinks.forEach(link => {
+                const isActive = link.dataset.page === pageId;
+                link.classList.toggle('bg-red-50', isActive);
+                link.classList.toggle('text-red-800', isActive);
+                link.classList.toggle('font-semibold', isActive);
+            });
+        }
+        
+        // ----------------------------------------
+        // ★ v57: Google API / GSI 認証 (v53のポーリング方式に戻す)
+        // ----------------------------------------
+        
+        // (v56 の gapiLoadedCallback, gisLoadedCallback を削除)
+
+        // ★ v57: GAPI/GIS の初期化 (ポーリングから呼ばれる)
+        async function tryInitGoogleClients() {
+            // GAPI (api.js) の初期化
+            if (!gapiReady) {
+                if (typeof gapi !== 'undefined' && gapi.load) {
+                    console.log("GAPI script loaded.");
+                    gapiReady = true;
+                    try {
+                        // gapi.load('client', ...) のコールバックとして
+                        await new Promise((resolve, reject) => {
+                            gapi.load('client', { callback: resolve, onerror: reject });
+                        });
+                        
+                        await gapi.client.load('https://sheets.googleapis.com/$discovery/rest?version=v4');
+                        console.log("GAPI Sheets API client initialized.");
+                        gapiSheetsReady = true; // Sheets API がロード完了
+                    } catch (e) {
+                        console.error("Error loading GAPI Sheets client:", e);
+                        showError("Google Sheets APIの初期化に失敗: " + (e.message || ""));
+                        updateAuthStatus(false, "Google API初期化失敗");
+                        return; // GAPI失敗
+                    }
+                }
+            }
+            
+            // GIS (gsi/client) の初期化
+            if (!gisReady) {
+                if (typeof google !== 'undefined' && google.accounts) {
+                    console.log("GIS script loaded.");
+                    gisReady = true;
+                }
+            }
+
+            // 両方が準備完了し、ClientID がある場合のみ TokenClient を初期化
+            if (gapiReady && gapiSheetsReady && gisReady && !tokenClient) {
+                if (!appSettings.clientId) {
+                    console.warn("Google APIs ready, but ClientID is not set.");
+                    updateAuthStatus(false, "クライアントID未設定");
+                    return; // ClientIDがなければ何もしない
+                }
+
+                try {
+                    tokenClient = google.accounts.oauth2.initTokenClient({
+                        client_id: appSettings.clientId,
+                        scope: 'https://www.googleapis.com/auth/spreadsheets.readonly',
+                        callback: handleTokenResponse, // トークン取得時のコールバック
+                    });
+                    console.log("GIS Token Client initialized.");
+                    
+                    // GAPI (Sheets) も準備完了しているので、ボタンを有効化
+                    if (googleAuthButton) googleAuthButton.disabled = false;
+                    updateAuthStatus(false, "Google認証準備完了");
+
+                } catch (e) {
+                    console.error("Error initializing GIS Token Client:", e);
+                    showError("Google認証の初期化に失敗: " + (e.message || ""));
+                    updateAuthStatus(false, "Google認証初期化失敗");
+                }
+            }
+        }
+        
+        function handleAuthClick() {
+            if (!appSettings.clientId) {
+                showError("「設定」ページでクライアントIDを設定してください。");
+                return;
+            }
+            if (!tokenClient) {
+                 console.error("GIS Token Client is not initialized yet.");
+                 showError("Google認証がまだ準備中です。");
+                 return;
+            }
+
+            if (googleTokenResponse && googleTokenResponse.access_token) {
+                // サインアウト
+                google.accounts.oauth2.revoke(googleTokenResponse.access_token, () => {
+                    console.log("Token revoked.");
+                });
+                googleTokenResponse = null;
+                if (gapi.client) gapi.client.setToken(null);
+                updateAuthStatus(false, "サインアウトしました");
+            } else {
+                // サインイン
+                tokenClient.requestAccessToken();
+            }
+        }
+
+        // ★ v47: サインインロジック修正
+        async function handleTokenResponse(response) {
+            if (response.error) {
+                console.error("Google Auth Error:", response.error);
+                showError(`サインイン失敗: ${response.error}`);
+                updateAuthStatus(false, "サインイン失敗");
+                return;
+            }
+            googleTokenResponse = response;
+            if (gapi.client) gapi.client.setToken(response);
+            
+            try {
+                // ★ v47: まずデータ読み込みを試行
+                // ★ v57: loadAndDisplayData を window にアタッチする必要がない
+                await loadAndDisplayData(appSettings);
+                // ★ v47: データ読み込み成功時のみ「サインイン済み」
+                console.log("Google Sign-In and data fetch successful.");
+                updateAuthStatus(true, "サインイン済み");
+            } catch (e) {
+                // ★ v47: データ読み込み失敗時
+                console.error("Sign-In OK, but data fetch failed:", e);
+                // showError は loadAndDisplayData 内部で呼ばれている
+                updateAuthStatus(false, "サインイン失敗 (データ読込不可)");
+                // トークンを破棄
+                if (googleTokenResponse && googleTokenResponse.access_token) {
+                    google.accounts.oauth2.revoke(googleTokenResponse.access_token, () => {});
+                }
+                googleTokenResponse = null;
+                if (gapi.client) gapi.client.setToken(null);
+            }
+        }
+        
+        function updateAuthStatus(isSignedIn, message) {
+            if (googleAuthButton) {
+                googleAuthButton.textContent = isSignedIn ? "Google サインアウト" : "Google サインイン";
+                googleAuthButton.classList.toggle('bg-blue-600', !isSignedIn);
+                googleAuthButton.classList.toggle('hover:bg-blue-700', !isSignedIn);
+                googleAuthButton.classList.toggle('bg-gray-500', isSignedIn);
+                googleAuthButton.classList.toggle('hover:bg-gray-600', isSignedIn);
+            }
+            if (googleAuthStatus) {
+                googleAuthStatus.textContent = message;
+                googleAuthStatus.classList.toggle('text-green-600', isSignedIn);
+                googleAuthStatus.classList.toggle('text-gray-500', !isSignedIn);
+            }
+        }
+
+
+        // ----------------------------------------
+        // 設定 (★ v49: ID抽出 + エラーハンドリング強化)
+        // ----------------------------------------
+        
+        // ★ v57: 編集ミスで失われていた toggleDataSourceView を再追加
+        function toggleDataSourceView(source) {
+            if (!settingsGoogleContainer || !settingsManualContainer) return;
+            if (source === 'google') {
+                settingsGoogleContainer.style.display = 'block';
+                settingsManualContainer.style.display = 'none';
+            } else { // 'manual'
+                settingsGoogleContainer.style.display = 'none';
+                settingsManualContainer.style.display = 'block';
+            }
+        }
+        
+        // ★ v49: エラーハンドリング強化
+        async function saveSettings() {
+            try {
+                // DOM要素がロードされているか確認
+                if (!dataSourceManual || !googleClientIdInput || !googleSpreadsheetIdInput || !googleSheetNamesInput || !manualDataInput || !saveStatus) {
+                    const errorMsg = "設定UIの読み込みに失敗しました。";
+                    console.error(errorMsg);
+                    if(saveStatus) saveStatus.textContent = errorMsg;
+                    // この環境では alert() は使えない
+                    return;
+                }
+                
+                const rawSpreadsheetInput = googleSpreadsheetIdInput.value;
+                const extractedId = extractSpreadsheetId(rawSpreadsheetInput); // ★ v49
+                
+                const settings = {
+                    // ★ v60: dataSourceGoogle を参照
+                    dataSource: dataSourceGoogle.checked ? 'google' : 'manual',
+                    // Google
+                    clientId: googleClientIdInput.value,
+                    spreadsheetId: extractedId, // ★ v49: 抽出したID
+                    sheetNames: googleSheetNamesInput.value.split('\n').filter(name => name.trim() !== ''),
+                    // 共通
+                    mapping: {}
+                };
+                
+                for (const key in mappingInputs) {
+                    if (mappingInputs[key]) {
+                        const letter = mappingInputs[key].value;
+                        settings.mapping[key] = letterToColumn(letter); // "B" -> 2
+                    }
+                }
+                
+                const manualData = manualDataInput.value;
+                
+                // ★ v49: localStorageの書き込み自体をtry...catch
+                try {
+                    localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+                    localStorage.setItem(MANUAL_DATA_STORAGE_KEY, manualData); // ★ v48: 修正
+                } catch (storageError) {
+                    console.error("Failed to write to localStorage:", storageError);
+                    saveStatus.textContent = '保存失敗(プライベートモードなど)';
+                    return;
+                }
+                
+                if (saveStatus) saveStatus.textContent = '保存しました！データを再読み込みします...';
+                
+                // ★ v49: リロードの代わりに、設定をグローバルに反映し、データを再読み込み
+                const oldClientId = appSettings.clientId; // ★ v56
+                appSettings = settings;
+                
+                // ★ v57: クライアントIDが変更された場合、GAPI/GISの再初期化を試みる
+                if (appSettings.clientId !== oldClientId) {
+                    console.log("ClientID changed or set. Re-initializing Google Clients.");
+                    // TokenClient をリセット (gapi/gis はリセット不要)
+                    tokenClient = null; 
+                    await tryInitGoogleClients();
+                }
+                
+                // データ再読み込み
+                await loadAndDisplayData(appSettings);
+                
+                setTimeout(() => { 
+                    if (saveStatus) saveStatus.textContent = '保存完了';
+                }, 1500);
+                setTimeout(() => { 
+                    if (saveStatus) saveStatus.textContent = ''; 
+                }, 3000);
+                
+            } catch (error) {
+                console.error("Failed to save settings:", error);
+                if (saveStatus) saveStatus.textContent = `保存に失敗しました: ${error.message}`;
+            }
+        }
+
+        // ★ v44: localStorageから読み込み (v48のキー修正)
+        async function loadSettings() {
+            let settings = null;
+            let manualData = "";
+            
+            try {
+                // ★ v48: キーのタイプミスを修正
+                manualData = localStorage.getItem(MANUAL_DATA_STORAGE_KEY) || "";
+                const savedSettings = localStorage.getItem(SETTINGS_STORAGE_KEY);
+                if (savedSettings) {
+                    settings = JSON.parse(savedSettings);
+                }
+
+                // --- 読み込んだ値をフォームに反映 ---
+                if (manualDataInput) {
+                    manualDataInput.value = manualData;
+                }
+                
+                if (settings) {
+                    // v44グローバル変数に保持
+                    appSettings = settings; 
+                    
+                    if (settings.dataSource === 'manual') {
+                        if (dataSourceManual) dataSourceManual.checked = true;
+                        if (dataSourceGoogle) dataSourceGoogle.checked = false; // ★ v59: Googleのチェックを外す
+                        toggleDataSourceView('manual');
+                    } else {
+                        if (dataSourceGoogle) dataSourceGoogle.checked = true;
+                        if (dataSourceManual) dataSourceManual.checked = false; // ★ v59: Manualのチェックを外す
+                        toggleDataSourceView('google');
+                    }
+                    
+                    // Google
+                    if (googleClientIdInput) googleClientIdInput.value = settings.clientId || "";
+                    // ★ v49: 保存されているのはIDだが、フォームにはIDをそのまま表示
+                    if (googleSpreadsheetIdInput) googleSpreadsheetIdInput.value = settings.spreadsheetId || ""; 
+                    if (googleSheetNamesInput) googleSheetNamesInput.value = (settings.sheetNames || []).join('\n');
+                    
+                    // 列設定
+                    if (settings.mapping) {
+                        for (const key in settings.mapping) {
+                            if (mappingInputs[key]) {
+                                const colNum = settings.mapping[key];
+                                mappingInputs[key].value = columnToLetter(colNum); // 2 -> "B"
+                            }
+                        }
+                    }
+                } else {
+                    console.log("No settings found, using defaults.");
+                    // ★ v60: デフォルトを 'google' に戻す
+                    if (dataSourceGoogle) dataSourceGoogle.checked = true;
+                    if (dataSourceManual) dataSourceManual.checked = false;
+                    toggleDataSourceView('google');
+                }
+                
+                return settings; // 読み込んだ設定を返す
+
+            } catch (error) {
+                console.error("Failed to load settings:", error);
+                showError(`設定の読み込みに失敗しました: ${error.message}`);
+                 // ★ v60: デフォルトを 'google' に戻す
+                if (dataSourceGoogle) dataSourceGoogle.checked = true;
+                if (dataSourceManual) dataSourceManual.checked = false;
+                toggleDataSourceView('google');
+                return null;
+            }
+        }
+        
+        // ----------------------------------------
+        // ★ v60: クイックログ (手動入力) 機能
+        // ----------------------------------------
+        
+        // ★ v60: localStorageからクイックログを読み込む
+        async function loadQuickLogs() {
+            try {
+                const savedLogs = localStorage.getItem(QUICK_LOGS_STORAGE_KEY);
+                if (savedLogs) {
+                    quickLogs = JSON.parse(savedLogs);
+                    console.log(`Loaded ${Object.keys(quickLogs).length} quick logs from localStorage.`);
+                } else {
+                    quickLogs = {};
+                }
+            } catch (error) {
+                console.error("Failed to load quick logs:", error);
+                quickLogs = {};
+            }
+            // 今日の日付をフォームに設定
+            if(logDateInput) {
+                logDateInput.value = getYYYYMMDD(new Date());
+                // ★ v60: フォームの日付変更時に、保存済みのログをフォームに反映する
+                logDateInput.dispatchEvent(new Event('change'));
+            }
+        }
+
+        // ★ v60: フォームの日付が変更されたときに既存データを表示
+        function handleLogDateChange() {
+            const dateKey = convertDateToMMDD(logDateInput.value);
+            if (!dateKey) {
+                clearLogForm();
+                return;
+            }
+
+            const logData = quickLogs[dateKey];
+            if (logData) {
+                console.log(`Loading log for ${dateKey} into form.`);
+                logDistanceInput.value = logData.distance || "";
+                logMorningWeightInput.value = logData.morningWeight || "";
+                logEveningWeightInput.value = logData.eveningWeight || "";
+                logWakingHrInput.value = logData.wakingHr || "";
+                logSleepInput.value = logData.sleep || "";
+            } else {
+                clearLogForm();
+            }
+        }
+        
+        // ★ v60: フォームをクリア (日付以外)
+        function clearLogForm() {
+            logDistanceInput.value = "";
+            logMorningWeightInput.value = "";
+            logEveningWeightInput.value = "";
+            logWakingHrInput.value = "";
+            logSleepInput.value = "";
+        }
+
+        // ★ v60: クイックログを保存
+        async function saveQuickLog() {
+            try {
+                const dateStr = logDateInput.value;
+                if (!dateStr) {
+                    showQuickLogError("日付を選択してください。");
+                    return;
+                }
+                
+                const dateKey = convertDateToMMDD(dateStr); // 'YYYY-MM-DD' -> 'MM/DD'
+                if (!dateKey) {
+                     showQuickLogError("無効な日付形式です。");
+                    return;
+                }
+
+                // フォームから値を取得 (null or number)
+                const getNum = (el) => {
+                    const val = parseFloat(el.value);
+                    return isNaN(val) ? null : val;
+                };
+
+                const logEntry = {
+                    date: dateKey, // 'MM/DD'
+                    distance: getNum(logDistanceInput),
+                    morningWeight: getNum(logMorningWeightInput),
+                    eveningWeight: getNum(logEveningWeightInput),
+                    wakingHr: getNum(logWakingHrInput),
+                    practiceHr: null, // (クイックログでは未対応)
+                    sleep: getNum(logSleepInput),
+                };
+
+                // quickLogs オブジェクトを更新
+                quickLogs[dateKey] = logEntry;
+
+                // localStorage に保存
+                localStorage.setItem(QUICK_LOGS_STORAGE_KEY, JSON.stringify(quickLogs));
+                console.log(`Quick log saved for ${dateKey}.`);
+                showQuickLogSuccess(`データを保存しました (${dateKey})`);
+
+                // データをマージして再表示
+                await mergeDataAndRefreshUI();
+
+            } catch (error) {
+                console.error("Failed to save quick log:", error);
+                showQuickLogError(`保存に失敗しました: ${error.message}`);
+            }
+        }
+
+        // ★ v60: クイックログのメッセージ表示
+        function showQuickLogError(message) {
+            quickLogError.textContent = message;
+            quickLogError.style.display = 'block';
+            quickLogSuccess.style.display = 'none';
+        }
+        function showQuickLogSuccess(message) {
+            quickLogSuccess.textContent = message;
+            quickLogSuccess.style.display = 'block';
+            quickLogError.style.display = 'none';
+            setTimeout(() => { quickLogSuccess.style.display = 'none'; }, 3000);
+        }
+
+
+        // ----------------------------------------
+        // データ取得・解析処理
+        // ----------------------------------------
+        
+        // ★ v44: Google Sheets API (gapi) からの応答をパース
+        function parseGapiResponse(valueRanges, mapping) {
+            if (!mapping || !mapping.date) {
+                throw new Error("「日付」の列設定は必須です。");
+            }
+
+            const indices = {};
+            for (const key in mapping) {
+                if (mapping[key]) {
+                    indices[key] = parseInt(mapping[key], 10) - 1; // 1-based to 0-based
+                }
+            }
+            
+            // v33と同じ (YYYY-MM-DD や MM/DD を許可)
+            const dateRegex = /^\s*"?\s*(\d{4}[-\/]\d{1,2}[-\/]\d{1,2}|\d{1,2}\/\d{1,2})\s*"?\s*$/i;
+            const data = [];
+
+            // valueRanges は [ { values: [...] }, { values: [...] } ] という構造
+            for (const sheetData of valueRanges) {
+                const lines = sheetData.values || [];
+                
+                for (const columns of lines) { // GAPIは既に配列
+                    const dateVal = columns[indices.date];
+
+                    if (dateVal && dateRegex.test(dateVal)) {
+                        const cleanValue = (val) => {
+                            if (val === undefined || val === null) return null;
+                            const trimmedVal = val.toString().trim().replace(/^["']|["']$/g, '').trim();
+                            if (trimmedVal === "") return null;
+                            const num = parseFloat(trimmedVal);
+                            return isNaN(num) ? null : num;
+                        };
+                        const cleanDate = dateVal.toString().trim().replace(/^["']|["']$/g, '').trim();
+                        
+                        data.push({
+                            date: cleanDate, // 'MM/DD' または 'YYYY/MM/DD'
+                            distance: cleanValue(columns[indices.distance]),
+                            morningWeight: cleanValue(columns[indices.morningWeight]),
+                            eveningWeight: cleanValue(columns[indices.eveningWeight]),
+                            wakingHr: cleanValue(columns[indices.wakingHr]),
+                            practiceHr: cleanValue(columns[indices.practiceHr]),
+                            sleep: cleanValue(columns[indices.sleep]),
+                        });
+                    }
+                }
+            }
+            return data;
+        }
+
+        // 手動入力データ用のパーサー (v33と同じ)
+        function parseManualData(manualText, mapping) {
+            const dateRegex = /^\s*"?\s*(\d{4}[-\/]\d{1,2}[-\/]\d{1,2}|\d{1,2}\/\d{1,2})\s*"?\s*$/i;
+            const lines = manualText.trim().split('\n');
+            const data = [];
+            
+            for (const line of lines) {
+                const parts = line.split(',');
+                if (parts.length < 2) continue;
+                
+                const dateVal = parts[0].trim();
+                const distVal = parts[1].trim();
+
+                if (dateVal && dateRegex.test(dateVal)) {
+                     const cleanValue = (val) => {
+                         if (val === undefined || val === null) return null;
+                         const trimmedVal = val.trim().replace(/^["']|["']$/g, '').trim();
+                         if (trimmedVal === "") return null;
+                         const num = parseFloat(trimmedVal);
+                         return isNaN(num) ? null : num;
+                    };
+                    const cleanDate = dateVal.trim().replace(/^["']|["']$/g, '').trim();
+                    
+                    data.push({
+                        date: cleanDate,
+                        distance: cleanValue(distVal),
+                        morningWeight: null,
+                        eveningWeight: null,
+                        wakingHr: null,
+                        practiceHr: null,
+                        sleep: null,
+                    });
+                }
+            }
+            return data;
+        }
+
+
+        // ★ v44: データ読み込みのメインロジック (GAPI/手動 分岐)
+        // ★ v60: loadAndDisplayData (ベースデータのロード) と mergeDataAndRefreshUI (マージとUI更新) に分離
+        
+        async function loadAndDisplayData(settings) {
+            const loadingEl = document.getElementById('dashboard-loading');
+            const summaryTopEl = document.getElementById('dashboard-summary-top');
+            const summaryBottomEl = document.getElementById('dashboard-summary-bottom');
+            const errorEl = document.getElementById('dashboard-error');
+            
+            if (!loadingEl || !summaryTopEl || !summaryBottomEl || !errorEl) {
+                console.error("Dashboard UI elements (top/bottom) not found.");
+                return;
+            }
+
+            loadingEl.style.display = 'flex';
+            summaryTopEl.style.display = 'none'; 
+            summaryBottomEl.style.display = 'none'; 
+            errorEl.style.display = 'none';
+
+            try {
+                if (!settings) {
+                    showError('「設定」ページで、入力方法と列設定を保存してください。');
+                    return; // ★ v60: baseData は空のまま
+                }
+                
+                // データソースによって処理を分岐
+                if (settings.dataSource === 'manual') {
+                    // --- 手動データの場合 ---
+                    console.log("Loading data from: Manual Input");
+                    const manualData = localStorage.getItem(MANUAL_DATA_STORAGE_KEY) || ""; // ★ v48
+                    if (!manualData) {
+                        showError('「設定」ページで、手動入力データを貼り付けて保存してください。');
+                        baseData = []; // ★ v60
+                        return;
+                    }
+                    baseData = parseManualData(manualData, settings.mapping); // ★ v60
+                    
+                } else {
+                    // --- Google連携の場合 ---
+                    console.log("Loading data from: Google Sheets API");
+                    if (!googleTokenResponse || !googleTokenResponse.access_token) {
+                        showError('「Google サインイン」ボタンを押して、スプレッドシートへのアクセスを許可してください。');
+                        baseData = []; // ★ v60
+                        return;
+                    }
+                    if (!settings.spreadsheetId || !settings.sheetNames || settings.sheetNames.length === 0 || !settings.mapping || !settings.mapping.date) {
+                        showError('「設定」ページで、クライアントID、スプレッドシートID、シート名、列設定をすべて完了してください。');
+                        baseData = []; // ★ v60
+                        return;
+                    }
+                    
+                    // ★ v57: GAPIが準備OKか最終確認
+                    if (!gapiReady || !gapiSheetsReady || !gapi.client || !gapi.client.sheets) {
+                        showError('Google Sheets API がまだ準備中です。数秒待ってから再試行してください。');
+                        baseData = []; // ★ v60
+                        return;
+                    }
+
+                    // 全シートのA-Z列（最大）のデータを要求
+                    const ranges = settings.sheetNames.map(name => `'${name}'!A:Z`);
+                    
+                    // ★ v49: タイムアウト付きでGAPIコール
+                    const gapiCall = gapi.client.sheets.spreadsheets.values.batchGet({
+                        spreadsheetId: settings.spreadsheetId,
+                        ranges: ranges,
+                    });
+                    
+                    const response = await Promise.race([
+                        gapiCall,
+                        new Promise((_, reject) => setTimeout(() => reject(new Error('Google Sheets API request timed out (10s)')), 10000))
+                    ]);
+                    
+                    baseData = parseGapiResponse(response.result.valueRanges, settings.mapping); // ★ v60
+                }
+
+                // ★ v60: マージ処理とUI更新を呼び出す
+                await mergeDataAndRefreshUI();
+
+            } catch (error) {
+                console.error("Failed to load and display data:", error);
+                // ★ v47: エラーオブジェクト全体を渡す
+                showError(error); 
+                // ★ v47: loadAndDisplayData が失敗したことを呼び出し元に伝える
+                throw error;
+            }
+        }
+        
+        // ★ v60: クイックログとベースデータをマージし、UIを更新する
+        async function mergeDataAndRefreshUI() {
+            const loadingEl = document.getElementById('dashboard-loading');
+            const summaryTopEl = document.getElementById('dashboard-summary-top');
+            const summaryBottomEl = document.getElementById('dashboard-summary-bottom');
+            
+            // 1. baseData を日付キー (MM/DD) のマップに変換 (重複排除)
+            const baseDataMap = new Map();
+            for (const item of baseData) {
+                const dateKey = convertDateToMMDD(item.date);
+                if (dateKey) {
+                    baseDataMap.set(dateKey, item);
+                }
+            }
+
+            // 2. クイックログ (quickLogs) で上書き (マージ)
+            //    quickLogs は既に { 'MM/DD': { ... } } 形式
+            for (const dateKey in quickLogs) {
+                const logEntry = quickLogs[dateKey];
+                const baseEntry = baseDataMap.get(dateKey) || { date: dateKey };
+
+                // クイックログのデータで上書き (null でない場合のみ)
+                const mergedEntry = {
+                    date: baseEntry.date, // 元の日付形式 (MM/DD or YYYY/MM/DD) を維持
+                    distance: (logEntry.distance !== null) ? logEntry.distance : baseEntry.distance,
+                    morningWeight: (logEntry.morningWeight !== null) ? logEntry.morningWeight : baseEntry.morningWeight,
+                    eveningWeight: (logEntry.eveningWeight !== null) ? logEntry.eveningWeight : baseEntry.eveningWeight,
+                    wakingHr: (logEntry.wakingHr !== null) ? logEntry.wakingHr : baseEntry.wakingHr,
+                    practiceHr: baseEntry.practiceHr, // クイックログでは未対応
+                    sleep: (logEntry.sleep !== null) ? logEntry.sleep : baseEntry.sleep,
+                };
+                baseDataMap.set(dateKey, mergedEntry);
+            }
+
+            // 3. マップを配列に戻し、ソートする
+            const mergedData = Array.from(baseDataMap.values());
+            mergedData.sort((a, b) => {
+                const dateA = parseDateToSort(a.date);
+                const dateB = parseDateToSort(b.date);
+                if (dateA === null) return 1;
+                if (dateB === null) return -1;
+                return dateA - dateB;
+            });
+            
+            appData = mergedData; // グローバルの appData を更新
+            console.log(`Data merged. Total ${appData.length} records.`);
+
+            // 4. UI更新
+            if (appData.length === 0) {
+                 showError('データを読み込めませんでした。設定（データソース、ID、シート名、列設定、日付形式）を確認してください。');
+                 return;
+            }
+
+            updateDashboard(appData);
+            updateConditionChart(appData); 
+
+            loadingEl.style.display = 'none';
+            summaryTopEl.style.display = 'grid'; 
+            summaryBottomEl.style.display = 'grid';
+            
+             // ★ v60: テーパリング計画の表示も実績データで更新する
+            const displayedPlanId = document.querySelector('#plan-output-container [data-plan-id]')?.dataset.planId;
+            if (displayedPlanId) {
+                displaySavedPlan(displayedPlanId);
+            }
+        }
+
+
+        function showError(error) {
+            const loadingEl = document.getElementById('dashboard-loading');
+            const errorEl = document.getElementById('dashboard-error');
+            const errorMsgEl = document.getElementById('dashboard-error-message');
+            const summaryTopEl = document.getElementById('dashboard-summary-top');
+            const summaryBottomEl = document.getElementById('dashboard-summary-bottom');
+
+            if (loadingEl) loadingEl.style.display = 'none';
+            if (summaryTopEl) summaryTopEl.style.display = 'none'; 
+            if (summaryBottomEl) summaryBottomEl.style.display = 'none'; 
+            if (errorEl) errorEl.style.display = 'block';
+            
+            // ★ v47: エラーオブジェクトを解析
+            let message = "不明なエラーが発生しました。";
+            if (typeof error === 'string') {
+                message = error;
+            } else if (error.message) {
+                message = error.message;
+            }
+            // GAPI/GSI 特有のエラー
+            if (error.result && error.result.error) {
+                message = `Google API エラー: ${error.result.error.message} (オリジンの設定を確認してください)`;
+            }
+            
+            if (errorMsgEl) errorMsgEl.textContent = message;
+        }
+        
+        // ★ v44: v43の警告表示は削除
+
+
+        // ----------------------------------------
+        // ダッシュボードの更新 (v33と同じ)
+        // ----------------------------------------
+        
+        // v33と同じヘルパー関数
+        function findChangeData(data, key) {
+            if (!data || data.length === 0) return null;
+            
+            let latestValue = null;
+            let latestIndex = -1;
+            
+            for (let i = data.length - 1; i >= 0; i--) {
+                const value = data[i][key];
+                if (value !== null && value !== undefined && !isNaN(parseFloat(value))) {
+                    latestValue = parseFloat(value);
+                    latestIndex = i;
+                    break;
+                }
+            }
+
+            if (latestIndex === -1) return { latest: null, previous: null, diff: null, percent: null };
+
+            let previousValue = null;
+            
+            for (let i = latestIndex - 1; i >= 0; i--) {
+                const value = data[i][key];
+                if (value !== null && value !== undefined && !isNaN(parseFloat(value))) {
+                    previousValue = parseFloat(value);
+                    break;
+                }
+            }
+
+            const result = { latest: latestValue, previous: null, diff: null, percent: null };
+
+            if (previousValue !== null) {
+                const diff = latestValue - previousValue;
+                result.previous = previousValue;
+                result.diff = diff;
+                if (previousValue !== 0) {
+                    result.percent = (diff / previousValue) * 100;
+                } else {
+                    result.percent = (latestValue > 0) ? 100.0 : 0; 
+                }
+            }
+            
+            return result;
+        }
+        
+        // v33と同じヘルパー関数
+        function calculateWeeklyAverage(data, key) {
+            if (!data || data.length === 0) {
+                return null;
+            }
+
+            const latestDate = new Date(); // 「今日」
+            latestDate.setHours(0, 0, 0, 0); 
+
+            const startDate = new Date(latestDate.getTime());
+            startDate.setDate(startDate.getDate() - 6); // 7日間 (今日を含む)
+
+            const recentData = data.filter(day => {
+                const d = parseDateToReal(day.date); // 実日付に変換
+                return d && d >= startDate && d <= latestDate;
+            });
+            
+            if (recentData.length === 0) {
+                return null; // この7日間にデータなし
+            }
+
+            let includedDays = 0;
+            const totalValue = recentData.reduce((sum, day) => {
+                const value = day[key];
+                if (value !== null && value !== undefined && !isNaN(parseFloat(value))) {
+                    const numValue = parseFloat(value);
+                    if (key === 'distance') {
+                        if (numValue >= 10) { 
+                            includedDays++;
+                            return sum + numValue;
+                        }
+                    } else {
+                        includedDays++;
+                        return sum + numValue;
+                    }
+                }
+                return sum;
+            }, 0);
+            
+            if (includedDays > 0) {
+                return totalValue / includedDays;
+            } else {
+                return null; // 有効なデータがなかった
+            }
+        }
+
+
+        // v33と同じ
+        function updateDashboard(data) {
+            
+            const metrics = [
+                { 
+                    key: 'distance', 
+                    el: document.getElementById('summary-distance'), 
+                    changeEl: document.getElementById('summary-distance-change'), 
+                    avgEl: document.getElementById('avg-distance'),
+                    unit: 'km', 
+                    avgUnit: 'km/日'
+                },
+                { 
+                    key: 'morningWeight', 
+                    el: document.getElementById('summary-morning-weight'), 
+                    changeEl: document.getElementById('summary-morning-weight-change'), 
+                    avgEl: document.getElementById('avg-morning-weight'),
+                    unit: 'kg', 
+                    avgUnit: 'kg'
+                },
+                { 
+                    key: 'eveningWeight', 
+                    el: document.getElementById('summary-evening-weight'), 
+                    changeEl: document.getElementById('summary-evening-weight-change'), 
+                    avgEl: document.getElementById('avg-evening-weight'),
+                    unit: 'kg', 
+                    avgUnit: 'kg'
+                },
+                { 
+                    key: 'wakingHr', 
+                    el: document.getElementById('summary-waking-hr'), 
+                    changeEl: document.getElementById('summary-waking-hr-change'), 
+                    avgEl: document.getElementById('avg-waking-hr'),
+                    unit: 'bpm', 
+                    avgUnit: 'bpm'
+                },
+                { 
+                    key: 'sleep', 
+                    el: document.getElementById('summary-sleep'), 
+                    changeEl: document.getElementById('summary-sleep-change'), 
+                    avgEl: document.getElementById('avg-sleep'),
+                    unit: '時間', 
+                    avgUnit: '時間'
+                },
+            ];
+
+            if (!data || data.length === 0) {
+                metrics.forEach(m => {
+                    if (m.el) m.el.innerHTML = `– <span class="text-lg font-medium text-gray-500">${m.unit}</span>`;
+                    if (m.avgEl) m.avgEl.textContent = `週平均: – ${m.avgUnit}`;
+                    if (m.changeEl) m.changeEl.innerHTML = `<span>–</span> (<span>–</span>)`;
+                });
+                return;
+            }
+
+            // 各メトリクスを更新
+            metrics.forEach(m => {
+                if (!m.el || !m.changeEl || !m.avgEl) {
+                    console.warn(`Dashboard elements for ${m.key} not found.`);
+                    return;
+                }
+                
+                // 1. 最新値と前日比
+                const changeData = findChangeData(data, m.key);
+                
+                if (changeData && changeData.latest !== null) {
+                    m.el.innerHTML = `${changeData.latest.toFixed(1)} <span class="text-lg font-medium text-gray-500">${m.unit}</span>`;
+                } else {
+                    m.el.innerHTML = `– <span class="text-lg font-medium text-gray-500">${m.unit}</span>`;
+                }
+                
+                if (changeData && changeData.diff !== null) {
+                    const diff = changeData.diff;
+                    const percent = changeData.percent;
+                    const isGoodWhenDown = m.key.includes('Weight') || m.key.includes('Hr');
+                    const defaultColor = diff > 0 ? 'text-green-600' : (diff < 0 ? 'text-red-600' : 'text-gray-500');
+                    const goodWhenDownColor = diff < 0 ? 'text-green-600' : (diff > 0 ? 'text-red-600' : 'text-gray-500');
+                    const color = isGoodWhenDown ? goodWhenDownColor : defaultColor;
+                    const sign = diff > 0 ? '+' : '';
+                    
+                    m.changeEl.innerHTML = `
+                        <span class="${color} font-semibold">${sign}${diff.toFixed(1)}</span>
+                        <span class="text-gray-500">(${sign}${percent.toFixed(1)}%)</span>
+                    `;
+                } else {
+                    m.changeEl.innerHTML = `<span>–</span> (<span>–</span>)`;
+                }
+                
+                // 2. 週平均
+                const avgValue = calculateWeeklyAverage(data, m.key);
+                if (avgValue !== null) {
+                    m.avgEl.textContent = `週平均: ${avgValue.toFixed(1)} ${m.avgUnit}`;
+                } else {
+                    m.avgEl.textContent = `週平均: – ${m.avgUnit}`;
+                }
+            });
+        }
+
+
+        // ----------------------------------------
+        // Chart.js (★ v45: グラフ破棄処理を修正)
+        // ----------------------------------------
+        function initializeChart() {
+            // ★ v45: 既存チャートの破棄
+            if (conditionChart) {
+                console.warn("Destroying existing chart instance before recreation.");
+                conditionChart.destroy();
+                conditionChart = null;
+            }
+            try {
+                const ctx = document.getElementById('conditionChart');
+                if (!ctx) {
+                    console.warn("conditionChart canvas not found.");
+                    return;
+                }
+                
+                conditionChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: [], 
+                        datasets: [
+                            { 
+                                label: '走行距離 (km)', 
+                                data: [], 
+                                borderColor: 'rgb(59, 130, 246)', // blue-600
+                                yAxisID: 'yDistance', 
+                                spanGaps: true,
+                                hidden: true 
+                            },
+                            { 
+                                label: '朝体重 (kg)', 
+                                data: [], 
+                                borderColor: 'rgb(34, 197, 94)', // green-500
+                                yAxisID: 'yWeight', 
+                                spanGaps: true,
+                                hidden: false 
+                            },
+                            { 
+                                label: '夕体重 (kg)', 
+                                data: [], 
+                                borderColor: 'rgb(5, 150, 105)', // emerald-600
+                                yAxisID: 'yWeight', 
+                                spanGaps: true,
+                                hidden: true 
+                            },
+                            { 
+                                label: '起床時脈拍', 
+                                data: [], 
+                                borderColor: 'rgb(239, 68, 68)', // red-500
+                                yAxisID: 'yHR', 
+                                spanGaps: true,
+                                hidden: false 
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: { 
+                                title: { display: true, text: '日付' },
+                                ticks: { autoSkip: true, maxTicksLimit: 20 }
+                            },
+                            yWeight: { 
+                                type: 'linear', 
+                                position: 'left', 
+                                title: { display: true, text: '体重 (kg)' },
+                                ticks: { stepSize: 1 }, 
+                                grace: '10%' 
+                            },
+                            yHR: { 
+                                type: 'linear', 
+                                position: 'right', 
+                                title: { display: true, text: '脈拍 (bpm)' }, 
+                                grid: { drawOnChartArea: false },
+                                ticks: { stepSize: 5 }, 
+                                grace: '10%'
+                            },
+                            yDistance: {
+                                type: 'linear',
+                                position: 'left', 
+                                title: { display: true, text: '距離 (km)' },
+                                grid: { drawOnChartArea: false },
+                                display: false,
+                                grace: '10%'
+                            }
+                        },
+                        plugins: { tooltip: { mode: 'index', intersect: false } }
+                    }
+                });
+            } catch (error) {
+                console.error("Failed to initialize chart:", error);
+            }
+        }
+
+        // ★ v58: グラフの表示期間を3週間に変更
+        function updateConditionChart(data) {
+            if (!conditionChart) {
+                console.warn("updateConditionChart called but chart is not initialized.");
+                return;
+            }
+            
+            const avgContentEl = document.getElementById('chart-averages-content');
+            
+            if (!data || data.length === 0) {
+                 if(avgContentEl) avgContentEl.innerHTML = `<p class="text-gray-500">（データを読み込み中...）</p>`;
+                return;
+            }
+
+            // ★ v58: データを直近3週間（21日間）にフィルタリング
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const threeWeeksAgo = new Date();
+            threeWeeksAgo.setDate(today.getDate() - 20); // 今日を含めて21日間
+            threeWeeksAgo.setHours(0, 0, 0, 0);
+
+            const filteredData = data.filter(d => {
+                const dateObj = parseDateToReal(d.date);
+                return dateObj && dateObj >= threeWeeksAgo && dateObj <= today;
+            });
+
+            if (filteredData.length === 0) {
+                console.warn("No data found in the last 3 weeks for the chart.");
+                 if(avgContentEl) avgContentEl.innerHTML = `<p class="text-gray-500">（直近3週間のデータがありません）</p>`;
+                // グラフを空にする
+                conditionChart.data.labels = [];
+                conditionChart.data.datasets.forEach(dataset => {
+                    dataset.data = [];
+                });
+                conditionChart.update();
+                return;
+            }
+            // ★ v58: フィルタリング後のデータを使用する
+
+            try {
+                // チェックボックスの状態を読み取る
+                const toggles = {
+                    distance: document.getElementById('toggle-distance').checked,
+                    morningWeight: document.getElementById('toggle-morning-weight').checked,
+                    eveningWeight: document.getElementById('toggle-evening-weight').checked,
+                    wakingHr: document.getElementById('toggle-waking-hr').checked,
+                };
+                
+                // データをセット (★ v58: filteredData を使用)
+                const labels = filteredData.map(d => d.date);
+                conditionChart.data.labels = labels;
+                
+                // データセットの表示/非表示を切り替え (★ v58: filteredData を使用)
+                conditionChart.data.datasets[0].data = filteredData.map(d => d.distance);
+                conditionChart.data.datasets[0].hidden = !toggles.distance;
+                
+                conditionChart.data.datasets[1].data = filteredData.map(d => d.morningWeight);
+                conditionChart.data.datasets[1].hidden = !toggles.morningWeight;
+                
+                conditionChart.data.datasets[2].data = filteredData.map(d => d.eveningWeight);
+                conditionChart.data.datasets[2].hidden = !toggles.eveningWeight;
+                
+                conditionChart.data.datasets[3].data = filteredData.map(d => d.wakingHr);
+                conditionChart.data.datasets[3].hidden = !toggles.wakingHr;
+
+                // Y軸の表示/非表示を切り替え
+                conditionChart.options.scales.yDistance.display = toggles.distance;
+                conditionChart.options.scales.yWeight.display = toggles.morningWeight || toggles.eveningWeight;
+                conditionChart.options.scales.yHR.display = toggles.wakingHr;
+                
+                // 軸が重なった場合（走行距離と体重を同時表示）のオフセット調整
+                if (toggles.distance && (toggles.morningWeight || toggles.eveningWeight)) {
+                    conditionChart.options.scales.yDistance.position = 'left';
+                    conditionChart.options.scales.yWeight.position = 'left';
+                    conditionChart.options.scales.yWeight.offset = true; // 重ならないようにオフセット
+                } else {
+                    conditionChart.options.scales.yWeight.offset = false; // オフセット解除
+                    conditionChart.options.scales.yDistance.position = 'left';
+                    conditionChart.options.scales.yWeight.position = 'left';
+                }
+                
+                // 平均値を計算して表示 (v33と同じ)
+                let avgHtml = '';
+                const avgMetrics = [
+                    { key: 'distance', label: '走行距離', unit: 'km/日', shown: toggles.distance, color: 'text-blue-600' },
+                    { key: 'morningWeight', label: '朝体重', unit: 'kg', shown: toggles.morningWeight, color: 'text-green-600' },
+                    { key: 'eveningWeight', label: '夕体重', unit: 'kg', shown: toggles.eveningWeight, color: 'text-emerald-600' },
+                    { key: 'wakingHr', label: '起床時脈拍', unit: 'bpm', shown: toggles.wakingHr, color: 'text-red-600' },
+                ];
+                
+                avgMetrics.forEach(m => {
+                    if (m.shown) {
+                        // ★ v58: 平均値の計算は「全データ (data)」を基に行う (calculateWeeklyAverageが内部で7日間にフィルタするため)
+                        const avg = calculateWeeklyAverage(data, m.key); 
+                        const avgText = (avg !== null) ? `${avg.toFixed(1)} ${m.unit}` : '–';
+                        avgHtml += `<p><strong class="${m.color}">${m.label}:</strong> ${avgText}</p>`;
+                    }
+                });
+                
+                if (avgHtml === '') {
+                    avgHtml = '<p class="text-gray-500">（グラフの表示項目を選択してください）</p>';
+                }
+                if (avgContentEl) avgContentEl.innerHTML = avgHtml;
+
+                conditionChart.update();
+            } catch (error) {
+                console.error("Failed to update chart:", error);
+            }
+        }
+        
+        // ----------------------------------------
+        // テーパリング計画 機能 (★ v44: localStorage保存)
+        // ----------------------------------------
+        
+        // 日付を "MM/DD (曜)" 形式にフォーマットするヘルパー関数
+        function formatDate(date) {
+            // v31: dateが文字列の場合、Dateオブジェクトに変換
+            const dateObj = (typeof date === 'string') ? new Date(date) : date;
+            const month = dateObj.getMonth() + 1;
+            const day = dateObj.getDate();
+            const weekday = ['日', '月', '火', '水', '木', '金', '土'][dateObj.getDay()];
+            return `${month}/${day} (${weekday})`;
+        }
+
+        // 「日平均」走行距離の計算ロジック (「今日」基準) - v33と同じ
+        function calculateAverageDistance() {
+            if (!appData || appData.length === 0) {
+                console.warn("[calcAvg] appData is empty. Returning 0.0");
+                return 0.0.toFixed(1); 
+            }
+
+            const latestDate = new Date(); // 「今日」
+            latestDate.setHours(0, 0, 0, 0); 
+
+            const startDate = new Date(latestDate.getTime());
+            startDate.setDate(startDate.getDate() - 20); // 21日間
+
+            console.log(`[calcAvg] Calculating average for 21 days from ${startDate.toLocaleDateString()} to ${latestDate.toLocaleDateString()}`);
+
+            const recentData = appData.filter(day => {
+                const d = parseDateToReal(day.date); // 実日付に変換
+                return d && d >= startDate && d <= latestDate;
+            });
+            
+            if (recentData.length === 0) {
+                console.warn("[calcAvg] No data found in the last 21 days.");
+                return 0.0.toFixed(1);
+            }
+
+            console.log(`[calcAvg] Found ${recentData.length} entries in the last 21 days.`);
+            
+            let includedDays = 0;
+            const totalDistance = recentData.reduce((sum, day) => {
+                const dist = day.distance || 0;
+                if (dist >= 10) { 
+                    includedDays++;
+                    return sum + dist;
+                }
+                return sum;
+            }, 0);
+            
+            console.log(`[calcAvg] Total distance (>=10km): ${totalDistance} km from ${includedDays} days.`);
+            
+            let dailyAvg = 0;
+            if (includedDays > 0) {
+                dailyAvg = totalDistance / includedDays; // 21 ではなく includedDays で割る
+            }
+            
+            console.log(`[calcAvg] Daily Avg (Total / includedDays): ${dailyAvg.toFixed(1)} km/day`);
+
+            return dailyAvg.toFixed(1);
+        }
+        
+        // レース日と期間を基準に平均を計算する (フォーム変更時) - v33と同じ
+        function calculateAverageDistanceOnFormChange(raceDateStr, durationStr) {
+            if (!appData || appData.length === 0) {
+                console.warn("[calcAvgForm] appData is empty. Returning 0.0");
+                return 0.0.toFixed(1);
+            }
+            
+            const raceDate = new Date(raceDateStr);
+            const duration = parseInt(durationStr, 10);
+            if (isNaN(raceDate.getTime()) || isNaN(duration) || duration <= 0) {
+                console.warn("[calcAvgForm] Invalid race date or duration.");
+                return "--"; // 0.0 ではなく "--" を返す
+            }
+
+            // 1. 基準日 (レースの(duration+1)日前) を計算
+            const baselineDaysBefore = duration + 1;
+            const latestDate = new Date(raceDate.getTime());
+            latestDate.setDate(latestDate.getDate() - baselineDaysBefore);
+            latestDate.setHours(0, 0, 0, 0); // 日付の比較のため時刻をリセット
+
+            // 2. 21日間の開始日を計算 (基準日 - 20日 = 21日間の窓)
+            const startDate = new Date(latestDate.getTime());
+            startDate.setDate(startDate.getDate() - 20); // 21日間をカバー
+            
+            console.log(`[calcAvgForm] Calculating average for 21 days from ${startDate.toLocaleDateString()} to ${latestDate.toLocaleDateString()}`);
+
+            // 3. 該当期間のデータをフィルタリング
+            const recentData = appData.filter(day => {
+                const d = parseDateToReal(day.date); // 実日付に変換
+                return d && d >= startDate && d <= latestDate;
+            });
+            
+            if (recentData.length === 0) {
+                console.warn(`[calcAvgForm] No data found in the period ${startDate.toLocaleDateString()} to ${latestDate.toLocaleDateString()}.`);
+                return 0.0.toFixed(1);
+            }
+
+            console.log(`[calcAvgForm] Found ${recentData.length} entries in the period.`);
+            
+            // 4. 外れ値(10km未満)を除外して合計距離を計算
+            let includedDays = 0;
+            const totalDistance = recentData.reduce((sum, day) => {
+                const dist = day.distance || 0;
+                if (dist >= 10) { // ★ 外れ値除外ルール
+                    includedDays++;
+                    return sum + dist;
+                }
+                return sum;
+            }, 0);
+            
+            console.log(`[calcAvgForm] Total distance (>=10km): ${totalDistance} km from ${includedDays} days.`);
+            
+            // 5. 日平均を計算 (「外れ値を除外した日数」で割る)
+            let dailyAvg = 0;
+            if (includedDays > 0) {
+                dailyAvg = totalDistance / includedDays; // 21 ではなく includedDays で割る
+            }
+            
+            console.log(`[calcAvgForm] Daily Avg (Total / includedDays): ${dailyAvg.toFixed(1)} km/day`);
+
+            return dailyAvg.toFixed(1);
+        }
+
+        // v33と同じ
+        function showPlanForm(show = true) {
+            if (planFormContainer) {
+                planFormContainer.style.display = show ? 'block' : 'none';
+            }
+            if (!show) {
+                const planFormError = document.getElementById('plan-form-error');
+                if (planFormError) {
+                    planFormError.textContent = '';
+                    planFormError.style.display = 'none';
+                }
+            }
+        }
+
+        // v33と同じ
+        function showNewPlanForm() {
+            if (!planFormContainer) return;
+            
+            const planFormError = document.getElementById('plan-form-error');
+            if (planFormError) {
+                planFormError.textContent = '';
+                planFormError.style.display = 'none';
+            }
+            
+            planFormTitle.textContent = "新規計画";
+            planEditId.value = ""; 
+            planRaceName.value = "";
+            planRaceDate.value = "";
+            planDuration.value = "";
+            planFinalLoad.value = "";
+            
+            const avgDistance = calculateAverageDistance(); 
+            if (planAvgDistanceSpan) {
+                planAvgDistanceSpan.textContent = avgDistance; 
+            }
+            showPlanForm(true);
+            planOutputContainer.innerHTML = ''; // 出力エリアをクリア
+        }
+        
+        // v33と同じ
+        function handleFormChange() {
+            const raceDateStr = planRaceDate.value;
+            const durationStr = planDuration.value;
+            
+            if (raceDateStr && durationStr && parseInt(durationStr, 10) > 0) {
+                const avgDistance = calculateAverageDistanceOnFormChange(raceDateStr, durationStr);
+                if(planAvgDistanceSpan) {
+                    planAvgDistanceSpan.textContent = avgDistance;
+                }
+            } else {
+                if(planAvgDistanceSpan) {
+                    planAvgDistanceSpan.textContent = "--";
+                }
+            }
+        }
+        
+        // ★ v44: localStorage保存
+        async function saveTaperPlan() {
+            if (!planRaceName || !planRaceDate || !planDuration || !planFinalLoad || !planOutputContainer || !planAvgDistanceSpan) {
+                console.error("Tapering plan calculation UI elements not found.");
+                return;
+            }
+            
+            const planFormError = document.getElementById('plan-form-error');
+            planFormError.textContent = '';
+            planFormError.style.display = 'none';
+
+            // 1. フォームから値を取得
+            const raceName = planRaceName.value || "（名称未設定のレース）";
+            const raceDateStr = planRaceDate.value;
+            const dailyAvgDistance = parseFloat(planAvgDistanceSpan.textContent); 
+            const duration = parseInt(planDuration.value, 10); 
+            const finalLoad = parseInt(planFinalLoad.value, 10); 
+            const editId = planEditId.value; 
+
+            // 2. バリデーション
+            if (!raceDateStr || isNaN(duration) || isNaN(dailyAvgDistance) || dailyAvgDistance <= 0 || isNaN(finalLoad)) {
+                planFormError.textContent = '「レース日」「期間」「負荷」を正しく入力してください。（平均距離が "0.0" または "--" の場合はデータ不足か計算できません）';
+                planFormError.style.display = 'block';
+                return;
+            }
+            if (finalLoad <= 0 || finalLoad >= 100) {
+                 planFormError.textContent = '「最終日の負荷」は 1% から 99% の間で入力してください。';
+                 planFormError.style.display = 'block';
+                return;
+            }
+            const raceDate = new Date(raceDateStr);
+            if (isNaN(raceDate.getTime())) {
+                planFormError.textContent = '有効なレース日を選択してください。';
+                planFormError.style.display = 'block';
+                return;
+            }
+
+            // 3. τ (タウ) の計算
+            const tau = -duration / Math.log(finalLoad / 100);
+
+            // 4. 保存するプランオブジェクトを作成
+            const planData = {
+                id: editId || Date.now().toString(), 
+                raceName: raceName,
+                raceDate: raceDateStr, 
+                duration: duration,
+                finalLoad: finalLoad,
+                dailyAvgDistance: dailyAvgDistance,
+                tau: tau
+            };
+
+            // 5. savedTaperPlans 配列を更新
+            if (editId) {
+                const index = savedTaperPlans.findIndex(p => p.id === editId);
+                if (index !== -1) {
+                    savedTaperPlans[index] = planData;
+                }
+            } else {
+                savedTaperPlans.push(planData);
+            }
+            
+            // 6. 保存、再描画、フォーム非表示
+            await saveTaperPlansToStorage(); // ★ v44: await (localStorage)
+            renderTaperPlanList();
+            showPlanForm(false);
+            
+            // v33のロジックを維持
+            displaySavedPlan(planData.id);
+        }
+        
+        // v33と同じ
+        function cancelPlanForm() {
+            showPlanForm(false);
+            planOutputContainer.innerHTML = ''; // 出力エリアをクリア
+            const planFormError = document.getElementById('plan-form-error');
+            if (planFormError) {
+                planFormError.textContent = '';
+                planFormError.style.display = 'none';
+            }
+        }
+
+        // ★ v44: localStorage保存
+        async function saveTaperPlansToStorage() {
+            try {
+                localStorage.setItem(TAPER_PLANS_STORAGE_KEY, JSON.stringify(savedTaperPlans));
+                console.log("Taper plans saved to localStorage.");
+            } catch (error) {
+                console.error("Failed to save taper plans:", error);
+            }
+        }
+
+        // ★ v44: localStorage読み込み
+        async function loadTaperPlans() {
+            try {
+                const savedData = localStorage.getItem(TAPER_PLANS_STORAGE_KEY);
+                if (savedData) {
+                    savedTaperPlans = JSON.parse(savedData);
+                    console.log(`Loaded ${savedTaperPlans.length} taper plans from localStorage.`);
+                } else {
+                    savedTaperPlans = [];
+                }
+            } catch (error) {
+                console.error("Failed to load taper plans:", error);
+                savedTaperPlans = [];
+            }
+            renderTaperPlanList(); // 読み込んだデータでリストを描画
+        }
+        
+        // v33と同じ
+        function renderTaperPlanList() {
+            if (!savedPlansList) return;
+            
+            if (savedTaperPlans.length === 0) {
+                savedPlansList.innerHTML = '<p class="text-gray-500 text-sm">保存された計画はまだありません。</p>';
+                return;
+            }
+
+            savedTaperPlans.sort((a, b) => new Date(b.raceDate) - new Date(a.raceDate));
+            
+            savedPlansList.innerHTML = savedTaperPlans.map(plan => {
+                const raceDate = new Date(plan.raceDate);
+                return `
+                    <div class="flex items-center justify-between bg-gray-50 p-3 rounded-lg border border-gray-200">
+                        <div>
+                            <a href="#" class="font-semibold text-red-800 hover:underline view-plan-button" data-id="${plan.id}">${plan.raceName}</a>
+                            <p class="text-sm text-gray-600">レース日: ${formatDate(raceDate)}</p>
+                        </div>
+                        <div class="flex-shrink-0">
+                            <button class="plan-button text-gray-500 hover:text-blue-600 edit-plan-button" title="編集" data-id="${plan.id}">✏️</button>
+                            <button class="plan-button text-gray-500 hover:text-red-600 delete-plan-button" title="削除" data-id="${plan.id}">🗑️</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            addPlanListEventListeners();
+        }
+        
+        // v33と同じ
+        function addPlanListEventListeners() {
+            document.querySelectorAll('.view-plan-button').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    displaySavedPlan(e.currentTarget.dataset.id);
+                });
+            });
+            document.querySelectorAll('.edit-plan-button').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    editPlan(e.currentTarget.dataset.id);
+                });
+            });
+            document.querySelectorAll('.delete-plan-button').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    deletePlan(e.currentTarget.dataset.id);
+                });
+            });
+        }
+        
+        // ★ v60: 計画 vs 実績 の比較機能を追加
+        function generatePlanHtml(plan) {
+            const raceDate = new Date(plan.raceDate);
+            // ★ v60: data-plan-id を追加
+            let outputHtml = `
+                <div data-plan-id="${plan.id}">
+                    <h3 class="text-xl font-semibold text-gray-800 mb-4 mt-6">${plan.raceName} への計画</h3>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 text-sm">
+                        <div><span class="font-semibold text-gray-600">レース日:</span> ${formatDate(raceDate)}</div>
+                        <div><span class="font-semibold text-gray-600">日平均:</span> ${plan.dailyAvgDistance} km</div>
+                        <div><span class="font-semibold text-gray-600">期間:</span> ${plan.duration} 日</div>
+                        <div><span class="font-semibold text-gray-600">τ (タウ):</span> ${plan.tau.toFixed(3)}</div>
+                    </div>
+
+                    <h4 class="text-lg font-semibold text-gray-800 mb-3">推奨走行距離 (計画 vs 実績)</h4>
+                    <div class="overflow-x-auto shadow rounded-lg">
+                        <table class="plan-table">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="plan-table th">日付</th>
+                                    <th class="plan-table th">レースまで</th>
+                                    <th class="plan-table th">負荷</th>
+                                    <th class="plan-table th">計画 (km)</th>
+                                    <th class="plan-table th">実績 (km)</th>
+                                    <th class="plan-table th">差 (km)</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+            `;
+
+            const planDays = [];
+            const duration = plan.duration;
+            const dailyAvgDistance = plan.dailyAvgDistance;
+            const tau = plan.tau;
+
+            const baselineDaysBefore = duration + 1;
+            const baselineDate = new Date(raceDate.getTime());
+            baselineDate.setDate(baselineDate.getDate() - baselineDaysBefore);
+            
+            planDays.push({
+                dateObj: baselineDate,
+                date: formatDate(baselineDate),
+                daysBefore: `${baselineDaysBefore} 日前`,
+                dayCounter: 0,
+                loadPercent: 100.0,
+                distance: dailyAvgDistance
+            });
+
+            for (let dayCounter = 1; dayCounter <= duration; dayCounter++) {
+                const daysBeforeRace = duration - dayCounter + 1; 
+                const currentDate = new Date(raceDate.getTime());
+                currentDate.setDate(currentDate.getDate() - daysBeforeRace);
+                const loadPercent = Math.exp(-dayCounter / tau) * 100;
+                const distance = dailyAvgDistance * (loadPercent / 100);
+                
+                planDays.push({
+                    dateObj: currentDate,
+                    date: formatDate(currentDate),
+                    daysBefore: `${daysBeforeRace} 日前`,
+                    dayCounter: dayCounter,
+                    loadPercent: loadPercent,
+                    distance: distance
+                });
+            }
+
+            for (const day of planDays) {
+                 // ★ v60: 実績データを appData から検索
+                 const dateKey = convertDateToMMDD(day.dateObj);
+                 // appData はソート済みだが、日付が飛び飛びの可能性があるので find を使う
+                 const actualData = appData.find(d => convertDateToMMDD(d.date) === dateKey);
+                 const actualDistance = (actualData && actualData.distance !== null) ? actualData.distance : null;
+                 
+                 let actualHtml = '<td class="plan-table td text-gray-400">–</td>';
+                 let diffHtml = '<td class="plan-table td text-gray-400">–</td>';
+
+                 if (actualDistance !== null) {
+                    const diff = actualDistance - day.distance;
+                    const diffSign = diff > 0 ? '+' : '';
+                    const diffColor = diff > 0.5 ? 'text-red-600' : (diff < -0.5 ? 'text-blue-600' : 'text-gray-700');
+                    
+                    actualHtml = `<td class="plan-table td">${actualDistance.toFixed(1)} km</td>`;
+                    diffHtml = `<td class="plan-table td ${diffColor}">${diffSign}${diff.toFixed(1)} km</td>`;
+                 }
+
+                 outputHtml += `
+                    <tr>
+                        <td class="plan-table td">${day.date}</td>
+                        <td class="plan-table td">${day.daysBefore}</td>
+                        <td class="plan-table td">${day.loadPercent.toFixed(1)} %</td>
+                        <td class="plan-table td font-bold">${day.distance.toFixed(1)} km</td>
+                        ${actualHtml}
+                        ${diffHtml}
+                    </tr>
+                `;
+            }
+
+            outputHtml += `
+                        </tbody>
+                    </table>
+                </div>
+                <p class="text-xs text-gray-500 mt-2">※レース当日の推奨距離は含まれていません。</p>
+                </div> <!-- ★ v60: data-plan-id の閉じタグ -->
+            `;
+            return outputHtml;
+        }
+
+        // v33と同じ
+        function displaySavedPlan(id) {
+            const plan = savedTaperPlans.find(p => p.id === id);
+            if (plan) {
+                planOutputContainer.innerHTML = generatePlanHtml(plan);
+                showPlanForm(false); // フォームは隠す
+            }
+        }
+        
+        // v33と同じ
+        function editPlan(id) {
+            const plan = savedTaperPlans.find(p => p.id === id);
+            if (plan) {
+                const planFormError = document.getElementById('plan-form-error');
+                if (planFormError) {
+                    planFormError.textContent = '';
+                    planFormError.style.display = 'none';
+                }
+
+                planFormTitle.textContent = "計画を編集";
+                planEditId.value = plan.id; 
+                planRaceName.value = plan.raceName;
+                planRaceDate.value = plan.raceDate; 
+                planDuration.value = plan.duration;
+                planFinalLoad.value = plan.finalLoad;
+                planAvgDistanceSpan.textContent = plan.dailyAvgDistance;
+                
+                showPlanForm(true); // フォーム表示
+                planOutputContainer.innerHTML = ''; // 出力エリアをクリア
+            }
+        }
+        
+        // v33と同じ
+        async function deletePlan(id) {
+            savedTaperPlans = savedTaperPlans.filter(p => p.id !== id);
+            await saveTaperPlansToStorage(); 
+            renderTaperPlanList();
+            planOutputContainer.innerHTML = ''; 
+        }
+
+        // ----------------------------------------
+        // ★ v40: 初期化処理 (v35のロジック)
+        // ----------------------------------------
+        document.addEventListener('DOMContentLoaded', async () => {
+            
+            // ★ v35: ここで DOM 要素をすべて取得
+            navLinks = document.querySelectorAll('.nav-link');
+            pages = document.querySelectorAll('.page-content');
+            mobileMenuButton = document.getElementById('mobile-menu-button');
+            googleAuthButton = document.getElementById('google-auth-button');
+            googleAuthStatus = document.getElementById('google-auth-status');
+            
+            // 設定ページ
+            dataSourceGoogle = document.getElementById('data-source-google');
+            dataSourceManual = document.getElementById('data-source-manual');
+            settingsGoogleContainer = document.getElementById('settings-google-container');
+            settingsManualContainer = document.getElementById('settings-manual-container');
+            googleClientIdInput = document.getElementById('google-client-id');
+            googleSpreadsheetIdInput = document.getElementById('google-spreadsheet-id');
+            googleSheetNamesInput = document.getElementById('google-sheet-names');
+            manualDataInput = document.getElementById('manual-data-input');
+            saveButton = document.getElementById('save-settings-button');
+            saveStatus = document.getElementById('save-status');
+            mappingInputs = {
+                date: document.getElementById('col-date'),
+                distance: document.getElementById('col-distance'),
+                morningWeight: document.getElementById('col-morning-weight'),
+                eveningWeight: document.getElementById('col-evening-weight'),
+                wakingHr: document.getElementById('col-waking-hr'),
+                practiceHr: document.getElementById('col-practice-hr'),
+                sleep: document.getElementById('col-sleep'),
+            };
+
+            // ★ v60: クイックログフォーム
+            logDateInput = document.getElementById('log-date');
+            logDistanceInput = document.getElementById('log-distance');
+            logMorningWeightInput = document.getElementById('log-morning-weight');
+            logEveningWeightInput = document.getElementById('log-evening-weight');
+            logWakingHrInput = document.getElementById('log-waking-hr');
+            logSleepInput = document.getElementById('log-sleep');
+            saveLogButton = document.getElementById('save-log-button');
+            quickLogSuccess = document.getElementById('quick-log-success');
+            quickLogError = document.getElementById('quick-log-error');
+            
+            // テーパリングページ
+            newPlanButton = document.getElementById('new-plan-button');
+            planFormContainer = document.getElementById('plan-form-container');
+            planAvgDistanceSpan = document.getElementById('plan-avg-distance');
+            savePlanButton = document.getElementById('save-plan-button');
+            cancelPlanButton = document.getElementById('cancel-plan-button');
+            planOutputContainer = document.getElementById('plan-output-container');
+            savedPlansList = document.getElementById('saved-plans-list');
+            planFormTitle = document.getElementById('plan-form-title');
+            planRaceName = document.getElementById('plan-race-name');
+            planRaceDate = document.getElementById('plan-race-date');
+            planDuration = document.getElementById('plan-duration');
+            planFinalLoad = document.getElementById('plan-final-load');
+            planEditId = document.getElementById('plan-edit-id');
+
+            // ★ v35: ここでイベントリスナーをすべて登録
+            try {
+                // ページ切り替え
+                navLinks.forEach(link => {
+                    link.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const pageId = link.dataset.page;
+                        showPage(pageId);
+                        const navContent = document.getElementById('nav-content');
+                        if (window.innerWidth < 768) {
+                            if (navContent) navContent.classList.add('hidden');
+                        }
+                    });
+                });
+                
+                if (mobileMenuButton) {
+                    mobileMenuButton.addEventListener('click', () => {
+                        const navContent = document.getElementById('nav-content');
+                        if (navContent) navContent.classList.toggle('hidden');
+                    });
+                }
+
+                // 設定ページ
+                if (dataSourceGoogle) {
+                    dataSourceGoogle.addEventListener('change', () => toggleDataSourceView('google'));
+                }
+                if (dataSourceManual) {
+                    dataSourceManual.addEventListener('change', () => toggleDataSourceView('manual'));
+                }
+                if (saveButton) {
+                    saveButton.addEventListener('click', saveSettings);
+                }
+                if (googleAuthButton) {
+                    googleAuthButton.addEventListener('click', handleAuthClick);
+                }
+
+                // ★ v60: クイックログ
+                if (saveLogButton) {
+                    saveLogButton.addEventListener('click', saveQuickLog);
+                }
+                if (logDateInput) {
+                    logDateInput.addEventListener('change', handleLogDateChange);
+                }
+
+
+                // テーパリングページ
+                if (newPlanButton) {
+                    newPlanButton.addEventListener('click', showNewPlanForm);
+                }
+                if (savePlanButton) { 
+                    savePlanButton.addEventListener('click', saveTaperPlan);
+                }
+                if (cancelPlanButton) { 
+                    cancelPlanButton.addEventListener('click', cancelPlanForm);
+                }
+                if (planRaceDate) {
+                    planRaceDate.addEventListener('change', handleFormChange);
+                }
+                if (planDuration) {
+                    planDuration.addEventListener('change', handleFormChange);
+                }
+
+                // グラフ
+                const chartToggles = document.querySelectorAll('.chart-toggle');
+                chartToggles.forEach(toggle => {
+                    toggle.addEventListener('change', () => {
+                        updateConditionChart(appData); 
+                    });
+                });
+            } catch (e) {
+                console.error("Error setting up event listeners:", e);
+                showError("UIの初期化に失敗しました。");
+            }
+            
+            // ★ v44: localStorageから設定・データを読み込む
+            showPage(defaultPage); 
+            initializeChart();
+            
+            try {
+                const settings = await loadSettings(); // await: localStorageから設定を読み込む
+                await loadTaperPlans(); // await: localStorageから計画を読み込む
+                await loadQuickLogs(); // ★ v60: localStorageからクイックログを読み込む
+                
+                // ★ v57: GAPI/GISの初期化ポーリングを開始
+                const gapiPollInterval = setInterval(async () => {
+                    // tryInitGoogleClients は gapiReady/gisReady/gapiSheetsReady をチェック/設定する
+                    await tryInitGoogleClients(); 
+                    
+                    // TokenClient が正常に初期化されたらポーリングを停止
+                    if (tokenClient || (appSettings && appSettings.dataSource === 'manual')) {
+                        clearInterval(gapiPollInterval);
+                    }
+                }, 500); // 0.5秒ごとにチェック
+                
+                // ★ v60: 読み込みロジック (v58の状態)
+                if (settings && settings.dataSource === 'google') {
+                    // Google連携の場合は、まだデータをロードせず、サインインを待つ
+                    showError('「Google サインイン」ボタンを押して、スプレッドシートへのアクセスを許可してください。');
+                    // ローダーを隠す
+                    const loadingEl = document.getElementById('dashboard-loading');
+                    if (loadingEl) loadingEl.style.display = 'none';
+                } else {
+                    // 手動データの場合はすぐにロード (設定がnullの場合もこちら)
+                    await loadAndDisplayData(settings);
+                }
+                
+            } catch(e) {
+                console.error("Failed during data loading sequence:", e);
+                showError(e.message || "データの読み込み中に不明なエラーが発生しました。");
+            }
+            
+        });
+
+    </script>
+</body>
+</html>
