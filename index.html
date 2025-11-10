@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ワセダ_覇者への道のり (v41)</title>
+    <title>ワセダ_覇者への道のり (v43)</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -148,11 +148,11 @@
         <!-- メインコンテンツ -->
         <main class="flex-grow p-6 md:p-10 overflow-auto">
             
-            <!-- 1. ダッシュボード ページ (v33と同じ) -->
+            <!-- 1. ダッシュボード ページ (★ v43: マニュアル更新) -->
             <div id="page-dashboard" class="page-content">
                 <h2 class="text-3xl font-semibold mb-6">ダッシュボード</h2>
 
-                <!-- 使い方マニュアル (v33と同じ) -->
+                <!-- 使い方マニュアル (★ v43: マニュアル更新) -->
                 <details class="bg-white p-6 rounded-2xl shadow-lg mb-8 border-l-4 border-red-800">
                     <summary class="text-xl font-semibold text-gray-800">はじめに (使い方マニュアル)</summary>
                     <div class="mt-4 pt-4 border-t border-gray-200 text-gray-700 space-y-3 text-sm">
@@ -164,6 +164,7 @@
                                     <li>最初に、このページでデータ入力方法（CSV連携 or 手動）を選択します。</li>
                                     <li><strong class="font-semibold text-red-800">CSV連携:</strong> 「ウェブに公開」したCSVのURLを貼り付けます。CSV連携の場合は「列設定」でアルファベット（A, Bなど）の指定が<strong>必須</strong>です。</li>
                                     <li><strong class="font-semibold text-red-800">手動入力:</strong> 走行距離データを「日付,距離」の形式で貼り付けます。（この場合、列設定は不要です）</li>
+                                    <li><strong class="font-semibold text-red-800">クラウド連携:</strong> 初期読み込みでクラウド連携に失敗した場合、このページ上部に「再試行」ボタンが表示されます。再試行後、[設定を保存]を押すとデータがクラウドに同期されます。</li>
                                     <li>最後に必ず「設定を保存」ボタンを押してください。データは保存後にリロードすると反映されます。</li>
                                 </ul>
                             </li>
@@ -194,7 +195,7 @@
                     <p class="mt-4 text-gray-600">データを読み込み中...</p>
                 </div>
 
-                <!-- ★ v41: エラー/警告エリアを統合 -->
+                <!-- (v42と同じ) -->
                 <div id="dashboard-error" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg relative mb-6" role="alert">
                     <strong class="font-bold">データ取得エラー</strong>
                     <span class="block sm:inline" id="dashboard-error-message"></span>
@@ -400,9 +401,20 @@
                 </div>
             </div>
 
-            <!-- 4. 設定 ページ (v33と同じ) -->
+            <!-- 4. 設定 ページ (★ v43: クラウド連携UI追加) -->
             <div id="page-settings" class="page-content">
                 <h2 class="text-3xl font-semibold mb-6">設定</h2>
+                
+                <!-- ★ v43: クラウド連携ステータス -->
+                <div id="cloud-status-container" class="bg-white p-6 rounded-2xl shadow-lg mb-8">
+                    <h3 class="text-xl font-semibold mb-4">クラウド連携ステータス</h3>
+                    <div id="cloud-status-text" class="text-gray-700 text-sm mb-4">
+                        連携ステータスを確認中...
+                    </div>
+                    <button id="retry-cloud-button" class="hidden bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 text-sm">
+                        クラウド連携を再試行
+                    </button>
+                </div>
                 
                 <!-- 1. データ入力方法の選択 -->
                 <div class="bg-white p-6 rounded-2xl shadow-lg mb-8">
@@ -551,6 +563,9 @@
         let csvUrlsInput, manualDataInput, saveButton, saveStatus;
         let dataSourceCsv, dataSourceManual, settingsCsvContainer, settingsManualContainer;
         let mappingInputs = {}; // mappingInputsはオブジェクトなので初期化
+        // ★ v43: クラウド連携UI
+        let cloudStatusText, retryCloudButton;
+
 
         // テーパリング計画ページ
         let newPlanButton, planFormContainer, planAvgDistanceSpan, savePlanButton;
@@ -803,7 +818,7 @@
             }
         }
 
-        // ★ v41: Firestore/localStorage フォールバック
+        // ★ v41: Firebase/localStorage フォールバック (v42 タイムアウト)
         async function loadSettings() {
             let settings = null;
             let manualData = "";
@@ -818,8 +833,8 @@
                     const settingsSnap = await getDocWithTimeout(settingsRef);
                     const manualDataSnap = await getDocWithTimeout(manualDataRef);
                     
-                    if (manualDataSnap.exists()) {
-                        manualData = manualDataSnap.data().data || "";
+                    if (manualDataSnap.exists() && manualDataInput) {
+                        manualDataInput.value = manualDataSnap.data().data || "";
                     }
                     if (settingsSnap.exists()) {
                         settings = settingsSnap.data().data;
@@ -867,7 +882,8 @@
 
             } catch (error) {
                 console.error("Failed to load settings:", error);
-                showError(`設定の読み込みに失敗しました: ${error.message}`); // ★ v42
+                // ★ v43: エラー表示を showError から updateCloudStatusUI に変更
+                updateCloudStatusUI("failed", `設定の読み込みに失敗しました: ${error.message}`);
                 toggleDataSourceView('csv'); // エラー時はデフォルト表示
                 return null;
             }
@@ -876,7 +892,7 @@
         // ----------------------------------------
         // データ取得・解析処理 (v33と同じ)
         // ----------------------------------------
-        
+
         // CSV (Google Sheet) 用のパーサー
         function parseCSV(csvText, mapping) {
             if (!mapping || !mapping.date) {
@@ -1059,30 +1075,27 @@
             }
         }
 
-        // ★ v41: 警告表示 (level) を追加
-        function showError(message, level = 'error') {
+        // ★ v43: showError と showWarning に分割
+        function showError(message) {
             const errorEl = document.getElementById('dashboard-error');
             const errorMsgEl = document.getElementById('dashboard-error-message');
-            const warningEl = document.getElementById('dashboard-warning');
-            const warningMsgEl = document.getElementById('dashboard-warning-message');
+            if (errorEl) errorEl.style.display = 'block';
+            if (errorMsgEl) errorMsgEl.textContent = message;
             
+            // 他のUIを隠す
             const loadingEl = document.getElementById('dashboard-loading');
             const summaryTopEl = document.getElementById('dashboard-summary-top');
             const summaryBottomEl = document.getElementById('dashboard-summary-bottom');
-
             if (loadingEl) loadingEl.style.display = 'none';
             if (summaryTopEl) summaryTopEl.style.display = 'none'; 
             if (summaryBottomEl) summaryBottomEl.style.display = 'none'; 
-            
-            if (level === 'warning') {
-                if (warningEl) warningEl.style.display = 'block';
-                if (warningMsgEl) warningMsgEl.textContent = message;
-                if (errorEl) errorEl.style.display = 'none'; // エラーは隠す
-            } else { // 'error'
-                if (errorEl) errorEl.style.display = 'block';
-                if (errorMsgEl) errorMsgEl.textContent = message;
-                if (warningEl) warningEl.style.display = 'none'; // 警告は隠す
-            }
+        }
+        
+        function showWarning(message) {
+            const warningEl = document.getElementById('dashboard-warning');
+            const warningMsgEl = document.getElementById('dashboard-warning-message');
+            if (warningEl) warningEl.style.display = 'block';
+            if (warningMsgEl) warningMsgEl.textContent = message;
         }
 
 
@@ -1281,10 +1294,10 @@
 
 
         // ----------------------------------------
-        // Chart.js (★ v41: グラフ破棄処理を追加)
+        // Chart.js (★ v42: グラフ破棄処理を追加)
         // ----------------------------------------
         function initializeChart() {
-            // ★ v41: 既存チャートの破棄
+            // ★ v42: 既存チャートの破棄
             if (conditionChart) {
                 console.warn("Destroying existing chart instance before recreation.");
                 conditionChart.destroy();
@@ -1643,7 +1656,7 @@
             }
         }
         
-        // ★ v34: async に変更 (Firestore保存のため)
+        // v33と同じ
         async function saveTaperPlan() {
             if (!planRaceName || !planRaceDate || !planDuration || !planFinalLoad || !planOutputContainer || !planAvgDistanceSpan) {
                 console.error("Tapering plan calculation UI elements not found.");
@@ -1705,7 +1718,7 @@
             }
             
             // 6. 保存、再描画、フォーム非表示
-            await saveTaperPlansToStorage(); // ★ v34: await
+            await saveTaperPlansToStorage(); 
             renderTaperPlanList();
             showPlanForm(false);
             
@@ -1724,7 +1737,7 @@
             }
         }
 
-        // ★ v41: Firebase/localStorage フォールバック
+        // v41と同じ
         async function saveTaperPlansToStorage() {
             try {
                 if (useFirebase && auth.currentUser) {
@@ -1740,7 +1753,7 @@
             }
         }
 
-        // ★ v41: Firebase/localStorage フォールバック
+        // v41と同じ
         async function loadTaperPlans() {
             try {
                 if (useFirebase && auth.currentUser) {
@@ -1765,7 +1778,7 @@
                 }
             } catch (error) {
                 console.error("Failed to load taper plans:", error);
-                showError("テーパリング計画の読み込みに失敗しました (タイムアウトの可能性)。", 'warning'); // ★ v42
+                showError("テーパリング計画の読み込みに失敗しました。", "warning"); // ★ v42
                 savedTaperPlans = [];
             }
             renderTaperPlanList(); // 読み込んだデータでリストを描画
@@ -1944,14 +1957,35 @@
             planOutputContainer.innerHTML = ''; 
         }
         
+        // ★ v43: クラウドステータスUI更新
+        function updateCloudStatusUI(status, message) {
+            if (!cloudStatusText || !retryCloudButton) return;
+            
+            if (status === "success") {
+                cloudStatusText.innerHTML = `
+                    <span class="font-semibold text-green-600">クラウド連携済み</span>
+                    <span class="text-xs text-gray-500">(ID: ${message.substring(0, 10)}...)</span>
+                `;
+                retryCloudButton.style.display = 'none';
+            } else { // "failed"
+                cloudStatusText.innerHTML = `
+                    <span class="font-semibold text-yellow-600">クラウド連携失敗</span>
+                    <span class="text-xs text-gray-500">(${message})</span>
+                    <p class="text-sm text-gray-600 mt-2">データはブラウザ内にのみ保存されます。再試行できます。</p>
+                `;
+                retryCloudButton.style.display = 'block';
+            }
+        }
+
         // ★ v41: Firebase 初期化関数
         async function initializeFirebase() {
              try {
+                // v40 の修正 (安全なパース)
                 const firebaseConfigString = (typeof __firebase_config !== 'undefined' && __firebase_config) ? __firebase_config : '{}';
                 const firebaseConfig = JSON.parse(firebaseConfigString);
 
                 if (!firebaseConfig.apiKey) {
-                    throw new Error("Firebase config is missing or invalid. Check environment variables.");
+                    throw new Error("Firebase config is missing or invalid.");
                 }
                 
                 const app = initializeApp(firebaseConfig);
@@ -1967,11 +2001,13 @@
                 userId = auth.currentUser?.uid || crypto.randomUUID();
                 console.log("Firebase Auth User ID:", userId);
                 useFirebase = true; // ★ v41: 成功フラグ
+                updateCloudStatusUI("success", userId); // ★ v43
 
             } catch (error) {
                 console.error("Firebase initialization failed:", error);
                 useFirebase = false; // ★ v41: 失敗フラグ
-                showError("クラウド連携に失敗。データはブラウザ内にのみ保存されます。", "warning"); 
+                // ★ v43: showErrorではなく、専用のUIを更新
+                updateCloudStatusUI("failed", error.message); 
             }
         }
 
@@ -1995,6 +2031,8 @@
             dataSourceManual = document.getElementById('data-source-manual');
             settingsCsvContainer = document.getElementById('settings-csv-container');
             settingsManualContainer = document.getElementById('settings-manual-container');
+            cloudStatusText = document.getElementById('cloud-status-text'); // ★ v43
+            retryCloudButton = document.getElementById('retry-cloud-button'); // ★ v43
             mappingInputs = {
                 date: document.getElementById('col-date'),
                 distance: document.getElementById('col-distance'),
@@ -2051,6 +2089,15 @@
             }
             if (saveButton) {
                 saveButton.addEventListener('click', saveSettings);
+            }
+            // ★ v43: 再試行ボタン
+            if (retryCloudButton) {
+                retryCloudButton.addEventListener('click', async () => {
+                    cloudStatusText.textContent = "再試行中...";
+                    retryCloudButton.style.display = 'none';
+                    await initializeFirebase(); // 再度初期化を試みる
+                    // 成功したら、次は saveSettings() が自動でクラウド保存を使う
+                });
             }
 
             // テーパリングページ
