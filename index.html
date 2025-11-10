@@ -16,7 +16,7 @@
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
     
-    <!-- ★ v57: Google API & Sign-In (GSI) - onload="" を「削除」 (v53の方式に戻す) -->
+    <!-- Google API & Sign-In (GSI) -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://apis.google.com/js/api.js" async defer></script>
     
@@ -110,7 +110,7 @@
     
     <div class="min-h-screen flex flex-col md:flex-row">
 
-        <!-- サイド ナビゲーションバー (★ v51: ボタンを disabled に) -->
+        <!-- サイド ナビゲーションバー -->
         <nav class="bg-white shadow-lg md:w-64 flex-shrink-0 flex flex-col">
             <!-- ヘッダー -->
             <div class="flex justify-between items-center p-4 md:pt-8 md:px-6">
@@ -145,7 +145,7 @@
                     </li>
                 </ul>
                 
-                <!-- ★ v51: サインイン/アウト ボタン (デフォルトで disabled) -->
+                <!-- サインイン/アウト ボタン -->
                 <div class="mt-auto p-4">
                     <button id="google-auth-button" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
                         Google サインイン
@@ -158,52 +158,84 @@
         <!-- メインコンテンツ -->
         <main class="flex-grow p-6 md:p-10 overflow-auto">
             
-            <!-- 1. ダッシュボード ページ (★ v60: クイックログ追加) -->
+            <!-- 1. ダッシュボード ページ -->
             <div id="page-dashboard" class="page-content">
                 <h2 class="text-3xl font-semibold mb-6">ダッシュボード</h2>
 
-                <!-- 使い方マニュアル (★ v59: 修正) -->
-                <details class="bg-white p-6 rounded-2xl shadow-lg mb-8 border-l-4 border-red-800">
-                    <summary class="text-xl font-semibold text-gray-800">はじめに (使い方マニュアル)</summary>
-                    <div class="mt-4 pt-4 border-t border-gray-200 text-gray-700 space-y-3 text-sm">
-                        <p>このアプリは、日々の練習日誌データ（CSVまたは手動入力）を読み込み、コンディションやテーパリング計画を管理するためのツールです。</p>
-                        <ol class="list-decimal list-inside space-y-2">
+                <!-- 使い方マニュアル -->
+                <details class="bg-white p-6 rounded-2xl shadow-lg mb-8 border-l-4 border-red-800" open>
+                    <summary class="text-xl font-semibold text-gray-800">はじめに (使い方・設定マニュアル)</summary>
+                    <div class="mt-4 pt-4 border-t border-gray-200 text-gray-700 space-y-4 text-sm">
+                        
+                        <div class="p-4 bg-red-50 border border-red-200 rounded-lg">
+                            <h4 class="font-bold text-gray-800 mb-2">1. チーム共有情報の確認</h4>
+                            <p class="mb-2">このアプリをGoogleスプレッドシートと連携させるため、以下のチーム共有情報を[設定]ページで使います。</p>
+                            <div class="space-y-2 text-sm">
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-600">チーム共用 Googleアカウント:</label>
+                                    <!-- ★★★ ここにチーム共有のアカウント名を記載 ★★★ -->
+                                    <code class="text-sm font-semibold text-red-700">team-shared-account@gmail.com</code>
+                                    <p class="text-xs text-gray-500">（[設定]入力後、左下の「Google サインイン」ボタンを押す際、このアカウントでログインしてください）</p>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-600">チーム共用 クライアントID:</label>
+                                    <!-- ★★★ ここにチーム共有のクライアントIDを記載 ★★★ -->
+                                    <code class="block text-xs font-semibold text-red-700 bg-gray-100 p-2 rounded break-all">1234567890-THIS-IS-A-DUMMY-ID.apps.googleusercontent.com</code>
+                                    <p class="text-xs text-gray-500">（この文字列全体をコピーして、[設定]ページの「クライアントID」欄に貼り付けてください）</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <ol class="list-decimal list-inside space-y-4" start="2">
                             <li>
-                                <strong class="font-semibold text-gray-800">[設定] ページ (最重要):</strong>
-                                <ul class="list-disc list-inside ml-4 mt-1">
-                                    <li>最初に、このページでデータ入力方法（Google連携 or 手動）を選択します。</li>
-                                    <li><strong class="font-semibold text-red-800">Google連携 (上級者向け):</strong> ご自身の「クライアントID」「スプレッドシートID」の入力が必要です。入力後、左下の「Google サインイン」ボタンを押してください。</li>
-                                    <li><strong class="font-semibold text-red-800">手動入力 (推奨):</strong> 走行距離データを「日付,距離」の形式で貼り付けます。こちらが簡単です。</li>
-                                    <li>最後に必ず「設定を保存」ボタンを押してください。データは保存後にリロードすると反映されます。</li>
+                                <strong class="font-semibold text-gray-800">2. [設定] ページでの初期設定</strong>
+                                <ul class="list-disc list-inside ml-4 mt-2 space-y-2">
+                                    <li>左のメニューから <code class="bg-gray-200 px-1 rounded">⚙️ 設定</code> ページに移動します。</li>
+                                    <li>「1. データ入力方法の選択」で、「<strong class="text-red-800">Google 連携</strong>」が選ばれていることを確認します。</li>
+                                    <li>「2. Google アカウント連携」の入力欄に以下を入力します。
+                                        <ul class="list-disc list-inside ml-4 mt-1 space-y-1">
+                                            <li><strong class="font-semibold">クライアント ID:</strong> 上記の「チーム共用 クライアントID」をコピーして貼り付けます。</li>
+                                            <li><strong class="font-semibold">スプレッドシート URL または ID:</strong> <strong class="text-red-800">あなた個人の</strong>練習日誌スプレッドシートのURL（またはID）を入力します。</li>
+                                            <li><strong class="font-semibold">シート名 (タブ名):</strong> 読み込みたいシート名（例: `11月`, `12月`）を1行に1つずつ入力します。</li>
+                                        </ul>
+                                    </li>
+                                    <li>「4. 列設定」で、あなたのスプレッドシートの列構成に合わせてアルファベット（例: 日付がC列なら `C`）を入力します。（チームで形式が統一されていれば、記載済みのものがそのまま使えます）</li>
+                                    <li>最後に「<strong class="text-red-800">設定を保存</strong>」ボタンを必ず押してください。</li>
                                 </ul>
                             </li>
-                             <!-- ★ v60: クイックログの説明追加 -->
+
                             <li>
-                                <strong class="font-semibold text-gray-800">[ダッシュボード] ページ:</strong>
-                                <ul class="list-disc list-inside ml-4 mt-1">
-                                    <li>読み込んだデータの「最新値」「前日比」「直近7日間平均」を一覧表示します。</li>
-                                    <li>「今日のデータを手動入力/修正」から、その日の全データを手動で入力・修正できます。Google連携よりこちらの入力が優先されます。</li>
+                                <strong class="font-semibold text-gray-800">3. Google サインイン</strong>
+                                <ul class="list-disc list-inside ml-4 mt-2 space-y-2">
+                                    <li>設定保存後、左下の「Google サインイン」ボタンが押せるようになります。</li>
+                                    <li>ボタンを押し、ポップアップウィンドウで上記の「<strong class="text-red-800">チーム共用 Googleアカウント</strong>」を選択してログインしてください。</li>
+                                    <li>「データ取得エラー」と表示された場合は、入力したスプレッドシートIDやシート名が間違っていないか確認してください。</li>
                                 </ul>
                             </li>
+                            
                             <li>
-                                <strong class="font-semibold text-gray-800">[コンディション] ページ:</strong>
-                                <ul class="list-disc list-inside ml-4 mt-1">
-                                    <li>データの推移をグラフで視覚化します。チェックボックスで表示項目を切り替えられます。</li>
-                                    <li>（★ v58: グラフは直近3週間のデータを表示します）</li>
+                                <strong class="font-semibold text-gray-800">4. 使い方</strong>
+                                <ul class="list-disc list-inside ml-4 mt-2 space-y-1">
+                                    <li><strong class="font-semibold">[ダッシュボード]:</strong> 最新のデータや週平均を確認できます。また、「手動入力/修正」フォームから、スプレッドシートを編集せずにアプリ上でデータを一時的に上書き・修正できます。</li>
+                                    <li><strong class="font-semibold">[コンディション]:</strong> 直近3週間のデータ推移をグラフで確認できます。</li>
+                                    <li><strong class="font-semibold">[テーパリング]:</strong> レースに向けた調整計画を作成・保存し、計画と実際の走行距離（実績）を比較できます。</li>
                                 </ul>
                             </li>
+
                             <li>
-                                <strong class="font-semibold text-gray-800">[テーパリング] ページ:</strong>
-                                <ul class="list-disc list-inside ml-4 mt-1">
-                                    <li>レース日と期間から、推奨される走行距離の減衰計画を自動で計算し、保存・管理できます。</li>
-                                    <li>（★ v60: 計画と実績の走行距離を比較できます）</li>
+                                <strong class="font-semibold text-gray-800">（参考）個人アカウントでGoogle連携を行いたい場合</strong>
+                                <ul class="list-disc list-inside ml-4 mt-2 space-y-1">
+                                    <li>技術的な設定に詳しい方は、ご自身の個人アカウントで専用のクライアントIDを取得することも可能です。</li>
+                                    <li>その場合、ご自身で「<strong class="font-semibold">Google Cloud Console</strong>」プロジェクトを作成し、「<strong class="font-semibold">Google Sheets API</strong>」を有効化してください。</li>
+                                    <li>「<strong class="font-semibold">OAuth 2.0 クライアント ID</strong>」を作成し、「ウェブ アプリケーション」タイプを選択します。</li>
+                                    <li>「<strong class="font-semibold">承認済みの JavaScript 生成元</strong>」と「<strong class="font-semibold">承認済みのリダイレクト URI</strong>」には、このアプリが動作しているURL（現在のブラウザのアドレスバーにあるURL）を正確に登録する必要があります。</li>
                                 </ul>
                             </li>
                         </ol>
                     </div>
                 </details>
                 
-                <!-- ★ v60: クイックログ入力フォーム -->
+                <!-- クイックログ入力フォーム -->
                 <details class="bg-white p-6 rounded-2xl shadow-lg mb-8 border-l-4 border-blue-600">
                     <summary class="text-xl font-semibold text-gray-800">今日のデータを手動入力/修正</summary>
                     <div class="mt-4 pt-4 border-t border-gray-200 text-gray-700 space-y-4 text-sm">
@@ -252,7 +284,6 @@
                     <p class="mt-4 text-gray-600">データを読み込み中...</p>
                 </div>
 
-                <!-- (v44と同じ) -->
                 <div id="dashboard-error" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg relative mb-6" role="alert">
                     <strong class="font-bold">データ取得エラー</strong>
                     <span class="block sm:inline" id="dashboard-error-message"></span>
@@ -263,7 +294,6 @@
                 </div>
 
 
-                <!-- 上段3つ (v44と同じ) -->
                 <div id="dashboard-summary-top" class="hidden grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                     <!-- 走行距離カード -->
                     <div class="bg-white p-6 rounded-2xl shadow-lg">
@@ -293,7 +323,6 @@
                         </div>
                     </div>
                 </div>
-                <!-- 下段2つ (v44と同じ) -->
                 <div id="dashboard-summary-bottom" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-6">
                      <!-- 起床時脈拍カード -->
                     <div class="bg-white p-6 rounded-2xl shadow-lg">
@@ -317,7 +346,7 @@
                 
             </div>
 
-            <!-- 2. コンディション記録 ページ (v44と同じ) -->
+            <!-- 2. コンディション記録 ページ -->
             <div id="page-condition" class="page-content">
                 <h2 class="text-3xl font-semibold mb-6">コンディション記録</h2>
                 
@@ -342,7 +371,7 @@
                     </label>
                 </div>
                 
-                <!-- 週平均表示エリア (v44と同じ) -->
+                <!-- 週平均表示エリア -->
                 <div id="chart-averages" class="bg-white p-4 rounded-2xl shadow-lg mb-6">
                     <h4 class="text-lg font-semibold text-gray-700 mb-2">直近7日間平均</h4>
                     <div id="chart-averages-content" class="flex flex-wrap gap-x-6 gap-y-2 text-gray-600">
@@ -358,12 +387,12 @@
                 </div>
             </div>
 
-<!-- 3. テーパリング計画 ページ (v44と同じ) -->
+<!-- 3. テーパリング計画 ページ -->
             <div id="page-tapering" class="page-content">
                 <h2 class="text-3xl font-semibold mb-6">テーパリング計画</h2>
                 <div class="bg-white p-6 rounded-2xl shadow-lg">
                     
-                    <!-- テーパリングの原則 (v44と同じ) -->
+                    <!-- テーパリングの原則 -->
                     <div class="mb-8 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded-lg">
                         <h3 class="text-lg font-semibold text-yellow-800 mb-3">テーパリングの原則</h3>
                         <div class="space-y-2 text-gray-700">
@@ -383,27 +412,26 @@
                         </div>
                     </div>
                     
-                    <!-- 「保存された計画」セクション (v44と同じ) -->
+                    <!-- 「保存された計画」セクション -->
                     <h3 class="text-xl font-semibold text-gray-800 mb-4">保存された計画</h3>
                     <div id="saved-plans-list" class="space-y-3 mb-6">
                         <!-- JSによって計画がここに追加されます -->
                         <p class="text-gray-500 text-sm">保存された計画はまだありません。</p>
                     </div>
 
-                    <!-- 新規計画ボタン (v44と同じ) -->
+                    <!-- 新規計画ボタン -->
                     <div class="mb-6">
                          <button id="new-plan-button" class="bg-red-800 hover:bg-red-900 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 w-full md:w-auto">
                              新規テーパリング計画を作成
                          </button>
                     </div>
 
-                    <!-- 新規/編集フォーム (v44と同じ) -->
+                    <!-- 新規/編集フォーム -->
                     <div id="plan-form-container" class="hidden mb-8 p-6 bg-gray-50 rounded-lg border border-gray-200">
                         <h3 id="plan-form-title" class="text-xl font-semibold text-gray-800 mb-6">新規計画</h3>
                         
                         <input type="hidden" id="plan-edit-id" value="">
                         
-                        <!-- (v44と同じ) -->
                         <div id="plan-form-error" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-4" role="alert"></div>
                         
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -439,7 +467,7 @@
                             </div>
                         </div>
                         
-                        <!-- ボタン (v44と同じ) -->
+                        <!-- ボタン -->
                         <div class="mt-8 flex space-x-4">
                             <button id="save-plan-button" class="bg-red-700 hover:bg-red-800 text-white font-bold py-2 px-5 rounded-lg shadow-md transition duration-300">
                                 計画を保存
@@ -450,7 +478,7 @@
                         </div>
                     </div>
 
-                    <!-- 計画表示エリア (v44と同じ) -->
+                    <!-- 計画表示エリア -->
                     <div id="plan-output-container">
                         <!-- JSによって計算結果がここに追加されます -->
                     </div>
@@ -458,7 +486,7 @@
                 </div>
             </div>
 
-            <!-- 4. 設定 ページ (★ v60: Googleをデフォルトに戻す) -->
+            <!-- 4. 設定 ページ -->
             <div id="page-settings" class="page-content">
                 <h2 class="text-3xl font-semibold mb-6">設定</h2>
                 
@@ -480,16 +508,16 @@
                     </div>
                 </div>
                 
-                <!-- 2. Google アカウント連携 (★ v59: 説明文修正) -->
+                <!-- 2. Google アカウント連携 -->
                 <div id="settings-google-container" class="bg-white p-6 rounded-2xl shadow-lg mb-8">
-                    <h3 class="text-xl font-semibold mb-4">2. Google アカウント連携 (上級者向け)</h3>
+                    <h3 class="text-xl font-semibold mb-4">2. Google アカウント連携</h3>
                     <p class="text-gray-700 mb-6 text-sm">
-                        この機能を利用するには、ご自身でGoogle APIの「クライアントID」を取得し、読み取りたい「スプレッドシートID」と「シート名」を設定する必要があります。
+                        「使い方マニュアル」を参照し、<strong class="text-red-800">チーム共用のクライアントID</strong>と、<strong class="text-red-800">ご自身のスプレッドシートID（またはURL）</strong>を入力してください。
                     </p>
                     <div class="space-y-4">
                         <div>
                             <label for="google-client-id" class="form-label font-bold">クライアント ID</label>
-                            <input type="text" id="google-client-id" class="form-input" placeholder="ご自身で取得したクライアントIDを入力...">
+                            <input type="text" id="google-client-id" class="form-input" placeholder="（使い方マニュアル記載のチーム用IDをコピー）">
                         </div>
                         <div>
                             <label for="google-spreadsheet-id" class="form-label font-bold">スプレッドシート URL または ID</label>
@@ -502,7 +530,7 @@
                     </div>
                 </div>
                 
-                <!-- 3. 手動データ入力 (★ v60: デフォルト非表示) -->
+                <!-- 3. 手動データ入力 -->
                 <div id="settings-manual-container" class="hidden bg-white p-6 rounded-2xl shadow-lg mb-8">
                     <h3 class="text-xl font-semibold mb-4">3. 手動データ入力</h3>
                     <p class="text-gray-700 mb-6 text-sm">
@@ -515,7 +543,7 @@
                     </div>
                 </div>
 
-                <!-- 4. 列マッピング (★ v58: デフォルト値を変更) -->
+                <!-- 4. 列マッピング (Google連携のみ) -->
                 <div class="bg-white p-6 rounded-2xl shadow-lg mb-8">
                     <h3 class="text-xl font-semibold mb-4">4. 列設定 (Google連携のみ)</h3>
                     <p class="text-gray-700 mb-6 text-sm">
@@ -574,41 +602,40 @@
         </main>
     </div>
     
-    <!-- ★ v47: スクリプトを </body> の直前に移動 -->
     <script type="module">
         // ----------------------------------------
         // グローバル変数
         // ----------------------------------------
         let conditionChart = null;
-        let appData = []; // ★ v60: マージ済みの最終データ
-        let baseData = []; // ★ v60: Google/手動(TextArea)から読み込んだ素のデータ
-        let quickLogs = {}; // ★ v60: クイックログデータ (日付 'MM/DD' をキー)
+        let appData = []; // マージ済みの最終データ
+        let baseData = []; // Google/手動(TextArea)から読み込んだ素のデータ
+        let quickLogs = {}; // クイックログデータ (日付 'MM/DD' をキー)
         let savedTaperPlans = [];
         
-        // ★ v44: Google API 用の変数
+        // Google API 用の変数
         let gapiClient;
         let tokenClient;
         let googleTokenResponse;
-        let appSettings = {}; // v44: 設定はグローバルに保持
+        let appSettings = {}; // 設定はグローバルに保持
         
-        // ★ v57: GAPI/GIS のロード状態フラグ (v56と同じ)
+        // GAPI/GIS のロード状態フラグ
         let gapiReady = false;
         let gisReady = false;
-        let gapiSheetsReady = false; // ★ v56: Sheets API 自体のロード完了
+        let gapiSheetsReady = false; // Sheets API 自体のロード完了
         
-        // ★ v44: 保存キー (localStorage)
-        const SETTINGS_STORAGE_KEY = 'practiceLogSettings_v44';
-        const MANUAL_DATA_STORAGE_KEY = 'practiceLogManualData_v44'; // ★ v48: 修正
-        const TAPER_PLANS_STORAGE_KEY = 'taperPlansV1_v44'; // v31のロジックを流用
-        const QUICK_LOGS_STORAGE_KEY = 'practiceLogQuickLogs_v60'; // ★ v60: 新規
+        // 保存キーからバージョン番号を削除
+        const SETTINGS_STORAGE_KEY = 'practiceLogSettings';
+        const MANUAL_DATA_STORAGE_KEY = 'practiceLogManualData';
+        const TAPER_PLANS_STORAGE_KEY = 'taperPlansV1';
+        const QUICK_LOGS_STORAGE_KEY = 'practiceLogQuickLogs';
 
-        // ★ v35: DOM要素の「宣言」をグローバルスコープに移動
+        // DOM要素の「宣言」をグローバルスコープに移動
         // ページ切り替え
         let navLinks;
         let pages;
         let mobileMenuButton;
         
-        // ★ v44: Google Auth
+        // Google Auth
         let googleAuthButton;
         let googleAuthStatus;
 
@@ -616,10 +643,10 @@
         let csvUrlsInput, manualDataInput, saveButton, saveStatus;
         let dataSourceGoogle, dataSourceManual, settingsGoogleContainer, settingsManualContainer;
         let mappingInputs = {}; // mappingInputsはオブジェクトなので初期化
-        // ★ v44: Google設定用
+        // Google設定用
         let googleClientIdInput, googleSpreadsheetIdInput, googleSheetNamesInput;
 
-        // ★ v60: クイックログフォーム
+        // クイックログフォーム
         let logDateInput, logDistanceInput, logMorningWeightInput, logEveningWeightInput, logWakingHrInput, logSleepInput, saveLogButton;
         let quickLogSuccess, quickLogError;
 
@@ -629,7 +656,7 @@
         let planRaceName, planRaceDate, planDuration, planFinalLoad, planEditId;
 
         // ----------------------------------------
-        // 列アルファベット <-> 数字 変換 (v33と同じ)
+        // 列アルファベット <-> 数字 変換
         // ----------------------------------------
         function columnToLetter(colNum) {
             if (colNum === null || colNum === undefined || colNum === "" || colNum < 1) {
@@ -658,7 +685,7 @@
         }
 
         // ----------------------------------------
-        // 日付パーサー (v33と同じ)
+        // 日付パーサー
         // ----------------------------------------
         
         // 「ソート用」
@@ -666,7 +693,7 @@
             try {
                 let month, day;
                 let dateObj;
-                // ★ v60: YYYY-MM-DD 形式も mdMatch の前に処理
+                // YYYY-MM-DD 形式も mdMatch の前に処理
                 const ymdMatch = dateStr.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})$/);
                 const mdMatch = dateStr.match(/^(\d{1,2})\/(\d{1,2})$/);
 
@@ -749,7 +776,7 @@
             }
         }
         
-        // ★ v60: YYYY-MM-DD を MM/DD に変換 (クイックログのキーとして使用)
+        // YYYY-MM-DD を MM/DD に変換 (クイックログのキーとして使用)
         function convertDateToMMDD(dateStr) {
              try {
                 // YYYY-MM-DD
@@ -772,7 +799,7 @@
              }
         }
 
-        // ★ v60: YYYY-MM-DD 形式の文字列を取得 (Dateオブジェクトから)
+        // YYYY-MM-DD 形式の文字列を取得 (Dateオブジェクトから)
         function getYYYYMMDD(date) {
             const y = date.getFullYear();
             const m = String(date.getMonth() + 1).padStart(2, '0');
@@ -781,7 +808,7 @@
         }
 
 
-        // ★ v49: スプレッドシートID抽出
+        // スプレッドシートID抽出
         function extractSpreadsheetId(input) {
             if (!input) return "";
             input = input.trim();
@@ -798,7 +825,6 @@
             }
             // 抽出失敗 (または既にIDだった)
             console.warn("Could not extract Spreadsheet ID. Using raw input.");
-            // ★ v49: 抽出失敗時は元の入力（おそらく不正）をそのまま返し、GAPIエラーで失敗させる
             return input; 
         }
 
@@ -828,12 +854,10 @@
         }
         
         // ----------------------------------------
-        // ★ v57: Google API / GSI 認証 (v53のポーリング方式に戻す)
+        // Google API / GSI 認証
         // ----------------------------------------
         
-        // (v56 の gapiLoadedCallback, gisLoadedCallback を削除)
-
-        // ★ v57: GAPI/GIS の初期化 (ポーリングから呼ばれる)
+        // GAPI/GIS の初期化 (ポーリングから呼ばれる)
         async function tryInitGoogleClients() {
             // GAPI (api.js) の初期化
             if (!gapiReady) {
@@ -919,7 +943,6 @@
             }
         }
 
-        // ★ v47: サインインロジック修正
         async function handleTokenResponse(response) {
             if (response.error) {
                 console.error("Google Auth Error:", response.error);
@@ -931,14 +954,13 @@
             if (gapi.client) gapi.client.setToken(response);
             
             try {
-                // ★ v47: まずデータ読み込みを試行
-                // ★ v57: loadAndDisplayData を window にアタッチする必要がない
+                // まずデータ読み込みを試行
                 await loadAndDisplayData(appSettings);
-                // ★ v47: データ読み込み成功時のみ「サインイン済み」
+                // データ読み込み成功時のみ「サインイン済み」
                 console.log("Google Sign-In and data fetch successful.");
                 updateAuthStatus(true, "サインイン済み");
             } catch (e) {
-                // ★ v47: データ読み込み失敗時
+                // データ読み込み失敗時
                 console.error("Sign-In OK, but data fetch failed:", e);
                 // showError は loadAndDisplayData 内部で呼ばれている
                 updateAuthStatus(false, "サインイン失敗 (データ読込不可)");
@@ -968,10 +990,9 @@
 
 
         // ----------------------------------------
-        // 設定 (★ v49: ID抽出 + エラーハンドリング強化)
+        // 設定
         // ----------------------------------------
         
-        // ★ v57: 編集ミスで失われていた toggleDataSourceView を再追加
         function toggleDataSourceView(source) {
             if (!settingsGoogleContainer || !settingsManualContainer) return;
             if (source === 'google') {
@@ -983,7 +1004,6 @@
             }
         }
         
-        // ★ v49: エラーハンドリング強化
         async function saveSettings() {
             try {
                 // DOM要素がロードされているか確認
@@ -991,19 +1011,17 @@
                     const errorMsg = "設定UIの読み込みに失敗しました。";
                     console.error(errorMsg);
                     if(saveStatus) saveStatus.textContent = errorMsg;
-                    // この環境では alert() は使えない
                     return;
                 }
                 
                 const rawSpreadsheetInput = googleSpreadsheetIdInput.value;
-                const extractedId = extractSpreadsheetId(rawSpreadsheetInput); // ★ v49
+                const extractedId = extractSpreadsheetId(rawSpreadsheetInput);
                 
                 const settings = {
-                    // ★ v60: dataSourceGoogle を参照
                     dataSource: dataSourceGoogle.checked ? 'google' : 'manual',
                     // Google
                     clientId: googleClientIdInput.value,
-                    spreadsheetId: extractedId, // ★ v49: 抽出したID
+                    spreadsheetId: extractedId,
                     sheetNames: googleSheetNamesInput.value.split('\n').filter(name => name.trim() !== ''),
                     // 共通
                     mapping: {}
@@ -1018,10 +1036,10 @@
                 
                 const manualData = manualDataInput.value;
                 
-                // ★ v49: localStorageの書き込み自体をtry...catch
+                // localStorageの書き込み自体をtry...catch
                 try {
                     localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
-                    localStorage.setItem(MANUAL_DATA_STORAGE_KEY, manualData); // ★ v48: 修正
+                    localStorage.setItem(MANUAL_DATA_STORAGE_KEY, manualData);
                 } catch (storageError) {
                     console.error("Failed to write to localStorage:", storageError);
                     saveStatus.textContent = '保存失敗(プライベートモードなど)';
@@ -1030,11 +1048,11 @@
                 
                 if (saveStatus) saveStatus.textContent = '保存しました！データを再読み込みします...';
                 
-                // ★ v49: リロードの代わりに、設定をグローバルに反映し、データを再読み込み
-                const oldClientId = appSettings.clientId; // ★ v56
+                // リロードの代わりに、設定をグローバルに反映し、データを再読み込み
+                const oldClientId = appSettings.clientId;
                 appSettings = settings;
                 
-                // ★ v57: クライアントIDが変更された場合、GAPI/GISの再初期化を試みる
+                // クライアントIDが変更された場合、GAPI/GISの再初期化を試みる
                 if (appSettings.clientId !== oldClientId) {
                     console.log("ClientID changed or set. Re-initializing Google Clients.");
                     // TokenClient をリセット (gapi/gis はリセット不要)
@@ -1058,13 +1076,12 @@
             }
         }
 
-        // ★ v44: localStorageから読み込み (v48のキー修正)
+        // localStorageから読み込み
         async function loadSettings() {
             let settings = null;
             let manualData = "";
             
             try {
-                // ★ v48: キーのタイプミスを修正
                 manualData = localStorage.getItem(MANUAL_DATA_STORAGE_KEY) || "";
                 const savedSettings = localStorage.getItem(SETTINGS_STORAGE_KEY);
                 if (savedSettings) {
@@ -1077,22 +1094,21 @@
                 }
                 
                 if (settings) {
-                    // v44グローバル変数に保持
+                    // グローバル変数に保持
                     appSettings = settings; 
                     
                     if (settings.dataSource === 'manual') {
                         if (dataSourceManual) dataSourceManual.checked = true;
-                        if (dataSourceGoogle) dataSourceGoogle.checked = false; // ★ v59: Googleのチェックを外す
+                        if (dataSourceGoogle) dataSourceGoogle.checked = false;
                         toggleDataSourceView('manual');
                     } else {
                         if (dataSourceGoogle) dataSourceGoogle.checked = true;
-                        if (dataSourceManual) dataSourceManual.checked = false; // ★ v59: Manualのチェックを外す
+                        if (dataSourceManual) dataSourceManual.checked = false;
                         toggleDataSourceView('google');
                     }
                     
                     // Google
                     if (googleClientIdInput) googleClientIdInput.value = settings.clientId || "";
-                    // ★ v49: 保存されているのはIDだが、フォームにはIDをそのまま表示
                     if (googleSpreadsheetIdInput) googleSpreadsheetIdInput.value = settings.spreadsheetId || ""; 
                     if (googleSheetNamesInput) googleSheetNamesInput.value = (settings.sheetNames || []).join('\n');
                     
@@ -1107,7 +1123,7 @@
                     }
                 } else {
                     console.log("No settings found, using defaults.");
-                    // ★ v60: デフォルトを 'google' に戻す
+                    // デフォルトを 'google' に
                     if (dataSourceGoogle) dataSourceGoogle.checked = true;
                     if (dataSourceManual) dataSourceManual.checked = false;
                     toggleDataSourceView('google');
@@ -1118,7 +1134,7 @@
             } catch (error) {
                 console.error("Failed to load settings:", error);
                 showError(`設定の読み込みに失敗しました: ${error.message}`);
-                 // ★ v60: デフォルトを 'google' に戻す
+                 // デフォルトを 'google' に
                 if (dataSourceGoogle) dataSourceGoogle.checked = true;
                 if (dataSourceManual) dataSourceManual.checked = false;
                 toggleDataSourceView('google');
@@ -1127,10 +1143,10 @@
         }
         
         // ----------------------------------------
-        // ★ v60: クイックログ (手動入力) 機能
+        // クイックログ (手動入力) 機能
         // ----------------------------------------
         
-        // ★ v60: localStorageからクイックログを読み込む
+        // localStorageからクイックログを読み込む
         async function loadQuickLogs() {
             try {
                 const savedLogs = localStorage.getItem(QUICK_LOGS_STORAGE_KEY);
@@ -1147,12 +1163,12 @@
             // 今日の日付をフォームに設定
             if(logDateInput) {
                 logDateInput.value = getYYYYMMDD(new Date());
-                // ★ v60: フォームの日付変更時に、保存済みのログをフォームに反映する
+                // フォームの日付変更時に、保存済みのログをフォームに反映する
                 logDateInput.dispatchEvent(new Event('change'));
             }
         }
 
-        // ★ v60: フォームの日付が変更されたときに既存データを表示
+        // フォームの日付が変更されたときに既存データを表示
         function handleLogDateChange() {
             const dateKey = convertDateToMMDD(logDateInput.value);
             if (!dateKey) {
@@ -1173,7 +1189,7 @@
             }
         }
         
-        // ★ v60: フォームをクリア (日付以外)
+        // フォームをクリア (日付以外)
         function clearLogForm() {
             logDistanceInput.value = "";
             logMorningWeightInput.value = "";
@@ -1182,7 +1198,7 @@
             logSleepInput.value = "";
         }
 
-        // ★ v60: クイックログを保存
+        // クイックログを保存
         async function saveQuickLog() {
             try {
                 const dateStr = logDateInput.value;
@@ -1230,7 +1246,7 @@
             }
         }
 
-        // ★ v60: クイックログのメッセージ表示
+        // クイックログのメッセージ表示
         function showQuickLogError(message) {
             quickLogError.textContent = message;
             quickLogError.style.display = 'block';
@@ -1248,7 +1264,7 @@
         // データ取得・解析処理
         // ----------------------------------------
         
-        // ★ v44: Google Sheets API (gapi) からの応答をパース
+        // Google Sheets API (gapi) からの応答をパース
         function parseGapiResponse(valueRanges, mapping) {
             if (!mapping || !mapping.date) {
                 throw new Error("「日付」の列設定は必須です。");
@@ -1261,7 +1277,6 @@
                 }
             }
             
-            // v33と同じ (YYYY-MM-DD や MM/DD を許可)
             const dateRegex = /^\s*"?\s*(\d{4}[-\/]\d{1,2}[-\/]\d{1,2}|\d{1,2}\/\d{1,2})\s*"?\s*$/i;
             const data = [];
 
@@ -1297,7 +1312,7 @@
             return data;
         }
 
-        // 手動入力データ用のパーサー (v33と同じ)
+        // 手動入力データ用のパーサー
         function parseManualData(manualText, mapping) {
             const dateRegex = /^\s*"?\s*(\d{4}[-\/]\d{1,2}[-\/]\d{1,2}|\d{1,2}\/\d{1,2})\s*"?\s*$/i;
             const lines = manualText.trim().split('\n');
@@ -1335,8 +1350,8 @@
         }
 
 
-        // ★ v44: データ読み込みのメインロジック (GAPI/手動 分岐)
-        // ★ v60: loadAndDisplayData (ベースデータのロード) と mergeDataAndRefreshUI (マージとUI更新) に分離
+        // データ読み込みのメインロジック (GAPI/手動 分岐)
+        // loadAndDisplayData (ベースデータのロード) と mergeDataAndRefreshUI (マージとUI更新) に分離
         
         async function loadAndDisplayData(settings) {
             const loadingEl = document.getElementById('dashboard-loading');
@@ -1357,46 +1372,45 @@
             try {
                 if (!settings) {
                     showError('「設定」ページで、入力方法と列設定を保存してください。');
-                    return; // ★ v60: baseData は空のまま
-                }
-                
-                // データソースによって処理を分岐
-                if (settings.dataSource === 'manual') {
+                    baseData = [];
+                // ★ v61: エラー修正。 if (!settings) の場合に settings.dataSource を読みに行かないよう、
+                //           else if / else で残りのロジックをラップする
+                } else if (settings.dataSource === 'manual') {
                     // --- 手動データの場合 ---
                     console.log("Loading data from: Manual Input");
-                    const manualData = localStorage.getItem(MANUAL_DATA_STORAGE_KEY) || ""; // ★ v48
+                    const manualData = localStorage.getItem(MANUAL_DATA_STORAGE_KEY) || "";
                     if (!manualData) {
                         showError('「設定」ページで、手動入力データを貼り付けて保存してください。');
-                        baseData = []; // ★ v60
-                        return;
+                        baseData = []; // baseData をリセット
+                        // 手動データが空でもマージ処理は実行（クイックログデータを表示するため）
+                    } else {
+                        baseData = parseManualData(manualData, settings.mapping); // baseData をセット
                     }
-                    baseData = parseManualData(manualData, settings.mapping); // ★ v60
                     
                 } else {
                     // --- Google連携の場合 ---
                     console.log("Loading data from: Google Sheets API");
                     if (!googleTokenResponse || !googleTokenResponse.access_token) {
                         showError('「Google サインイン」ボタンを押して、スプレッドシートへのアクセスを許可してください。');
-                        baseData = []; // ★ v60
-                        return;
+                        baseData = []; // baseData をリセット
+                        return; // Google連携の場合はサインイン必須
                     }
                     if (!settings.spreadsheetId || !settings.sheetNames || settings.sheetNames.length === 0 || !settings.mapping || !settings.mapping.date) {
                         showError('「設定」ページで、クライアントID、スプレッドシートID、シート名、列設定をすべて完了してください。');
-                        baseData = []; // ★ v60
-                        return;
+                        baseData = []; // baseData をリセット
+                        return; // 設定不備
                     }
                     
-                    // ★ v57: GAPIが準備OKか最終確認
+                    // GAPIが準備OKか最終確認
                     if (!gapiReady || !gapiSheetsReady || !gapi.client || !gapi.client.sheets) {
                         showError('Google Sheets API がまだ準備中です。数秒待ってから再試行してください。');
-                        baseData = []; // ★ v60
-                        return;
+                        baseData = []; // baseData をリセット
+                        return; // GAPI不備
                     }
 
                     // 全シートのA-Z列（最大）のデータを要求
                     const ranges = settings.sheetNames.map(name => `'${name}'!A:Z`);
                     
-                    // ★ v49: タイムアウト付きでGAPIコール
                     const gapiCall = gapi.client.sheets.spreadsheets.values.batchGet({
                         spreadsheetId: settings.spreadsheetId,
                         ranges: ranges,
@@ -1407,22 +1421,22 @@
                         new Promise((_, reject) => setTimeout(() => reject(new Error('Google Sheets API request timed out (10s)')), 10000))
                     ]);
                     
-                    baseData = parseGapiResponse(response.result.valueRanges, settings.mapping); // ★ v60
+                    baseData = parseGapiResponse(response.result.valueRanges, settings.mapping); // baseData をセット
                 }
 
-                // ★ v60: マージ処理とUI更新を呼び出す
+                // マージ処理とUI更新を呼び出す
                 await mergeDataAndRefreshUI();
 
             } catch (error) {
                 console.error("Failed to load and display data:", error);
-                // ★ v47: エラーオブジェクト全体を渡す
+                // エラーオブジェクト全体を渡す
                 showError(error); 
-                // ★ v47: loadAndDisplayData が失敗したことを呼び出し元に伝える
+                // loadAndDisplayData が失敗したことを呼び出し元に伝える
                 throw error;
             }
         }
         
-        // ★ v60: クイックログとベースデータをマージし、UIを更新する
+        // クイックログとベースデータをマージし、UIを更新する
         async function mergeDataAndRefreshUI() {
             const loadingEl = document.getElementById('dashboard-loading');
             const summaryTopEl = document.getElementById('dashboard-summary-top');
@@ -1445,7 +1459,7 @@
 
                 // クイックログのデータで上書き (null でない場合のみ)
                 const mergedEntry = {
-                    date: baseEntry.date, // 元の日付形式 (MM/DD or YYYY/MM/DD) を維持
+                    date: baseEntry.date || logEntry.date, // 元の日付形式 (MM/DD or YYYY/MM/DD) を維持
                     distance: (logEntry.distance !== null) ? logEntry.distance : baseEntry.distance,
                     morningWeight: (logEntry.morningWeight !== null) ? logEntry.morningWeight : baseEntry.morningWeight,
                     eveningWeight: (logEntry.eveningWeight !== null) ? logEntry.eveningWeight : baseEntry.eveningWeight,
@@ -1471,7 +1485,13 @@
 
             // 4. UI更新
             if (appData.length === 0) {
-                 showError('データを読み込めませんでした。設定（データソース、ID、シート名、列設定、日付形式）を確認してください。');
+                 // baseData も quickLogs も空の場合
+                 if (baseData.length === 0 && Object.keys(quickLogs).length === 0) {
+                    showError('データを読み込めませんでした。設定ページを確認するか、ダッシュボードから手動でデータを入力してください。');
+                 } else {
+                    // baseData にはデータがあったが、パース等に失敗した場合
+                    showError('データはありますが、有効な日付形式の行が見つかりませんでした。列設定や日付形式（MM/DD）を確認してください。');
+                 }
                  return;
             }
 
@@ -1482,7 +1502,7 @@
             summaryTopEl.style.display = 'grid'; 
             summaryBottomEl.style.display = 'grid';
             
-             // ★ v60: テーパリング計画の表示も実績データで更新する
+             // テーパリング計画の表示も実績データで更新する
             const displayedPlanId = document.querySelector('#plan-output-container [data-plan-id]')?.dataset.planId;
             if (displayedPlanId) {
                 displaySavedPlan(displayedPlanId);
@@ -1502,7 +1522,7 @@
             if (summaryBottomEl) summaryBottomEl.style.display = 'none'; 
             if (errorEl) errorEl.style.display = 'block';
             
-            // ★ v47: エラーオブジェクトを解析
+            // エラーオブジェクトを解析
             let message = "不明なエラーが発生しました。";
             if (typeof error === 'string') {
                 message = error;
@@ -1517,14 +1537,11 @@
             if (errorMsgEl) errorMsgEl.textContent = message;
         }
         
-        // ★ v44: v43の警告表示は削除
-
 
         // ----------------------------------------
-        // ダッシュボードの更新 (v33と同じ)
+        // ダッシュボードの更新
         // ----------------------------------------
         
-        // v33と同じヘルパー関数
         function findChangeData(data, key) {
             if (!data || data.length === 0) return null;
             
@@ -1568,7 +1585,6 @@
             return result;
         }
         
-        // v33と同じヘルパー関数
         function calculateWeeklyAverage(data, key) {
             if (!data || data.length === 0) {
                 return null;
@@ -1615,7 +1631,6 @@
         }
 
 
-        // v33と同じ
         function updateDashboard(data) {
             
             const metrics = [
@@ -1715,10 +1730,10 @@
 
 
         // ----------------------------------------
-        // Chart.js (★ v45: グラフ破棄処理を修正)
+        // Chart.js
         // ----------------------------------------
         function initializeChart() {
-            // ★ v45: 既存チャートの破棄
+            // 既存チャートの破棄
             if (conditionChart) {
                 console.warn("Destroying existing chart instance before recreation.");
                 conditionChart.destroy();
@@ -1810,7 +1825,7 @@
             }
         }
 
-        // ★ v58: グラフの表示期間を3週間に変更
+        // グラフの表示期間を3週間に変更
         function updateConditionChart(data) {
             if (!conditionChart) {
                 console.warn("updateConditionChart called but chart is not initialized.");
@@ -1824,7 +1839,7 @@
                 return;
             }
 
-            // ★ v58: データを直近3週間（21日間）にフィルタリング
+            // データを直近3週間（21日間）にフィルタリング
             const today = new Date();
             today.setHours(0, 0, 0, 0);
             const threeWeeksAgo = new Date();
@@ -1847,7 +1862,7 @@
                 conditionChart.update();
                 return;
             }
-            // ★ v58: フィルタリング後のデータを使用する
+            // フィルタリング後のデータを使用する
 
             try {
                 // チェックボックスの状態を読み取る
@@ -1858,11 +1873,11 @@
                     wakingHr: document.getElementById('toggle-waking-hr').checked,
                 };
                 
-                // データをセット (★ v58: filteredData を使用)
+                // データをセット (filteredData を使用)
                 const labels = filteredData.map(d => d.date);
                 conditionChart.data.labels = labels;
                 
-                // データセットの表示/非表示を切り替え (★ v58: filteredData を使用)
+                // データセットの表示/非表示を切り替え (filteredData を使用)
                 conditionChart.data.datasets[0].data = filteredData.map(d => d.distance);
                 conditionChart.data.datasets[0].hidden = !toggles.distance;
                 
@@ -1891,7 +1906,7 @@
                     conditionChart.options.scales.yWeight.position = 'left';
                 }
                 
-                // 平均値を計算して表示 (v33と同じ)
+                // 平均値を計算して表示
                 let avgHtml = '';
                 const avgMetrics = [
                     { key: 'distance', label: '走行距離', unit: 'km/日', shown: toggles.distance, color: 'text-blue-600' },
@@ -1902,7 +1917,7 @@
                 
                 avgMetrics.forEach(m => {
                     if (m.shown) {
-                        // ★ v58: 平均値の計算は「全データ (data)」を基に行う (calculateWeeklyAverageが内部で7日間にフィルタするため)
+                        // 平均値の計算は「全データ (data)」を基に行う (calculateWeeklyAverageが内部で7日間にフィルタするため)
                         const avg = calculateWeeklyAverage(data, m.key); 
                         const avgText = (avg !== null) ? `${avg.toFixed(1)} ${m.unit}` : '–';
                         avgHtml += `<p><strong class="${m.color}">${m.label}:</strong> ${avgText}</p>`;
@@ -1921,12 +1936,11 @@
         }
         
         // ----------------------------------------
-        // テーパリング計画 機能 (★ v44: localStorage保存)
+        // テーパリング計画 機能
         // ----------------------------------------
         
         // 日付を "MM/DD (曜)" 形式にフォーマットするヘルパー関数
         function formatDate(date) {
-            // v31: dateが文字列の場合、Dateオブジェクトに変換
             const dateObj = (typeof date === 'string') ? new Date(date) : date;
             const month = dateObj.getMonth() + 1;
             const day = dateObj.getDate();
@@ -1934,7 +1948,7 @@
             return `${month}/${day} (${weekday})`;
         }
 
-        // 「日平均」走行距離の計算ロジック (「今日」基準) - v33と同じ
+        // 「日平均」走行距離の計算ロジック (「今日」基準)
         function calculateAverageDistance() {
             if (!appData || appData.length === 0) {
                 console.warn("[calcAvg] appData is empty. Returning 0.0");
@@ -1983,7 +1997,7 @@
             return dailyAvg.toFixed(1);
         }
         
-        // レース日と期間を基準に平均を計算する (フォーム変更時) - v33と同じ
+        // レース日と期間を基準に平均を計算する (フォーム変更時)
         function calculateAverageDistanceOnFormChange(raceDateStr, durationStr) {
             if (!appData || appData.length === 0) {
                 console.warn("[calcAvgForm] appData is empty. Returning 0.0");
@@ -2046,7 +2060,6 @@
             return dailyAvg.toFixed(1);
         }
 
-        // v33と同じ
         function showPlanForm(show = true) {
             if (planFormContainer) {
                 planFormContainer.style.display = show ? 'block' : 'none';
@@ -2060,7 +2073,6 @@
             }
         }
 
-        // v33と同じ
         function showNewPlanForm() {
             if (!planFormContainer) return;
             
@@ -2085,7 +2097,6 @@
             planOutputContainer.innerHTML = ''; // 出力エリアをクリア
         }
         
-        // v33と同じ
         function handleFormChange() {
             const raceDateStr = planRaceDate.value;
             const durationStr = planDuration.value;
@@ -2102,7 +2113,7 @@
             }
         }
         
-        // ★ v44: localStorage保存
+        // localStorage保存
         async function saveTaperPlan() {
             if (!planRaceName || !planRaceDate || !planDuration || !planFinalLoad || !planOutputContainer || !planAvgDistanceSpan) {
                 console.error("Tapering plan calculation UI elements not found.");
@@ -2164,15 +2175,13 @@
             }
             
             // 6. 保存、再描画、フォーム非表示
-            await saveTaperPlansToStorage(); // ★ v44: await (localStorage)
+            await saveTaperPlansToStorage();
             renderTaperPlanList();
             showPlanForm(false);
             
-            // v33のロジックを維持
             displaySavedPlan(planData.id);
         }
         
-        // v33と同じ
         function cancelPlanForm() {
             showPlanForm(false);
             planOutputContainer.innerHTML = ''; // 出力エリアをクリア
@@ -2183,7 +2192,7 @@
             }
         }
 
-        // ★ v44: localStorage保存
+        // localStorage保存
         async function saveTaperPlansToStorage() {
             try {
                 localStorage.setItem(TAPER_PLANS_STORAGE_KEY, JSON.stringify(savedTaperPlans));
@@ -2193,7 +2202,7 @@
             }
         }
 
-        // ★ v44: localStorage読み込み
+        // localStorage読み込み
         async function loadTaperPlans() {
             try {
                 const savedData = localStorage.getItem(TAPER_PLANS_STORAGE_KEY);
@@ -2210,7 +2219,6 @@
             renderTaperPlanList(); // 読み込んだデータでリストを描画
         }
         
-        // v33と同じ
         function renderTaperPlanList() {
             if (!savedPlansList) return;
             
@@ -2240,7 +2248,6 @@
             addPlanListEventListeners();
         }
         
-        // v33と同じ
         function addPlanListEventListeners() {
             document.querySelectorAll('.view-plan-button').forEach(btn => {
                 btn.addEventListener('click', (e) => {
@@ -2262,10 +2269,10 @@
             });
         }
         
-        // ★ v60: 計画 vs 実績 の比較機能を追加
+        // 計画 vs 実績 の比較機能
         function generatePlanHtml(plan) {
             const raceDate = new Date(plan.raceDate);
-            // ★ v60: data-plan-id を追加
+            // data-plan-id を追加
             let outputHtml = `
                 <div data-plan-id="${plan.id}">
                     <h3 class="text-xl font-semibold text-gray-800 mb-4 mt-6">${plan.raceName} への計画</h3>
@@ -2328,7 +2335,7 @@
             }
 
             for (const day of planDays) {
-                 // ★ v60: 実績データを appData から検索
+                 // 実績データを appData から検索
                  const dateKey = convertDateToMMDD(day.dateObj);
                  // appData はソート済みだが、日付が飛び飛びの可能性があるので find を使う
                  const actualData = appData.find(d => convertDateToMMDD(d.date) === dateKey);
@@ -2363,12 +2370,11 @@
                     </table>
                 </div>
                 <p class="text-xs text-gray-500 mt-2">※レース当日の推奨距離は含まれていません。</p>
-                </div> <!-- ★ v60: data-plan-id の閉じタグ -->
+                </div> <!-- data-plan-id の閉じタグ -->
             `;
             return outputHtml;
         }
 
-        // v33と同じ
         function displaySavedPlan(id) {
             const plan = savedTaperPlans.find(p => p.id === id);
             if (plan) {
@@ -2377,7 +2383,6 @@
             }
         }
         
-        // v33と同じ
         function editPlan(id) {
             const plan = savedTaperPlans.find(p => p.id === id);
             if (plan) {
@@ -2400,7 +2405,6 @@
             }
         }
         
-        // v33と同じ
         async function deletePlan(id) {
             savedTaperPlans = savedTaperPlans.filter(p => p.id !== id);
             await saveTaperPlansToStorage(); 
@@ -2409,11 +2413,11 @@
         }
 
         // ----------------------------------------
-        // ★ v40: 初期化処理 (v35のロジック)
+        // 初期化処理
         // ----------------------------------------
         document.addEventListener('DOMContentLoaded', async () => {
             
-            // ★ v35: ここで DOM 要素をすべて取得
+            // ここで DOM 要素をすべて取得
             navLinks = document.querySelectorAll('.nav-link');
             pages = document.querySelectorAll('.page-content');
             mobileMenuButton = document.getElementById('mobile-menu-button');
@@ -2441,7 +2445,7 @@
                 sleep: document.getElementById('col-sleep'),
             };
 
-            // ★ v60: クイックログフォーム
+            // クイックログフォーム
             logDateInput = document.getElementById('log-date');
             logDistanceInput = document.getElementById('log-distance');
             logMorningWeightInput = document.getElementById('log-morning-weight');
@@ -2467,7 +2471,7 @@
             planFinalLoad = document.getElementById('plan-final-load');
             planEditId = document.getElementById('plan-edit-id');
 
-            // ★ v35: ここでイベントリスナーをすべて登録
+            // ここでイベントリスナーをすべて登録
             try {
                 // ページ切り替え
                 navLinks.forEach(link => {
@@ -2503,7 +2507,7 @@
                     googleAuthButton.addEventListener('click', handleAuthClick);
                 }
 
-                // ★ v60: クイックログ
+                // クイックログ
                 if (saveLogButton) {
                     saveLogButton.addEventListener('click', saveQuickLog);
                 }
@@ -2541,16 +2545,16 @@
                 showError("UIの初期化に失敗しました。");
             }
             
-            // ★ v44: localStorageから設定・データを読み込む
+            // localStorageから設定・データを読み込む
             showPage(defaultPage); 
             initializeChart();
             
             try {
                 const settings = await loadSettings(); // await: localStorageから設定を読み込む
                 await loadTaperPlans(); // await: localStorageから計画を読み込む
-                await loadQuickLogs(); // ★ v60: localStorageからクイックログを読み込む
+                await loadQuickLogs(); // localStorageからクイックログを読み込む
                 
-                // ★ v57: GAPI/GISの初期化ポーリングを開始
+                // GAPI/GISの初期化ポーリングを開始
                 const gapiPollInterval = setInterval(async () => {
                     // tryInitGoogleClients は gapiReady/gisReady/gapiSheetsReady をチェック/設定する
                     await tryInitGoogleClients(); 
@@ -2561,7 +2565,7 @@
                     }
                 }, 500); // 0.5秒ごとにチェック
                 
-                // ★ v60: 読み込みロジック (v58の状態)
+                // 読み込みロジック
                 if (settings && settings.dataSource === 'google') {
                     // Google連携の場合は、まだデータをロードせず、サインインを待つ
                     showError('「Google サインイン」ボタンを押して、スプレッドシートへのアクセスを許可してください。');
