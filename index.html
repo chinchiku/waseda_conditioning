@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ワセダ_覇者への道のり (v42)</title>
+    <title>ワセダ_覇者への道のり (v41)</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -194,10 +194,16 @@
                     <p class="mt-4 text-gray-600">データを読み込み中...</p>
                 </div>
 
-                <div id="dashboard-error" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg relative" role="alert">
+                <!-- ★ v41: エラー/警告エリアを統合 -->
+                <div id="dashboard-error" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg relative mb-6" role="alert">
                     <strong class="font-bold">データ取得エラー</strong>
                     <span class="block sm:inline" id="dashboard-error-message"></span>
                 </div>
+                <div id="dashboard-warning" class="hidden bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded-lg relative mb-6" role="alert">
+                    <strong class="font-bold">警告</strong>
+                    <span class="block sm:inline" id="dashboard-warning-message"></span>
+                </div>
+
 
                 <!-- 上段3つ (v33と同じ) -->
                 <div id="dashboard-summary-top" class="hidden grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
@@ -516,16 +522,24 @@
         let appData = [];
         let savedTaperPlans = [];
         
+        // ★ v41: Firebase フォールバック用フラグ
+        let useFirebase = true; 
+        
         // ★ v34: Firebase用グローバル変数
         let db;
         let auth;
         let userId;
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
-        // ★ v34: 保存キーを Firestore のドキュメントIDに変更
+        // ★ v34: 保存キー
         const SETTINGS_DOC_ID = 'settingsV1';
         const MANUAL_DATA_DOC_ID = 'manualDataV1';
         const TAPER_PLANS_DOC_ID = 'taperPlansV1';
+        // ★ v41: (localStorage用)
+        const LOCAL_SETTINGS_KEY = 'practiceLogSettingsV5';
+        const LOCAL_MANUAL_DATA_KEY = 'practiceLogManualData';
+        const LOCAL_TAPER_PLANS_KEY = 'taperPlansV1';
+
 
         // ★ v35: DOM要素の「宣言」をグローバルスコープに移動
         // ページ切り替え
@@ -734,7 +748,7 @@
         }
         
         // ----------------------------------------
-        // 設定 (★ v42: getDocWithTimeout を使用)
+        // 設定 (★ v41: Firebase/localStorage フォールバック)
         // ----------------------------------------
 
         function toggleDataSourceView(source) {
@@ -749,11 +763,6 @@
         }
         
         async function saveSettings() {
-            if (!auth.currentUser) {
-                 if (saveStatus) saveStatus.textContent = 'エラー: 認証されていません。';
-                 return;
-            }
-            
             try {
                 const settings = {
                     dataSource: dataSourceManual.checked ? 'manual' : 'csv',
@@ -770,11 +779,17 @@
                 
                 const manualData = manualDataInput.value;
                 
-                const settingsRef = doc(db, 'artifacts', appId, 'users', userId, 'settings', SETTINGS_DOC_ID);
-                const manualDataRef = doc(db, 'artifacts', appId, 'users', userId, 'settings', MANUAL_DATA_DOC_ID);
-
-                await setDoc(settingsRef, { data: settings });
-                await setDoc(manualDataRef, { data: manualData });
+                // ★ v41: 保存先を分岐
+                if (useFirebase && auth.currentUser) {
+                    const settingsRef = doc(db, 'artifacts', appId, 'users', userId, 'settings', SETTINGS_DOC_ID);
+                    const manualDataRef = doc(db, 'artifacts', appId, 'users', userId, 'settings', MANUAL_DATA_DOC_ID);
+                    await setDoc(settingsRef, { data: settings });
+                    await setDoc(manualDataRef, { data: manualData });
+                } else {
+                    // Firebase失敗時はlocalStorage
+                    localStorage.setItem(LOCAL_SETTINGS_KEY, JSON.stringify(settings));
+                    localStorage.setItem(LOCAL_MANUAL_DATA_KEY, manualData);
+                }
                 
                 if (saveStatus) saveStatus.textContent = '保存しました！リロードしてデータを反映します。';
                 setTimeout(() => { 
@@ -783,30 +798,48 @@
                 }, 1500);
                 
             } catch (error) {
-                console.error("Failed to save settings to Firestore:", error);
+                console.error("Failed to save settings:", error);
                 if (saveStatus) saveStatus.textContent = '保存に失敗しました。';
             }
         }
 
-        // ★ v42: getDocWithTimeout を使用
+        // ★ v41: Firestore/localStorage フォールバック
         async function loadSettings() {
-            if (!auth.currentUser) return null; 
+            let settings = null;
+            let manualData = "";
             
             try {
-                const settingsRef = doc(db, 'artifacts', appId, 'users', userId, 'settings', SETTINGS_DOC_ID);
-                const manualDataRef = doc(db, 'artifacts', appId, 'users', userId, 'settings', MANUAL_DATA_DOC_ID);
+                if (useFirebase && auth.currentUser) {
+                    // --- Firebaseから読み込み ---
+                    const settingsRef = doc(db, 'artifacts', appId, 'users', userId, 'settings', SETTINGS_DOC_ID);
+                    const manualDataRef = doc(db, 'artifacts', appId, 'users', userId, 'settings', MANUAL_DATA_DOC_ID);
 
-                // ★ v42: タイムアウト付きで読み込み
-                const settingsSnap = await getDocWithTimeout(settingsRef);
-                const manualDataSnap = await getDocWithTimeout(manualDataRef);
-                
-                if (manualDataSnap.exists() && manualDataInput) {
-                    manualDataInput.value = manualDataSnap.data().data || "";
+                    // ★ v42: タイムアウト付きで読み込み
+                    const settingsSnap = await getDocWithTimeout(settingsRef);
+                    const manualDataSnap = await getDocWithTimeout(manualDataRef);
+                    
+                    if (manualDataSnap.exists()) {
+                        manualData = manualDataSnap.data().data || "";
+                    }
+                    if (settingsSnap.exists()) {
+                        settings = settingsSnap.data().data;
+                    }
+                } else {
+                    // --- localStorageから読み込み ---
+                    console.log("Loading settings from localStorage (Firebase disabled).");
+                    manualData = localStorage.getItem(LOCAL_MANUAL_DATA_KEY) || "";
+                    const savedSettings = localStorage.getItem(LOCAL_SETTINGS_KEY);
+                    if (savedSettings) {
+                        settings = JSON.parse(savedSettings);
+                    }
+                }
+
+                // --- 読み込んだ値をフォームに反映 ---
+                if (manualDataInput) {
+                    manualDataInput.value = manualData;
                 }
                 
-                if (settingsSnap.exists()) {
-                    const settings = settingsSnap.data().data;
-                    
+                if (settings) {
                     if (settings.dataSource === 'manual') {
                         if (dataSourceManual) dataSourceManual.checked = true;
                         toggleDataSourceView('manual');
@@ -814,11 +847,9 @@
                         if (dataSourceCsv) dataSourceCsv.checked = true;
                         toggleDataSourceView('csv');
                     }
-                    
                     if (settings.csvUrls && csvUrlsInput) {
                         csvUrlsInput.value = (settings.csvUrls || []).join('\n');
                     }
-                    
                     if (settings.mapping) {
                         for (const key in settings.mapping) {
                             if (mappingInputs[key]) {
@@ -827,23 +858,25 @@
                             }
                         }
                     }
-                    return settings; // ★ v41: 読み込んだ設定を返す
                 } else {
-                    console.log("No settings found in Firestore, using defaults.");
+                    console.log("No settings found, using defaults.");
                     toggleDataSourceView('csv');
-                    return null; // ★ v41: 設定がない場合は null を返す
                 }
+                
+                return settings; // 読み込んだ設定を返す
+
             } catch (error) {
-                console.error("Failed to load settings from Firestore:", error);
-                showError("設定の読み込みに失敗しました (タイムアウトの可能性)。"); // ★ v42
-                return null; // ★ v41: エラー時も null を返す
+                console.error("Failed to load settings:", error);
+                showError(`設定の読み込みに失敗しました: ${error.message}`); // ★ v42
+                toggleDataSourceView('csv'); // エラー時はデフォルト表示
+                return null;
             }
         }
         
         // ----------------------------------------
         // データ取得・解析処理 (v33と同じ)
         // ----------------------------------------
-
+        
         // CSV (Google Sheet) 用のパーサー
         function parseCSV(csvText, mapping) {
             if (!mapping || !mapping.date) {
@@ -956,15 +989,22 @@
                 if (settings.dataSource === 'manual') {
                     // --- 手動データの場合 ---
                     console.log("Loading data from: Manual Input");
-                    const manualDataRef = doc(db, 'artifacts', appId, 'users', userId, 'settings', MANUAL_DATA_DOC_ID);
-                    // ★ v42: タイムアウト付きで読み込み
-                    const manualDataSnap = await getDocWithTimeout(manualDataRef);
-                    
-                    if (!manualDataSnap.exists() || !manualDataSnap.data().data) {
-                        showError('「設定」ページで、手動入力データを貼り付けて保存してください。');
-                        return;
+                    let manualData;
+                    if (useFirebase && auth.currentUser) {
+                        const manualDataRef = doc(db, 'artifacts', appId, 'users', userId, 'settings', MANUAL_DATA_DOC_ID);
+                        const manualDataSnap = await getDocWithTimeout(manualDataRef); // ★ v42
+                        if (!manualDataSnap.exists() || !manualDataSnap.data().data) {
+                            showError('「設定」ページで、手動入力データを貼り付けて保存してください。');
+                            return;
+                        }
+                        manualData = manualDataSnap.data().data;
+                    } else {
+                        manualData = localStorage.getItem(LOCAL_MANUAL_DATA_KEY);
+                        if (!manualData) {
+                            showError('「設定」ページで、手動入力データを貼り付けて保存してください。');
+                            return;
+                        }
                     }
-                    const manualData = manualDataSnap.data().data;
                     appData = parseManualData(manualData, settings.mapping);
                     
                 } else {
@@ -1019,18 +1059,30 @@
             }
         }
 
-        function showError(message) {
-            const loadingEl = document.getElementById('dashboard-loading');
+        // ★ v41: 警告表示 (level) を追加
+        function showError(message, level = 'error') {
             const errorEl = document.getElementById('dashboard-error');
             const errorMsgEl = document.getElementById('dashboard-error-message');
+            const warningEl = document.getElementById('dashboard-warning');
+            const warningMsgEl = document.getElementById('dashboard-warning-message');
+            
+            const loadingEl = document.getElementById('dashboard-loading');
             const summaryTopEl = document.getElementById('dashboard-summary-top');
             const summaryBottomEl = document.getElementById('dashboard-summary-bottom');
 
             if (loadingEl) loadingEl.style.display = 'none';
             if (summaryTopEl) summaryTopEl.style.display = 'none'; 
             if (summaryBottomEl) summaryBottomEl.style.display = 'none'; 
-            if (errorEl) errorEl.style.display = 'block';
-            if (errorMsgEl) errorMsgEl.textContent = message;
+            
+            if (level === 'warning') {
+                if (warningEl) warningEl.style.display = 'block';
+                if (warningMsgEl) warningMsgEl.textContent = message;
+                if (errorEl) errorEl.style.display = 'none'; // エラーは隠す
+            } else { // 'error'
+                if (errorEl) errorEl.style.display = 'block';
+                if (errorMsgEl) errorMsgEl.textContent = message;
+                if (warningEl) warningEl.style.display = 'none'; // 警告は隠す
+            }
         }
 
 
@@ -1229,10 +1281,10 @@
 
 
         // ----------------------------------------
-        // Chart.js (★ v42: グラフ破棄処理を追加)
+        // Chart.js (★ v41: グラフ破棄処理を追加)
         // ----------------------------------------
         function initializeChart() {
-            // ★ v42: 既存チャートの破棄
+            // ★ v41: 既存チャートの破棄
             if (conditionChart) {
                 console.warn("Destroying existing chart instance before recreation.");
                 conditionChart.destroy();
@@ -1672,39 +1724,51 @@
             }
         }
 
-        // ★ v34: async に変更 (Firestoreに保存)
+        // ★ v41: Firebase/localStorage フォールバック
         async function saveTaperPlansToStorage() {
-            if (!auth.currentUser) return;
             try {
-                const plansRef = doc(db, 'artifacts', appId, 'users', userId, 'taperPlans', TAPER_PLANS_DOC_ID);
-                await setDoc(plansRef, { data: savedTaperPlans });
-                console.log("Taper plans saved to Firestore.");
+                if (useFirebase && auth.currentUser) {
+                    const plansRef = doc(db, 'artifacts', appId, 'users', userId, 'taperPlans', TAPER_PLANS_DOC_ID);
+                    await setDoc(plansRef, { data: savedTaperPlans });
+                    console.log("Taper plans saved to Firestore.");
+                } else {
+                    localStorage.setItem(LOCAL_TAPER_PLANS_KEY, JSON.stringify(savedTaperPlans));
+                    console.log("Taper plans saved to localStorage.");
+                }
             } catch (error) {
                 console.error("Failed to save taper plans:", error);
             }
         }
 
-        // ★ v42: getDocWithTimeout を使用
+        // ★ v41: Firebase/localStorage フォールバック
         async function loadTaperPlans() {
-            if (!auth.currentUser) return;
             try {
-                const plansRef = doc(db, 'artifacts', appId, 'users', userId, 'taperPlans', TAPER_PLANS_DOC_ID);
-                // ★ v42: タイムアウト付きで読み込み
-                const docSnap = await getDocWithTimeout(plansRef);
-                
-                if (docSnap.exists()) {
-                    savedTaperPlans = docSnap.data().data || [];
-                    console.log(`Loaded ${savedTaperPlans.length} taper plans from Firestore.`);
-                    renderTaperPlanList();
+                if (useFirebase && auth.currentUser) {
+                    const plansRef = doc(db, 'artifacts', appId, 'users', userId, 'taperPlans', TAPER_PLANS_DOC_ID);
+                    const docSnap = await getDocWithTimeout(plansRef); // ★ v42
+                    
+                    if (docSnap.exists()) {
+                        savedTaperPlans = docSnap.data().data || [];
+                        console.log(`Loaded ${savedTaperPlans.length} taper plans from Firestore.`);
+                    } else {
+                        console.log("No taper plans found in Firestore.");
+                        savedTaperPlans = [];
+                    }
                 } else {
-                    console.log("No taper plans found in Firestore.");
-                    renderTaperPlanList(); // 空のリストを描画
+                    const savedData = localStorage.getItem(LOCAL_TAPER_PLANS_KEY);
+                    if (savedData) {
+                        savedTaperPlans = JSON.parse(savedData);
+                        console.log(`Loaded ${savedTaperPlans.length} taper plans from localStorage.`);
+                    } else {
+                        savedTaperPlans = [];
+                    }
                 }
             } catch (error) {
                 console.error("Failed to load taper plans:", error);
-                showError("テーパリング計画の読み込みに失敗しました (タイムアウトの可能性)。"); // ★ v42
+                showError("テーパリング計画の読み込みに失敗しました (タイムアウトの可能性)。", 'warning'); // ★ v42
                 savedTaperPlans = [];
             }
+            renderTaperPlanList(); // 読み込んだデータでリストを描画
         }
         
         // v33と同じ
@@ -1872,25 +1936,52 @@
             }
         }
         
-        // ★ v34: async に変更 (Firestore保存のため)
+        // v33と同じ
         async function deletePlan(id) {
-            // ご要望により、確認ダイアログは省略
             savedTaperPlans = savedTaperPlans.filter(p => p.id !== id);
-            await saveTaperPlansToStorage(); // ★ v34: await
+            await saveTaperPlansToStorage(); 
             renderTaperPlanList();
-            planOutputContainer.innerHTML = ''; // 表示されていた計画をクリア
+            planOutputContainer.innerHTML = ''; 
         }
+        
+        // ★ v41: Firebase 初期化関数
+        async function initializeFirebase() {
+             try {
+                const firebaseConfigString = (typeof __firebase_config !== 'undefined' && __firebase_config) ? __firebase_config : '{}';
+                const firebaseConfig = JSON.parse(firebaseConfigString);
 
-        // ★ v35: DOMContentLoaded の中に移動
-        // if (newPlanButton) { ...
+                if (!firebaseConfig.apiKey) {
+                    throw new Error("Firebase config is missing or invalid. Check environment variables.");
+                }
+                
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                setLogLevel('Debug'); 
+
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+                userId = auth.currentUser?.uid || crypto.randomUUID();
+                console.log("Firebase Auth User ID:", userId);
+                useFirebase = true; // ★ v41: 成功フラグ
+
+            } catch (error) {
+                console.error("Firebase initialization failed:", error);
+                useFirebase = false; // ★ v41: 失敗フラグ
+                showError("クラウド連携に失敗。データはブラウザ内にのみ保存されます。", "warning"); 
+            }
+        }
 
 
         // ----------------------------------------
-        // ★ v35: 初期化処理 (v34をリファクタリング)
+        // ★ v41: 初期化処理
         // ----------------------------------------
         document.addEventListener('DOMContentLoaded', async () => {
             
-            // ★ v35: ここで DOM 要素をすべて取得
+            // ★ v35: DOM 要素をすべて取得
             navLinks = document.querySelectorAll('.nav-link');
             pages = document.querySelectorAll('.page-content');
             mobileMenuButton = document.getElementById('mobile-menu-button');
@@ -1929,7 +2020,7 @@
             planFinalLoad = document.getElementById('plan-final-load');
             planEditId = document.getElementById('plan-edit-id');
 
-            // ★ v35: ここでイベントリスナーをすべて登録
+            // ★ v35: イベントリスナーをすべて登録
             
             // ページ切り替え
             navLinks.forEach(link => {
@@ -1987,43 +2078,16 @@
                 });
             });
             
-            // ★ v34: Firebase 初期化
-            try {
-                // v40 の修正 (安全なパース)
-                const firebaseConfigString = (typeof __firebase_config !== 'undefined' && __firebase_config) ? __firebase_config : '{}';
-                const firebaseConfig = JSON.parse(firebaseConfigString);
-
-                if (!firebaseConfig.apiKey) {
-                    throw new Error("Firebase config is missing or invalid. Check environment variables.");
-                }
-                
-                const app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                auth = getAuth(app);
-                setLogLevel('Debug'); // Firestoreのデバッグログを有効化
-
-                // ★ v34: 認証
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
-                userId = auth.currentUser?.uid || crypto.randomUUID();
-                console.log("Firebase Auth User ID:", userId);
-
-            } catch (error) {
-                console.error("Firebase initialization failed:", error);
-                showError("アプリの初期化に失敗しました。"); 
-                return;
-            }
+            // ★ v41: Firebase 初期化 (フォールバック対応)
+            await initializeFirebase();
             
             // ★ v41: 認証後に設定・データを読み込む (読み込み順を修正)
             showPage(defaultPage); 
             initializeChart(); // チャートは先に初期化
             
             try {
-                const settings = await loadSettings(); // ★ await: クラウドから設定を読み込むのを待つ
-                await loadTaperPlans(); // ★ await: クラウドから計画を読み込むのを待つ
+                const settings = await loadSettings(); // ★ await: クラウド/localStorageから設定を読み込む
+                await loadTaperPlans(); // ★ await: クラウド/localStorageから計画を読み込む
                 await loadAndDisplayData(settings); // ★ v41: 読み込んだ設定を渡す
             } catch(e) {
                 console.error("Failed during data loading sequence:", e);
