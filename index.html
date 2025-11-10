@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ワセダ_覇者への道のり (v57)</title>
+    <title>ワセダ_覇者への道のり (v58)</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -187,6 +187,7 @@
                                 <strong class="font-semibold text-gray-800">[コンディション] ページ:</strong>
                                 <ul class="list-disc list-inside ml-4 mt-1">
                                     <li>データの推移をグラフで視覚化します。チェックボックスで表示項目を切り替えられます。</li>
+                                    <li>（★ v58: グラフは直近3週間のデータを表示します）</li>
                                 </ul>
                             </li>
                             <li>
@@ -303,7 +304,7 @@
                 </div>
                 
                 <div class="bg-white p-6 rounded-2xl shadow-lg">
-                    <h3 class="text-xl font-semibold mb-4">コンディションの推移</h3>
+                    <h3 class="text-xl font-semibold mb-4">コンディションの推移 (直近3週間)</h3>
                     <div class="w-full" style="height: 400px;">
                         <canvas id="conditionChart"></canvas>
                     </div>
@@ -468,7 +469,7 @@
                     </div>
                 </div>
 
-                <!-- 4. 列マッピング (v44と同じ) -->
+                <!-- 4. 列マッピング (★ v58: デフォルト値を変更) -->
                 <div class="bg-white p-6 rounded-2xl shadow-lg mb-8">
                     <h3 class="text-xl font-semibold mb-4">4. 列設定 (Google連携のみ)</h3>
                     <p class="text-gray-700 mb-6 text-sm">
@@ -478,31 +479,31 @@
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                         <div>
                             <label for="col-date" class="form-label font-bold">日付</label>
-                            <input type="text" id="col-date" class="form-input uppercase" placeholder="例: B">
+                            <input type="text" id="col-date" class="form-input uppercase" placeholder="例: C">
                         </div>
                         <div>
                             <label for="col-distance" class="form-label">走行距離</label>
-                            <input type="text" id="col-distance" class="form-input uppercase" placeholder="例: J">
+                            <input type="text" id="col-distance" class="form-input uppercase" placeholder="例: K">
                         </div>
                         <div>
                             <label for="col-morning-weight" class="form-label">朝体重</label>
-                            <input type="text" id="col-morning-weight" class="form-input uppercase" placeholder="例: L">
+                            <input type="text" id="col-morning-weight" class="form-input uppercase" placeholder="例: M">
                         </div>
                         <div>
                             <label for="col-evening-weight" class="form-label">夕体重</label>
-                            <input type="text" id="col-evening-weight" class="form-input uppercase">
+                            <input type="text" id="col-evening-weight" class="form-input uppercase" placeholder="例: N">
                         </div>
                         <div>
                             <label for="col-waking-hr" class="form-label">起床時脈拍</label>
-                            <input type="text" id="col-waking-hr" class="form-input uppercase" placeholder="例: M">
+                            <input type="text" id="col-waking-hr" class="form-input uppercase" placeholder="例: O">
                         </div>
                         <div>
                             <label for="col-practice-hr" class="form-label">本練脈拍</label>
-                            <input type="text" id="col-practice-hr" class="form-input uppercase">
+                            <input type="text" id="col-practice-hr" class="form-input uppercase" placeholder="例: P">
                         </div>
                         <div>
                             <label for="col-sleep" class="form-label">睡眠時間</label>
-                            <input type="text" id="col-sleep" class="form-input uppercase" placeholder="例: O">
+                            <input type="text" id="col-sleep" class="form-input uppercase" placeholder="例: Q">
                         </div>
                     </div>
                 </div>
@@ -885,8 +886,6 @@
         // ----------------------------------------
         // 設定 (★ v49: ID抽出 + エラーハンドリング強化)
         // ----------------------------------------
-
-        // ★ v57: 構文エラーの原因となった '}' を削除
         
         // ★ v57: 編集ミスで失われていた toggleDataSourceView を再追加
         function toggleDataSourceView(source) {
@@ -1554,7 +1553,7 @@
             }
         }
 
-        // v33と同じ
+        // ★ v58: グラフの表示期間を3週間に変更
         function updateConditionChart(data) {
             if (!conditionChart) {
                 console.warn("updateConditionChart called but chart is not initialized.");
@@ -1568,6 +1567,31 @@
                 return;
             }
 
+            // ★ v58: データを直近3週間（21日間）にフィルタリング
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const threeWeeksAgo = new Date();
+            threeWeeksAgo.setDate(today.getDate() - 20); // 今日を含めて21日間
+            threeWeeksAgo.setHours(0, 0, 0, 0);
+
+            const filteredData = data.filter(d => {
+                const dateObj = parseDateToReal(d.date);
+                return dateObj && dateObj >= threeWeeksAgo && dateObj <= today;
+            });
+
+            if (filteredData.length === 0) {
+                console.warn("No data found in the last 3 weeks for the chart.");
+                 if(avgContentEl) avgContentEl.innerHTML = `<p class="text-gray-500">（直近3週間のデータがありません）</p>`;
+                // グラフを空にする
+                conditionChart.data.labels = [];
+                conditionChart.data.datasets.forEach(dataset => {
+                    dataset.data = [];
+                });
+                conditionChart.update();
+                return;
+            }
+            // ★ v58: フィルタリング後のデータを使用する
+
             try {
                 // チェックボックスの状態を読み取る
                 const toggles = {
@@ -1577,21 +1601,21 @@
                     wakingHr: document.getElementById('toggle-waking-hr').checked,
                 };
                 
-                // データをセット
-                const labels = data.map(d => d.date);
+                // データをセット (★ v58: filteredData を使用)
+                const labels = filteredData.map(d => d.date);
                 conditionChart.data.labels = labels;
                 
-                // データセットの表示/非表示を切り替え
-                conditionChart.data.datasets[0].data = data.map(d => d.distance);
+                // データセットの表示/非表示を切り替え (★ v58: filteredData を使用)
+                conditionChart.data.datasets[0].data = filteredData.map(d => d.distance);
                 conditionChart.data.datasets[0].hidden = !toggles.distance;
                 
-                conditionChart.data.datasets[1].data = data.map(d => d.morningWeight);
+                conditionChart.data.datasets[1].data = filteredData.map(d => d.morningWeight);
                 conditionChart.data.datasets[1].hidden = !toggles.morningWeight;
                 
-                conditionChart.data.datasets[2].data = data.map(d => d.eveningWeight);
+                conditionChart.data.datasets[2].data = filteredData.map(d => d.eveningWeight);
                 conditionChart.data.datasets[2].hidden = !toggles.eveningWeight;
                 
-                conditionChart.data.datasets[3].data = data.map(d => d.wakingHr);
+                conditionChart.data.datasets[3].data = filteredData.map(d => d.wakingHr);
                 conditionChart.data.datasets[3].hidden = !toggles.wakingHr;
 
                 // Y軸の表示/非表示を切り替え
@@ -1621,7 +1645,8 @@
                 
                 avgMetrics.forEach(m => {
                     if (m.shown) {
-                        const avg = calculateWeeklyAverage(data, m.key);
+                        // ★ v58: 平均値の計算は「全データ (data)」を基に行う (calculateWeeklyAverageが内部で7日間にフィルタするため)
+                        const avg = calculateWeeklyAverage(data, m.key); 
                         const avgText = (avg !== null) ? `${avg.toFixed(1)} ${m.unit}` : '–';
                         avgHtml += `<p><strong class="${m.color}">${m.label}:</strong> ${avgText}</p>`;
                     }
