@@ -3,18 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ワセダ_覇者への道のり (v43)</title>
+    <title>ワセダ_覇者への道のり (v44)</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Google Fonts (v33と同じ) -->
+    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Klee+One:wght@600&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
     
-    <!-- Chart.js (グラフ描画ライブラリ) -->
+    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+    
+    <!-- ★ v44: Google API & Sign-In (GSI) -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="https://apis.google.com/js/api.js" async defer></script>
     
     <script>
         tailwind.config = {
@@ -106,20 +110,18 @@
     
     <div class="min-h-screen flex flex-col md:flex-row">
 
-        <!-- サイド ナビゲーションバー (v33と同じ) -->
-        <nav class="bg-white shadow-lg md:w-64 flex-shrink-0">
-            <!-- ヘッダー (モバイル用) -->
-            <div class="flex justify-between items-center p-4 md:hidden">
-                <h1 class="text-xl font-bold text-red-800">ワセダ_覇者への道のり</h1>
-                <button id="mobile-menu-button" class="text-gray-600 focus:outline-none">
+        <!-- サイド ナビゲーションバー (★ v44: サインインボタン追加) -->
+        <nav class="bg-white shadow-lg md:w-64 flex-shrink-0 flex flex-col">
+            <!-- ヘッダー -->
+            <div class="flex justify-between items-center p-4 md:pt-8 md:px-6">
+                <h1 class="text-xl md:text-2xl font-bold text-red-800">ワセダ_覇者への道のり</h1>
+                <button id="mobile-menu-button" class="text-gray-600 focus:outline-none md:hidden">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
                 </button>
             </div>
             
             <!-- ナビゲーション (PC用 / モバイル用メニュー) -->
-            <div id="nav-content" class="hidden md:block md:mt-8">
-                <h1 class="hidden md:block text-2xl font-bold text-red-800 px-6 mb-10">ワセダ_覇者への道のり</h1>
-                
+            <div id="nav-content" class="hidden md:flex md:flex-col md:flex-grow md:mt-8">
                 <ul class="space-y-2 px-4">
                     <li>
                         <a href="#" class="nav-link flex items-center px-4 py-3 text-gray-700 rounded-lg hover:bg-red-50 hover:text-red-800" data-page="page-settings">
@@ -142,17 +144,25 @@
                         </a>
                     </li>
                 </ul>
+                
+                <!-- ★ v44: サインイン/アウト ボタン -->
+                <div class="mt-auto p-4">
+                    <button id="google-auth-button" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300">
+                        Google サインイン
+                    </button>
+                    <div id="google-auth-status" class="text-xs text-gray-500 mt-2 text-center"></div>
+                </div>
             </div>
         </nav>
 
         <!-- メインコンテンツ -->
         <main class="flex-grow p-6 md:p-10 overflow-auto">
             
-            <!-- 1. ダッシュボード ページ (★ v43: マニュアル更新) -->
+            <!-- 1. ダッシュボード ページ (v33と同じ) -->
             <div id="page-dashboard" class="page-content">
                 <h2 class="text-3xl font-semibold mb-6">ダッシュボード</h2>
 
-                <!-- 使い方マニュアル (★ v43: マニュアル更新) -->
+                <!-- 使い方マニュアル (v33と同じ) -->
                 <details class="bg-white p-6 rounded-2xl shadow-lg mb-8 border-l-4 border-red-800">
                     <summary class="text-xl font-semibold text-gray-800">はじめに (使い方マニュアル)</summary>
                     <div class="mt-4 pt-4 border-t border-gray-200 text-gray-700 space-y-3 text-sm">
@@ -161,10 +171,9 @@
                             <li>
                                 <strong class="font-semibold text-gray-800">[設定] ページ (最重要):</strong>
                                 <ul class="list-disc list-inside ml-4 mt-1">
-                                    <li>最初に、このページでデータ入力方法（CSV連携 or 手動）を選択します。</li>
-                                    <li><strong class="font-semibold text-red-800">CSV連携:</strong> 「ウェブに公開」したCSVのURLを貼り付けます。CSV連携の場合は「列設定」でアルファベット（A, Bなど）の指定が<strong>必須</strong>です。</li>
-                                    <li><strong class="font-semibold text-red-800">手動入力:</strong> 走行距離データを「日付,距離」の形式で貼り付けます。（この場合、列設定は不要です）</li>
-                                    <li><strong class="font-semibold text-red-800">クラウド連携:</strong> 初期読み込みでクラウド連携に失敗した場合、このページ上部に「再試行」ボタンが表示されます。再試行後、[設定を保存]を押すとデータがクラウドに同期されます。</li>
+                                    <li>最初に、このページでデータ入力方法（Google連携 or 手動）を選択します。</li>
+                                    <li><strong class="font-semibold text-red-800">Google連携:</strong> 「クライアントID」「スプレッドシートID」「シート名(タブ名)」の入力が必要です。入力後、左下の「Google サインイン」ボタンを押してください。</li>
+                                    <li><strong class="font-semibold text-red-800">手動入力:</strong> 走行距離データを「日付,距離」の形式で貼り付けます。</li>
                                     <li>最後に必ず「設定を保存」ボタンを押してください。データは保存後にリロードすると反映されます。</li>
                                 </ul>
                             </li>
@@ -401,20 +410,9 @@
                 </div>
             </div>
 
-            <!-- 4. 設定 ページ (★ v43: クラウド連携UI追加) -->
+            <!-- 4. 設定 ページ (★ v44: Google連携UIに変更) -->
             <div id="page-settings" class="page-content">
                 <h2 class="text-3xl font-semibold mb-6">設定</h2>
-                
-                <!-- ★ v43: クラウド連携ステータス -->
-                <div id="cloud-status-container" class="bg-white p-6 rounded-2xl shadow-lg mb-8">
-                    <h3 class="text-xl font-semibold mb-4">クラウド連携ステータス</h3>
-                    <div id="cloud-status-text" class="text-gray-700 text-sm mb-4">
-                        連携ステータスを確認中...
-                    </div>
-                    <button id="retry-cloud-button" class="hidden bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 text-sm">
-                        クラウド連携を再試行
-                    </button>
-                </div>
                 
                 <!-- 1. データ入力方法の選択 -->
                 <div class="bg-white p-6 rounded-2xl shadow-lg mb-8">
@@ -424,8 +422,8 @@
                     </p>
                     <div class="flex space-x-6">
                         <label class="flex items-center">
-                            <input type="radio" id="data-source-csv" name="dataSource" value="csv" class="form-radio text-red-800 focus:ring-red-700" checked>
-                            <span class="ml-2 text-gray-700">CSV自動連携</span>
+                            <input type="radio" id="data-source-google" name="dataSource" value="google" class="form-radio text-red-800 focus:ring-red-700" checked>
+                            <span class="ml-2 text-gray-700">Google アカウント連携</span>
                         </label>
                         <label class="flex items-center">
                             <input type="radio" id="data-source-manual" name="dataSource" value="manual" class="form-radio text-red-800 focus:ring-red-700">
@@ -434,16 +432,25 @@
                     </div>
                 </div>
                 
-                <!-- 2. CSV自動連携 (デフォルト表示) -->
-                <div id="settings-csv-container" class="bg-white p-6 rounded-2xl shadow-lg mb-8">
-                    <h3 class="text-xl font-semibold mb-4">2. CSV自動連携</h3>
+                <!-- 2. Google アカウント連携 (デフォルト表示) -->
+                <div id="settings-google-container" class="bg-white p-6 rounded-2xl shadow-lg mb-8">
+                    <h3 class="text-xl font-semibold mb-4">2. Google アカウント連携</h3>
                     <p class="text-gray-700 mb-6 text-sm">
-                        各月のシートを「ファイル > 共有 > ウェブに公開」で <strong class="text-red-600">CSV形式</strong> で公開し、
-                        発行されたURLを <strong class="text-red-800">1行に1つずつ</strong>、すべて貼り付けてください。
+                        <strong class="text-red-800">Google アカウント連携</strong> を使うには、`google_setup_guide.md` の手順に従ってキーを取得し、以下を設定してください。
                     </p>
-                    <div>
-                        <label for="csv-urls" class="form-label font-bold">公開CSVのURL一覧 (1行に1URL)</label>
-                        <textarea id="csv-urls" class="form-input font-mono" rows="8" placeholder="https://docs.google.com/spreadsheets/d/.../pub?output=csv (11月シートのURL)&#10;https://docs.google.com/spreadsheets/d/.../pub?output=csv (12月シートのURL)&#10;..."></textarea>
+                    <div class="space-y-4">
+                        <div>
+                            <label for="google-client-id" class="form-label font-bold">クライアント ID</label>
+                            <input type="text" id="google-client-id" class="form-input" placeholder="123456...-abcde...apps.googleusercontent.com">
+                        </div>
+                        <div>
+                            <label for="google-spreadsheet-id" class="form-label font-bold">スプレッドシート ID</label>
+                            <input type="text" id="google-spreadsheet-id" class="form-input" placeholder="URLの .../d/ココの部分/edit... を貼り付け">
+                        </div>
+                        <div>
+                            <label for="google-sheet-names" class="form-label font-bold">シート名 (タブ名) (1行に1つ)</label>
+                            <textarea id="google-sheet-names" class="form-input font-mono" rows="5" placeholder="11月&#10;12月&#10;1月"></textarea>
+                        </div>
                     </div>
                 </div>
                 
@@ -451,7 +458,7 @@
                 <div id="settings-manual-container" class="hidden bg-white p-6 rounded-2xl shadow-lg mb-8">
                     <h3 class="text-xl font-semibold mb-4">3. 手動データ入力</h3>
                     <p class="text-gray-700 mb-6 text-sm">
-                        CSV連携を使わない場合、ここに走行距離データを貼り付けてください。<br>
+                        Google連携を使わない場合、ここに走行距離データを貼り付けてください。<br>
                         形式: <code class="text-xs bg-gray-200 p-1 rounded">日付,走行距離</code> (半角カンマ区切り、<strong class="text-red-600">スペースなし</strong>、1行に1日分)
                     </p>
                     <div>
@@ -462,9 +469,9 @@
 
                 <!-- 4. 列マッピング (v33と同じ) -->
                 <div class="bg-white p-6 rounded-2xl shadow-lg mb-8">
-                    <h3 class="text-xl font-semibold mb-4">4. 列設定 (CSV連携のみ)</h3>
+                    <h3 class="text-xl font-semibold mb-4">4. 列設定 (Google連携のみ)</h3>
                     <p class="text-gray-700 mb-6 text-sm">
-                        <strong class="text-red-800">CSV自動連携</strong> を使う場合、シートの「何列目」にどのデータが入っているか <strong class="text-red-800">アルファベット (A, B, G など)</strong> で設定してください。<br>
+                        <strong class="text-red-800">Google アカウント連携</strong> を使う場合、シートの「何列目」にどのデータが入っているか <strong class="text-red-800">アルファベット (A, B, G など)</strong> で設定してください。<br>
                         <span class="text-gray-500">※ 手動入力の場合は、この列設定は無視されます。</span>
                     </p>
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -509,7 +516,6 @@
                         設定を保存
                     </button>
                     <span id="save-status" class="ml-4 text-green-600"></span>
-                    <!-- (v33と同じ) -->
                     <p class="text-gray-700 mt-6 text-sm">
                         保存後、ダッシュボードに戻るか、ページをリロードするとデータが自動で読み込まれます。
                     </p>
@@ -522,11 +528,8 @@
     
     <!-- ★ v40: スクリプトを </body> の直前に移動 -->
     <script type="module">
-        // Firebase v11 (モジュール版) をインポート
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInWithCustomToken, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
+        // ★ v44: Firebase import は削除
+        
         // ----------------------------------------
         // グローバル変数
         // ----------------------------------------
@@ -534,23 +537,18 @@
         let appData = [];
         let savedTaperPlans = [];
         
-        // ★ v41: Firebase フォールバック用フラグ
-        let useFirebase = true; 
+        // ★ v44: Google API 用の変数
+        let gapiClient;
+        let tokenClient;
+        let googleTokenResponse;
+        let gapiReady = false;
+        let gisReady = false;
+        let appSettings = {}; // v44: 設定はグローバルに保持
         
-        // ★ v34: Firebase用グローバル変数
-        let db;
-        let auth;
-        let userId;
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-
-        // ★ v34: 保存キー
-        const SETTINGS_DOC_ID = 'settingsV1';
-        const MANUAL_DATA_DOC_ID = 'manualDataV1';
-        const TAPER_PLANS_DOC_ID = 'taperPlansV1';
-        // ★ v41: (localStorage用)
-        const LOCAL_SETTINGS_KEY = 'practiceLogSettingsV5';
-        const LOCAL_MANUAL_DATA_KEY = 'practiceLogManualData';
-        const LOCAL_TAPER_PLANS_KEY = 'taperPlansV1';
+        // ★ v44: 保存キー (localStorage)
+        const SETTINGS_STORAGE_KEY = 'practiceLogSettings_v44';
+        const MANUAL_DATA_STORAGE_KEY = 'practiceLogManualData_v44';
+        const TAPER_PLANS_STORAGE_KEY = 'taperPlansV1_v44'; // v31のロジックを流用
 
 
         // ★ v35: DOM要素の「宣言」をグローバルスコープに移動
@@ -558,13 +556,17 @@
         let navLinks;
         let pages;
         let mobileMenuButton;
+        
+        // ★ v44: Google Auth
+        let googleAuthButton;
+        let googleAuthStatus;
 
         // 設定ページ
         let csvUrlsInput, manualDataInput, saveButton, saveStatus;
-        let dataSourceCsv, dataSourceManual, settingsCsvContainer, settingsManualContainer;
+        let dataSourceGoogle, dataSourceManual, settingsGoogleContainer, settingsManualContainer;
         let mappingInputs = {}; // mappingInputsはオブジェクトなので初期化
-        // ★ v43: クラウド連携UI
-        let cloudStatusText, retryCloudButton;
+        // ★ v44: Google設定用
+        let googleClientIdInput, googleSpreadsheetIdInput, googleSheetNamesInput;
 
 
         // テーパリング計画ページ
@@ -698,7 +700,7 @@
         const defaultPage = 'page-dashboard'; 
 
         function showPage(pageId) {
-            if (!pages) pages = document.querySelectorAll('.page-content'); // v35: 遅延初期化
+            if (!pages) pages = document.querySelectorAll('.page-content');
             pages.forEach(page => { page.style.display = 'none'; });
             const targetPage = document.getElementById(pageId);
             if (targetPage) { 
@@ -707,7 +709,7 @@
                 console.error(`Page with id ${pageId} not found.`);
             }
             
-            if (!navLinks) navLinks = document.querySelectorAll('.nav-link'); // v35: 遅延初期化
+            if (!navLinks) navLinks = document.querySelectorAll('.nav-link');
             navLinks.forEach(link => {
                 const isActive = link.dataset.page === pageId;
                 link.classList.toggle('bg-red-50', isActive);
@@ -716,72 +718,132 @@
             });
         }
         
-        // ★ v35: イベントリスナーは DOMContentLoaded の中で登録
-
         // ----------------------------------------
-        // ★ v42: タイムアウト付きヘルパー関数
+        // ★ v44: Google API / GSI 認証
         // ----------------------------------------
         
-        function fetchWithTimeout(url, timeout = 10000) { 
-            return Promise.race([
-                fetch(url),
-                new Promise((_, reject) =>
-                    setTimeout(() => reject(new Error('リクエストがタイムアウトしました')), timeout)
-                )
-            ]);
-        }
-
-        // ★ v42: Firestore getDoc 用のタイムアウト関数
-        function getDocWithTimeout(docRef, timeout = 10000) {
-            return Promise.race([
-                getDoc(docRef),
-                new Promise((_, reject) =>
-                    setTimeout(() => reject(new Error('Firestoreの読み込みがタイムアウトしました')), timeout)
-                )
-            ]);
+        function gapiLoadedCallback() {
+            console.log("GAPI client loaded.");
+            gapiReady = true;
+            tryInitClient();
         }
         
-        async function fetchCSVData(url) {
-            const cacheBustUrl = `${url}&_=${new Date().getTime()}`;
-            try {
-                const response = await fetchWithTimeout(cacheBustUrl, 10000); 
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status} (URL: ${url})`);
+        function gisLoadedCallback() {
+            console.log("GIS client loaded.");
+            gisReady = true;
+            tryInitClient();
+        }
+
+        async function tryInitClient() {
+            if (gapiReady && gisReady) {
+                console.log("Both GAPI and GIS loaded. Initializing clients...");
+                try {
+                    // 1. GAPI (Sheets API)
+                    // APIキーは不要。OAuthトークンで gapi.client を直接使う
+                    await gapi.client.load('https://sheets.googleapis.com/$discovery/rest?version=v4');
+                    console.log("GAPI Sheets API client initialized.");
+
+                    // 2. GIS (Token Client)
+                    if (appSettings.clientId) {
+                        tokenClient = google.accounts.oauth2.initTokenClient({
+                            client_id: appSettings.clientId,
+                            scope: 'https://www.googleapis.com/auth/spreadsheets.readonly',
+                            callback: handleTokenResponse, // トークン取得時のコールバック
+                        });
+                        console.log("GIS Token Client initialized.");
+                    } else {
+                        console.warn("CLIENT_ID is not set. Google Sign-In will not work.");
+                        updateAuthStatus(false, "クライアントID未設定");
+                    }
+                } catch (e) {
+                    console.error("Error initializing GAPI/GIS clients:", e);
+                    showError("Google APIの初期化に失敗: " + e.message);
                 }
-                return await response.text();
-            } catch (error) {
-                console.error("Fetch error:", error);
-                if (error.message.includes('timeout')) {
-                    throw new Error(`データ取得がタイムアウトしました (10秒)。URLが正しいか確認してください: ${url}`);
-                }
-                if (error.message.includes('Failed to fetch')) {
-                     throw new Error('データの取得に失敗しました。CORSポリシー違反、またはネットワークエラーの可能性があります。');
-                }
-                throw error;
             }
         }
         
+        function handleAuthClick() {
+            if (!appSettings.clientId) {
+                showError("「設定」ページでクライアントIDを設定してください。");
+                return;
+            }
+            if (!tokenClient) {
+                 console.error("GIS Token Client is not initialized yet.");
+                 showError("Google認証がまだ準備中です。");
+                 return;
+            }
+
+            if (googleTokenResponse && googleTokenResponse.access_token) {
+                // サインアウト
+                google.accounts.oauth2.revoke(googleTokenResponse.access_token, () => {
+                    console.log("Token revoked.");
+                });
+                googleTokenResponse = null;
+                gapi.client.setToken(null);
+                updateAuthStatus(false, "サインアウトしました");
+            } else {
+                // サインイン
+                tokenClient.requestAccessToken();
+            }
+        }
+
+        function handleTokenResponse(response) {
+            if (response.error) {
+                console.error("Google Auth Error:", response.error);
+                showError(`サインイン失敗: ${response.error}`);
+                updateAuthStatus(false, "サインイン失敗");
+                return;
+            }
+            googleTokenResponse = response;
+            gapi.client.setToken(response);
+            console.log("Google Sign-In successful.");
+            updateAuthStatus(true, "サインイン済み");
+            
+            // ★ サインイン成功後、データを再読み込み
+            loadAndDisplayData(appSettings);
+        }
+        
+        function updateAuthStatus(isSignedIn, message) {
+            if (googleAuthButton) {
+                googleAuthButton.textContent = isSignedIn ? "Google サインアウト" : "Google サインイン";
+                googleAuthButton.classList.toggle('bg-blue-600', !isSignedIn);
+                googleAuthButton.classList.toggle('hover:bg-blue-700', !isSignedIn);
+                googleAuthButton.classList.toggle('bg-gray-500', isSignedIn);
+                googleAuthButton.classList.toggle('hover:bg-gray-600', isSignedIn);
+            }
+            if (googleAuthStatus) {
+                googleAuthStatus.textContent = message;
+                googleAuthStatus.classList.toggle('text-green-600', isSignedIn);
+                googleAuthStatus.classList.toggle('text-gray-500', !isSignedIn);
+            }
+        }
+
+
         // ----------------------------------------
-        // 設定 (★ v41: Firebase/localStorage フォールバック)
+        // 設定 (★ v44: localStorage + Google設定)
         // ----------------------------------------
 
         function toggleDataSourceView(source) {
-            if (!settingsCsvContainer || !settingsManualContainer) return;
-            if (source === 'csv') {
-                settingsCsvContainer.style.display = 'block';
+            if (!settingsGoogleContainer || !settingsManualContainer) return;
+            if (source === 'google') {
+                settingsGoogleContainer.style.display = 'block';
                 settingsManualContainer.style.display = 'none';
             } else { // 'manual'
-                settingsCsvContainer.style.display = 'none';
+                settingsGoogleContainer.style.display = 'none';
                 settingsManualContainer.style.display = 'block';
             }
         }
         
+        // ★ v44: localStorageに保存
         async function saveSettings() {
             try {
                 const settings = {
-                    dataSource: dataSourceManual.checked ? 'manual' : 'csv',
-                    csvUrls: csvUrlsInput.value.split('\n').filter(url => url.trim() !== ''),
+                    dataSource: dataSourceManual.checked ? 'manual' : 'google',
+                    // Google
+                    clientId: googleClientIdInput.value,
+                    spreadsheetId: googleSpreadsheetIdInput.value,
+                    sheetNames: googleSheetNamesInput.value.split('\n').filter(name => name.trim() !== ''),
+                    // 共通
                     mapping: {}
                 };
                 
@@ -794,17 +856,9 @@
                 
                 const manualData = manualDataInput.value;
                 
-                // ★ v41: 保存先を分岐
-                if (useFirebase && auth.currentUser) {
-                    const settingsRef = doc(db, 'artifacts', appId, 'users', userId, 'settings', SETTINGS_DOC_ID);
-                    const manualDataRef = doc(db, 'artifacts', appId, 'users', userId, 'settings', MANUAL_DATA_DOC_ID);
-                    await setDoc(settingsRef, { data: settings });
-                    await setDoc(manualDataRef, { data: manualData });
-                } else {
-                    // Firebase失敗時はlocalStorage
-                    localStorage.setItem(LOCAL_SETTINGS_KEY, JSON.stringify(settings));
-                    localStorage.setItem(LOCAL_MANUAL_DATA_KEY, manualData);
-                }
+                // ★ v44: localStorageに保存
+                localStorage.setItem(LOCAL_SETTINGS_KEY, JSON.stringify(settings));
+                localStorage.setItem(LOCAL_MANUAL_DATA_KEY, manualData);
                 
                 if (saveStatus) saveStatus.textContent = '保存しました！リロードしてデータを反映します。';
                 setTimeout(() => { 
@@ -818,35 +872,17 @@
             }
         }
 
-        // ★ v41: Firebase/localStorage フォールバック (v42 タイムアウト)
+        // ★ v44: localStorageから読み込み
         async function loadSettings() {
             let settings = null;
             let manualData = "";
             
             try {
-                if (useFirebase && auth.currentUser) {
-                    // --- Firebaseから読み込み ---
-                    const settingsRef = doc(db, 'artifacts', appId, 'users', userId, 'settings', SETTINGS_DOC_ID);
-                    const manualDataRef = doc(db, 'artifacts', appId, 'users', userId, 'settings', MANUAL_DATA_DOC_ID);
-
-                    // ★ v42: タイムアウト付きで読み込み
-                    const settingsSnap = await getDocWithTimeout(settingsRef);
-                    const manualDataSnap = await getDocWithTimeout(manualDataRef);
-                    
-                    if (manualDataSnap.exists() && manualDataInput) {
-                        manualDataInput.value = manualDataSnap.data().data || "";
-                    }
-                    if (settingsSnap.exists()) {
-                        settings = settingsSnap.data().data;
-                    }
-                } else {
-                    // --- localStorageから読み込み ---
-                    console.log("Loading settings from localStorage (Firebase disabled).");
-                    manualData = localStorage.getItem(LOCAL_MANUAL_DATA_KEY) || "";
-                    const savedSettings = localStorage.getItem(LOCAL_SETTINGS_KEY);
-                    if (savedSettings) {
-                        settings = JSON.parse(savedSettings);
-                    }
+                // localStorageから読み込み
+                manualData = localStorage.getItem(LOCAL_MANUAL_DATA_KEY) || "";
+                const savedSettings = localStorage.getItem(LOCAL_SETTINGS_KEY);
+                if (savedSettings) {
+                    settings = JSON.parse(savedSettings);
                 }
 
                 // --- 読み込んだ値をフォームに反映 ---
@@ -855,16 +891,23 @@
                 }
                 
                 if (settings) {
+                    // v44グローバル変数に保持
+                    appSettings = settings; 
+                    
                     if (settings.dataSource === 'manual') {
                         if (dataSourceManual) dataSourceManual.checked = true;
                         toggleDataSourceView('manual');
                     } else {
-                        if (dataSourceCsv) dataSourceCsv.checked = true;
-                        toggleDataSourceView('csv');
+                        if (dataSourceGoogle) dataSourceGoogle.checked = true;
+                        toggleDataSourceView('google');
                     }
-                    if (settings.csvUrls && csvUrlsInput) {
-                        csvUrlsInput.value = (settings.csvUrls || []).join('\n');
-                    }
+                    
+                    // Google
+                    if (googleClientIdInput) googleClientIdInput.value = settings.clientId || "";
+                    if (googleSpreadsheetIdInput) googleSpreadsheetIdInput.value = settings.spreadsheetId || "";
+                    if (googleSheetNamesInput) googleSheetNamesInput.value = (settings.sheetNames || []).join('\n');
+                    
+                    // 列設定
                     if (settings.mapping) {
                         for (const key in settings.mapping) {
                             if (mappingInputs[key]) {
@@ -875,26 +918,25 @@
                     }
                 } else {
                     console.log("No settings found, using defaults.");
-                    toggleDataSourceView('csv');
+                    toggleDataSourceView('google');
                 }
                 
                 return settings; // 読み込んだ設定を返す
 
             } catch (error) {
                 console.error("Failed to load settings:", error);
-                // ★ v43: エラー表示を showError から updateCloudStatusUI に変更
-                updateCloudStatusUI("failed", `設定の読み込みに失敗しました: ${error.message}`);
-                toggleDataSourceView('csv'); // エラー時はデフォルト表示
+                showError(`設定の読み込みに失敗しました: ${error.message}`);
+                toggleDataSourceView('google'); // エラー時はデフォルト表示
                 return null;
             }
         }
         
         // ----------------------------------------
-        // データ取得・解析処理 (v33と同じ)
+        // データ取得・解析処理
         // ----------------------------------------
-
-        // CSV (Google Sheet) 用のパーサー
-        function parseCSV(csvText, mapping) {
+        
+        // ★ v44: Google Sheets API (gapi) からの応答をパース
+        function parseGapiResponse(valueRanges, mapping) {
             if (!mapping || !mapping.date) {
                 throw new Error("「日付」の列設定は必須です。");
             }
@@ -906,39 +948,43 @@
                 }
             }
             
+            // v33と同じ (YYYY-MM-DD や MM/DD を許可)
             const dateRegex = /^\s*"?\s*(\d{4}[-\/]\d{1,2}[-\/]\d{1,2}|\d{1,2}\/\d{1,2})\s*"?\s*$/i;
-            const lines = csvText.trim().split('\n');
             const data = [];
 
-            for (const line of lines) {
-                const columns = line.split(',');
-                const dateVal = columns[indices.date];
+            // valueRanges は [ { values: [...] }, { values: [...] } ] という構造
+            for (const sheetData of valueRanges) {
+                const lines = sheetData.values || [];
+                
+                for (const columns of lines) { // GAPIは既に配列
+                    const dateVal = columns[indices.date];
 
-                if (dateVal && dateRegex.test(dateVal)) {
-                    const cleanValue = (val) => {
-                        if (val === undefined || val === null) return null;
-                        const trimmedVal = val.trim().replace(/^["']|["']$/g, '').trim();
-                        if (trimmedVal === "") return null;
-                        const num = parseFloat(trimmedVal);
-                        return isNaN(num) ? null : num;
-                    };
-                    const cleanDate = dateVal.trim().replace(/^["']|["']$/g, '').trim();
-                    
-                    data.push({
-                        date: cleanDate,
-                        distance: cleanValue(columns[indices.distance]),
-                        morningWeight: cleanValue(columns[indices.morningWeight]),
-                        eveningWeight: cleanValue(columns[indices.eveningWeight]),
-                        wakingHr: cleanValue(columns[indices.wakingHr]),
-                        practiceHr: cleanValue(columns[indices.practiceHr]),
-                        sleep: cleanValue(columns[indices.sleep]),
-                    });
+                    if (dateVal && dateRegex.test(dateVal)) {
+                        const cleanValue = (val) => {
+                            if (val === undefined || val === null) return null;
+                            const trimmedVal = val.toString().trim().replace(/^["']|["']$/g, '').trim();
+                            if (trimmedVal === "") return null;
+                            const num = parseFloat(trimmedVal);
+                            return isNaN(num) ? null : num;
+                        };
+                        const cleanDate = dateVal.toString().trim().replace(/^["']|["']$/g, '').trim();
+                        
+                        data.push({
+                            date: cleanDate,
+                            distance: cleanValue(columns[indices.distance]),
+                            morningWeight: cleanValue(columns[indices.morningWeight]),
+                            eveningWeight: cleanValue(columns[indices.eveningWeight]),
+                            wakingHr: cleanValue(columns[indices.wakingHr]),
+                            practiceHr: cleanValue(columns[indices.practiceHr]),
+                            sleep: cleanValue(columns[indices.sleep]),
+                        });
+                    }
                 }
             }
             return data;
         }
 
-        // 手動入力データ用のパーサー
+        // 手動入力データ用のパーサー (v33と同じ)
         function parseManualData(manualText, mapping) {
             const dateRegex = /^\s*"?\s*(\d{4}[-\/]\d{1,2}[-\/]\d{1,2}|\d{1,2}\/\d{1,2})\s*"?\s*$/i;
             const lines = manualText.trim().split('\n');
@@ -946,7 +992,7 @@
             
             for (const line of lines) {
                 const parts = line.split(',');
-                if (parts.length < 2) continue; // 「日付, 距離」の形式でない行はスキップ
+                if (parts.length < 2) continue;
                 
                 const dateVal = parts[0].trim();
                 const distVal = parts[1].trim();
@@ -961,7 +1007,6 @@
                     };
                     const cleanDate = dateVal.trim().replace(/^["']|["']$/g, '').trim();
                     
-                    // 手動入力は日付と距離のみ
                     data.push({
                         date: cleanDate,
                         distance: cleanValue(distVal),
@@ -977,7 +1022,7 @@
         }
 
 
-        // ★ v42: getDocWithTimeout を使用
+        // ★ v44: データ読み込みのメインロジック (GAPI/手動 分岐)
         async function loadAndDisplayData(settings) {
             const loadingEl = document.getElementById('dashboard-loading');
             const summaryTopEl = document.getElementById('dashboard-summary-top');
@@ -995,7 +1040,6 @@
             errorEl.style.display = 'none';
 
             try {
-                // v41: settings は引数で渡される
                 if (!settings) {
                     showError('「設定」ページで、入力方法と列設定を保存してください。');
                     return;
@@ -1005,37 +1049,34 @@
                 if (settings.dataSource === 'manual') {
                     // --- 手動データの場合 ---
                     console.log("Loading data from: Manual Input");
-                    let manualData;
-                    if (useFirebase && auth.currentUser) {
-                        const manualDataRef = doc(db, 'artifacts', appId, 'users', userId, 'settings', MANUAL_DATA_DOC_ID);
-                        const manualDataSnap = await getDocWithTimeout(manualDataRef); // ★ v42
-                        if (!manualDataSnap.exists() || !manualDataSnap.data().data) {
-                            showError('「設定」ページで、手動入力データを貼り付けて保存してください。');
-                            return;
-                        }
-                        manualData = manualDataSnap.data().data;
-                    } else {
-                        manualData = localStorage.getItem(LOCAL_MANUAL_DATA_KEY);
-                        if (!manualData) {
-                            showError('「設定」ページで、手動入力データを貼り付けて保存してください。');
-                            return;
-                        }
+                    const manualData = localStorage.getItem(MANUAL_DATA_STORAGE_KEY) || "";
+                    if (!manualData) {
+                        showError('「設定」ページで、手動入力データを貼り付けて保存してください。');
+                        return;
                     }
                     appData = parseManualData(manualData, settings.mapping);
                     
                 } else {
-                    // --- CSV連携の場合 ---
-                    console.log("Loading data from: CSV URLs");
-                    if (!settings.csvUrls || settings.csvUrls.length === 0 || !settings.mapping || !settings.mapping.date) {
-                        showError('「設定」ページで、最低1つの公開CSVのURLと「日付」の列設定を完了してください。');
+                    // --- Google連携の場合 ---
+                    console.log("Loading data from: Google Sheets API");
+                    if (!googleTokenResponse || !googleTokenResponse.access_token) {
+                        showError('「Google サインイン」ボタンを押して、スプレッドシートへのアクセスを許可してください。');
+                        return;
+                    }
+                    if (!settings.spreadsheetId || !settings.sheetNames || settings.sheetNames.length === 0 || !settings.mapping || !settings.mapping.date) {
+                        showError('「設定」ページで、クライアントID、スプレッドシートID、シート名、列設定をすべて完了してください。');
                         return;
                     }
                     
-                    const fetchPromises = settings.csvUrls.map(url => fetchCSVData(url));
-                    const csvTexts = await Promise.all(fetchPromises);
+                    // 全シートのA-Z列（最大）のデータを要求
+                    const ranges = settings.sheetNames.map(name => `'${name}'!A:Z`);
                     
-                    const combinedCsvText = csvTexts.join('\n');
-                    appData = parseCSV(combinedCsvText, settings.mapping);
+                    const response = await gapi.client.sheets.spreadsheets.values.batchGet({
+                        spreadsheetId: settings.spreadsheetId,
+                        ranges: ranges,
+                    });
+                    
+                    appData = parseGapiResponse(response.result.valueRanges, settings.mapping);
                 }
 
                 // --- 共通処理 (ソートと重複排除) ---
@@ -1058,7 +1099,7 @@
                 appData = uniqueData;
 
                 if (appData.length === 0) {
-                     showError('データを読み込めませんでした。設定（データソース、URL、列設定、日付形式）を確認してください。');
+                     showError('データを読み込めませんでした。設定（データソース、ID、シート名、列設定、日付形式）を確認してください。');
                      return;
                 }
 
@@ -1071,32 +1112,25 @@
 
             } catch (error) {
                 console.error("Failed to load and display data:", error);
-                showError(error.message); // ★ タイムアウトエラーもここで表示
+                showError(error.message || "データ取得に失敗しました。");
             }
         }
 
-        // ★ v43: showError と showWarning に分割
         function showError(message) {
+            const loadingEl = document.getElementById('dashboard-loading');
             const errorEl = document.getElementById('dashboard-error');
             const errorMsgEl = document.getElementById('dashboard-error-message');
-            if (errorEl) errorEl.style.display = 'block';
-            if (errorMsgEl) errorMsgEl.textContent = message;
-            
-            // 他のUIを隠す
-            const loadingEl = document.getElementById('dashboard-loading');
             const summaryTopEl = document.getElementById('dashboard-summary-top');
             const summaryBottomEl = document.getElementById('dashboard-summary-bottom');
+
             if (loadingEl) loadingEl.style.display = 'none';
             if (summaryTopEl) summaryTopEl.style.display = 'none'; 
             if (summaryBottomEl) summaryBottomEl.style.display = 'none'; 
+            if (errorEl) errorEl.style.display = 'block';
+            if (errorMsgEl) errorMsgEl.textContent = message;
         }
         
-        function showWarning(message) {
-            const warningEl = document.getElementById('dashboard-warning');
-            const warningMsgEl = document.getElementById('dashboard-warning-message');
-            if (warningEl) warningEl.style.display = 'block';
-            if (warningMsgEl) warningMsgEl.textContent = message;
-        }
+        // ★ v44: v43の警告表示は削除
 
 
         // ----------------------------------------
@@ -1294,10 +1328,10 @@
 
 
         // ----------------------------------------
-        // Chart.js (★ v42: グラフ破棄処理を追加)
+        // Chart.js (v33と同じ)
         // ----------------------------------------
         function initializeChart() {
-            // ★ v42: 既存チャートの破棄
+            // ★ v38: 既存チャートの破棄
             if (conditionChart) {
                 console.warn("Destroying existing chart instance before recreation.");
                 conditionChart.destroy();
@@ -1474,9 +1508,8 @@
         }
         
         // ----------------------------------------
-        // テーパリング計画 機能 (v33と同じ)
+        // テーパリング計画 機能 (★ v44: localStorage保存)
         // ----------------------------------------
-        // const newPlanButton = ... (★ v35: DOMContentLoaded に移動)
         
         // 日付を "MM/DD (曜)" 形式にフォーマットするヘルパー関数
         function formatDate(date) {
@@ -1656,7 +1689,7 @@
             }
         }
         
-        // v33と同じ
+        // ★ v44: localStorage保存
         async function saveTaperPlan() {
             if (!planRaceName || !planRaceDate || !planDuration || !planFinalLoad || !planOutputContainer || !planAvgDistanceSpan) {
                 console.error("Tapering plan calculation UI elements not found.");
@@ -1718,7 +1751,7 @@
             }
             
             // 6. 保存、再描画、フォーム非表示
-            await saveTaperPlansToStorage(); 
+            await saveTaperPlansToStorage(); // ★ v44: await (localStorage)
             renderTaperPlanList();
             showPlanForm(false);
             
@@ -1737,48 +1770,28 @@
             }
         }
 
-        // v41と同じ
+        // ★ v44: localStorage保存
         async function saveTaperPlansToStorage() {
             try {
-                if (useFirebase && auth.currentUser) {
-                    const plansRef = doc(db, 'artifacts', appId, 'users', userId, 'taperPlans', TAPER_PLANS_DOC_ID);
-                    await setDoc(plansRef, { data: savedTaperPlans });
-                    console.log("Taper plans saved to Firestore.");
-                } else {
-                    localStorage.setItem(LOCAL_TAPER_PLANS_KEY, JSON.stringify(savedTaperPlans));
-                    console.log("Taper plans saved to localStorage.");
-                }
+                localStorage.setItem(TAPER_PLANS_STORAGE_KEY, JSON.stringify(savedTaperPlans));
+                console.log("Taper plans saved to localStorage.");
             } catch (error) {
                 console.error("Failed to save taper plans:", error);
             }
         }
 
-        // v41と同じ
+        // ★ v44: localStorage読み込み
         async function loadTaperPlans() {
             try {
-                if (useFirebase && auth.currentUser) {
-                    const plansRef = doc(db, 'artifacts', appId, 'users', userId, 'taperPlans', TAPER_PLANS_DOC_ID);
-                    const docSnap = await getDocWithTimeout(plansRef); // ★ v42
-                    
-                    if (docSnap.exists()) {
-                        savedTaperPlans = docSnap.data().data || [];
-                        console.log(`Loaded ${savedTaperPlans.length} taper plans from Firestore.`);
-                    } else {
-                        console.log("No taper plans found in Firestore.");
-                        savedTaperPlans = [];
-                    }
+                const savedData = localStorage.getItem(TAPER_PLANS_STORAGE_KEY);
+                if (savedData) {
+                    savedTaperPlans = JSON.parse(savedData);
+                    console.log(`Loaded ${savedTaperPlans.length} taper plans from localStorage.`);
                 } else {
-                    const savedData = localStorage.getItem(LOCAL_TAPER_PLANS_KEY);
-                    if (savedData) {
-                        savedTaperPlans = JSON.parse(savedData);
-                        console.log(`Loaded ${savedTaperPlans.length} taper plans from localStorage.`);
-                    } else {
-                        savedTaperPlans = [];
-                    }
+                    savedTaperPlans = [];
                 }
             } catch (error) {
                 console.error("Failed to load taper plans:", error);
-                showError("テーパリング計画の読み込みに失敗しました。", "warning"); // ★ v42
                 savedTaperPlans = [];
             }
             renderTaperPlanList(); // 読み込んだデータでリストを描画
@@ -1956,83 +1969,35 @@
             renderTaperPlanList();
             planOutputContainer.innerHTML = ''; 
         }
+
+        // ----------------------------------------
+        // ★ v44: 初期化処理 (GAPI/GSI)
+        // ----------------------------------------
         
-        // ★ v43: クラウドステータスUI更新
-        function updateCloudStatusUI(status, message) {
-            if (!cloudStatusText || !retryCloudButton) return;
-            
-            if (status === "success") {
-                cloudStatusText.innerHTML = `
-                    <span class="font-semibold text-green-600">クラウド連携済み</span>
-                    <span class="text-xs text-gray-500">(ID: ${message.substring(0, 10)}...)</span>
-                `;
-                retryCloudButton.style.display = 'none';
-            } else { // "failed"
-                cloudStatusText.innerHTML = `
-                    <span class="font-semibold text-yellow-600">クラウド連携失敗</span>
-                    <span class="text-xs text-gray-500">(${message})</span>
-                    <p class="text-sm text-gray-600 mt-2">データはブラウザ内にのみ保存されます。再試行できます。</p>
-                `;
-                retryCloudButton.style.display = 'block';
-            }
-        }
-
-        // ★ v41: Firebase 初期化関数
-        async function initializeFirebase() {
-             try {
-                // v40 の修正 (安全なパース)
-                const firebaseConfigString = (typeof __firebase_config !== 'undefined' && __firebase_config) ? __firebase_config : '{}';
-                const firebaseConfig = JSON.parse(firebaseConfigString);
-
-                if (!firebaseConfig.apiKey) {
-                    throw new Error("Firebase config is missing or invalid.");
-                }
-                
-                const app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                auth = getAuth(app);
-                setLogLevel('Debug'); 
-
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
-                userId = auth.currentUser?.uid || crypto.randomUUID();
-                console.log("Firebase Auth User ID:", userId);
-                useFirebase = true; // ★ v41: 成功フラグ
-                updateCloudStatusUI("success", userId); // ★ v43
-
-            } catch (error) {
-                console.error("Firebase initialization failed:", error);
-                useFirebase = false; // ★ v41: 失敗フラグ
-                // ★ v43: showErrorではなく、専用のUIを更新
-                updateCloudStatusUI("failed", error.message); 
-            }
-        }
-
-
-        // ----------------------------------------
-        // ★ v41: 初期化処理
-        // ----------------------------------------
+        // ★ v44: GAPI/GSI のコールバックをグローバルに公開
+        window.gapiLoadedCallback = gapiLoadedCallback;
+        window.gisLoadedCallback = gisLoadedCallback;
+        
         document.addEventListener('DOMContentLoaded', async () => {
             
             // ★ v35: DOM 要素をすべて取得
             navLinks = document.querySelectorAll('.nav-link');
             pages = document.querySelectorAll('.page-content');
             mobileMenuButton = document.getElementById('mobile-menu-button');
+            googleAuthButton = document.getElementById('google-auth-button');
+            googleAuthStatus = document.getElementById('google-auth-status');
             
             // 設定ページ
-            csvUrlsInput = document.getElementById('csv-urls');
+            dataSourceGoogle = document.getElementById('data-source-google');
+            dataSourceManual = document.getElementById('data-source-manual');
+            settingsGoogleContainer = document.getElementById('settings-google-container');
+            settingsManualContainer = document.getElementById('settings-manual-container');
+            googleClientIdInput = document.getElementById('google-client-id');
+            googleSpreadsheetIdInput = document.getElementById('google-spreadsheet-id');
+            googleSheetNamesInput = document.getElementById('google-sheet-names');
             manualDataInput = document.getElementById('manual-data-input');
             saveButton = document.getElementById('save-settings-button');
             saveStatus = document.getElementById('save-status');
-            dataSourceCsv = document.getElementById('data-source-csv');
-            dataSourceManual = document.getElementById('data-source-manual');
-            settingsCsvContainer = document.getElementById('settings-csv-container');
-            settingsManualContainer = document.getElementById('settings-manual-container');
-            cloudStatusText = document.getElementById('cloud-status-text'); // ★ v43
-            retryCloudButton = document.getElementById('retry-cloud-button'); // ★ v43
             mappingInputs = {
                 date: document.getElementById('col-date'),
                 distance: document.getElementById('col-distance'),
@@ -2081,8 +2046,8 @@
             }
 
             // 設定ページ
-            if (dataSourceCsv) {
-                dataSourceCsv.addEventListener('change', () => toggleDataSourceView('csv'));
+            if (dataSourceGoogle) {
+                dataSourceGoogle.addEventListener('change', () => toggleDataSourceView('google'));
             }
             if (dataSourceManual) {
                 dataSourceManual.addEventListener('change', () => toggleDataSourceView('manual'));
@@ -2090,14 +2055,8 @@
             if (saveButton) {
                 saveButton.addEventListener('click', saveSettings);
             }
-            // ★ v43: 再試行ボタン
-            if (retryCloudButton) {
-                retryCloudButton.addEventListener('click', async () => {
-                    cloudStatusText.textContent = "再試行中...";
-                    retryCloudButton.style.display = 'none';
-                    await initializeFirebase(); // 再度初期化を試みる
-                    // 成功したら、次は saveSettings() が自動でクラウド保存を使う
-                });
+            if (googleAuthButton) {
+                googleAuthButton.addEventListener('click', handleAuthClick);
             }
 
             // テーパリングページ
@@ -2125,16 +2084,33 @@
                 });
             });
             
-            // ★ v41: Firebase 初期化 (フォールバック対応)
-            await initializeFirebase();
-            
-            // ★ v41: 認証後に設定・データを読み込む (読み込み順を修正)
+            // ★ v44: Firebaseではなく、localStorageから設定・データを読み込む
             showPage(defaultPage); 
-            initializeChart(); // チャートは先に初期化
+            initializeChart();
             
             try {
-                const settings = await loadSettings(); // ★ await: クラウド/localStorageから設定を読み込む
-                await loadTaperPlans(); // ★ await: クラウド/localStorageから計画を読み込む
+                const settings = await loadSettings(); // await: localStorageから設定を読み込む
+                await loadTaperPlans(); // await: localStorageから計画を読み込む
+                
+                // ★ v44: GSI/GAPIのロードを開始
+                // コールバックが設定を読み取れるよう、loadSettings() の *後* でロードする
+                if (settings && settings.clientId) {
+                    // <script> タグを動的に追加してロードを開始
+                    const gapiScript = document.createElement('script');
+                    gapiScript.src = 'https://apis.google.com/js/api.js?onload=gapiLoadedCallback';
+                    gapiScript.async = true;
+                    gapiScript.defer = true;
+                    document.head.appendChild(gapiScript);
+
+                    const gisScript = document.createElement('script');
+                    gisScript.src = 'https://accounts.google.com/gsi/client?onload=gisLoadedCallback';
+                    gisScript.async = true;
+                    gisScript.defer = true;
+                    document.head.appendChild(gisScript);
+                } else {
+                    updateAuthStatus(false, "クライアントID未設定");
+                }
+                
                 await loadAndDisplayData(settings); // ★ v41: 読み込んだ設定を渡す
             } catch(e) {
                 console.error("Failed during data loading sequence:", e);
