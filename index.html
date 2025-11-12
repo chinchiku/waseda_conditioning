@@ -2573,26 +2573,26 @@
 
             // ここでイベントリスナーをすべて登録
             try {
-                // ページ切り替え
-                if (navLinks) {
-                    navLinks.forEach(link => {
-                        link.addEventListener('click', (e) => {
-                            e.preventDefault();
-                            const pageId = link.dataset.page;
-                            if (pageId) {
-                                showPage(pageId);
+                // ページ切り替え (Event Delegation for robustness)
+                document.body.addEventListener('click', function(e) {
+                    const navLink = e.target.closest('.nav-link');
+                    if (navLink) {
+                        alert('Link clicked: ' + navLink.dataset.page);
+                        e.preventDefault();
+                        const pageId = navLink.dataset.page;
+                        if (pageId) {
+                            showPage(pageId);
+                        }
+                        
+                        // On mobile, hide the menu after clicking a link
+                        const navContent = document.getElementById('nav-content');
+                        if (window.innerWidth < 768) {
+                            if (navContent) {
+                                navContent.classList.add('hidden');
                             }
-                            
-                            // On mobile, hide the menu after clicking a link
-                            const navContent = document.getElementById('nav-content');
-                            if (window.innerWidth < 768) {
-                                if (navContent) {
-                                    navContent.classList.add('hidden');
-                                }
-                            }
-                        });
-                    });
-                }
+                        }
+                    }
+                });
                 
                 if (mobileMenuButton) {
                     mobileMenuButton.addEventListener('click', () => {
