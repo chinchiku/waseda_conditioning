@@ -207,8 +207,9 @@
                             <li>
                                 <strong class="font-semibold text-gray-800">3. Google サインイン</strong>
                                 <ul class="list-disc list-inside ml-4 mt-2 space-y-2">
-                                    <li>設定保存後、左下の「Google サインイン」ボタンが押せるようになります。</li>
-                                    <li>ボタンを押し、ポップアップウィンドウで上記の「<strong class="text-red-800">チーム共用 Googleアカウント</strong>」を選択してログインしてください。</li>
+                                    <li>設定保存後、アプリをリロード（再読み込み）すると、自動でサインインが試行されます。</li>
+                                    <li>もし自動サインインに失敗した場合（初めての利用時など）は、左下の「Google サインイン」ボタンを押してください。</li>
+                                    <li>ポップアップウィンドウで上記の「<strong class="text-red-800">チーム共用 Googleアカウント</strong>」を選択してログインしてください。</li>
                                     <li>「データ取得エラー」と表示された場合は、入力したスプレッドシートIDやシート名が間違っていないか確認してください。</li>
                                 </ul>
                             </li>
@@ -452,8 +453,7 @@
                                     <span id="plan-avg-distance" class="font-bold text-red-800">--</span>
                                     <span class="text-sm text-gray-600"> km/日</span>
                                 </p>
-                                <!-- ★ v63: 平均の計算方法を変更 (0kmのみ除外) -->
-                                <p class="text-xs text-gray-500">（レース日・期間から自動計算。0km除外）</p>
+                                <p class="text-xs text-gray-500">（レース日・期間から自動計算。10km未満除外）</p>
                             </div>
                             <div></div> <!-- 空のセル -->
                             <!-- テーパリング期間 -->
@@ -855,7 +855,7 @@
         }
         
         // ----------------------------------------
-        // Google API / GSI 認証
+        // Google API / GSI 認証 (★ v63: 自動サインイン対応)
         // ----------------------------------------
         
         // GAPI/GIS の初期化 (ポーリングから呼ばれる)
@@ -907,9 +907,25 @@
                     });
                     console.log("GIS Token Client initialized.");
                     
-                    // GAPI (Sheets) も準備完了しているので、ボタンを有効化
-                    if (googleAuthButton) googleAuthButton.disabled = false;
-                    updateAuthStatus(false, "Google認証準備完了");
+                    // ★ v63: 自動サインイン処理
+                    // 以前にスコープが許可されているか確認
+                    const hasGranted = google.accounts.oauth2.hasGrantedAllScopes(
+                        tokenClient,
+                        'https://www.googleapis.com/auth/spreadsheets.readonly'
+                    );
+
+                    if (hasGranted) {
+                        console.log("Previous grant found. Attempting silent sign-in...");
+                        updateAuthStatus(false, "自動サインイン試行中...");
+                        // ポップアップなしでトークンを要求
+                        tokenClient.requestAccessToken({ prompt: 'none' });
+                        // handleTokenResponse が自動的に呼ばれる
+                    } else {
+                        console.log("No previous grant found. Manual sign-in required.");
+                        // 手動サインインの準備完了
+                        if (googleAuthButton) googleAuthButton.disabled = false;
+                        updateAuthStatus(false, "Google認証準備完了");
+                    }
 
                 } catch (e) {
                     console.error("Error initializing GIS Token Client:", e);
@@ -939,18 +955,43 @@
                 if (gapi.client) gapi.client.setToken(null);
                 updateAuthStatus(false, "サインアウトしました");
             } else {
-                // サインイン
-                tokenClient.requestAccessToken();
+                // サインイン (ポップアップをトリガー)
+                tokenClient.requestAccessToken({ prompt: 'consent' });
             }
         }
 
+        // ★ v63: 自動サインイン失敗時のハンドリングを強化
         async function handleTokenResponse(response) {
             if (response.error) {
-                console.error("Google Auth Error:", response.error);
+                console.error("Google Auth Error:", response.error, response.error_description);
+
+                // 手動サインインがキャンセルされた場合
+                if (response.error === "popup_closed_by_user") {
+                    showError(`サインインがキャンセルされました。`);
+                    updateAuthStatus(false, "サインインがキャンセルされました");
+                    return;
+                }
+                
+                // 自動サインイン(prompt: 'none')が失敗した場合
+                if (response.error === "consent_required" || response.error === "login_required" || response.error === "user_logged_out" || response.error === "immediate_failed") {
+                    console.log("Silent sign-in failed. Manual sign-in required.");
+                    if (googleAuthButton) googleAuthButton.disabled = false;
+                    updateAuthStatus(false, "Google認証準備完了"); // 手動サインインを促す
+                    
+                    // ★ v63: 自動サインイン失敗時は「サインインしてください」というエラーを出す
+                    showError('「Google サインイン」ボタンを押して、スプレッドシートへのアクセスを許可してください。');
+                    const loadingEl = document.getElementById('dashboard-loading');
+                    if (loadingEl) loadingEl.style.display = 'none';
+
+                    return; 
+                }
+
+                // その他の致命的なエラー
                 showError(`サインイン失敗: ${response.error}`);
                 updateAuthStatus(false, "サインイン失敗");
                 return;
             }
+            
             googleTokenResponse = response;
             if (gapi.client) gapi.client.setToken(response);
             
@@ -981,6 +1022,15 @@
                 googleAuthButton.classList.toggle('hover:bg-blue-700', !isSignedIn);
                 googleAuthButton.classList.toggle('bg-gray-500', isSignedIn);
                 googleAuthButton.classList.toggle('hover:bg-gray-600', isSignedIn);
+                
+                // ★ v63: 自動サインイン試行中はボタンを無効化
+                if (message === "自動サインイン試行中...") {
+                    googleAuthButton.disabled = true;
+                } else if (!appSettings.clientId) {
+                     googleAuthButton.disabled = true; // ClientIDがなければ無効
+                } else {
+                    googleAuthButton.disabled = false; // それ以外は有効
+                }
             }
             if (googleAuthStatus) {
                 googleAuthStatus.textContent = message;
@@ -1265,7 +1315,7 @@
         // データ取得・解析処理
         // ----------------------------------------
         
-        // ★ v63: v61 のロジック (i++) に戻す
+        // 2行1組の結合セルに対応
         // Google Sheets API (gapi) からの応答をパース
         function parseGapiResponse(valueRanges, mapping) {
             if (!mapping || !mapping.date) {
@@ -1286,16 +1336,16 @@
             for (const sheetData of valueRanges) {
                 const lines = sheetData.values || [];
                 
-                // ★ v63: 1行ずつチェックする (i++)
-                for (let i = 0; i < lines.length; i++) { 
-                    const columns = lines[i];
+                // 2行1組で処理するため、インデックスを使ったループに変更
+                for (let i = 0; i < lines.length; i += 2) { 
+                    const columns = lines[i]; // 2行のうちの1行目 (結合セルの値が入っている行)
                     
-                    if (!columns) continue;
+                    if (!columns) continue; // lines[i] が存在しない場合 (例: 奇数行)
 
+                    // 1行目の日付列を取得
                     const dateVal = columns[indices.date];
 
-                    // 日付があり、正規表現に一致する場合のみ処理
-                    // (これにより、結合セルの2行目(日付=null)は自動的にスキップされる)
+                    // 1行目に日付があり、正規表現に一致する場合のみ処理
                     if (dateVal && dateRegex.test(dateVal)) {
                         const cleanValue = (val) => {
                             if (val === undefined || val === null) return null;
@@ -1308,18 +1358,17 @@
                         
                         data.push({
                             date: cleanDate, // 'MM/DD' または 'YYYY/MM/DD'
-                            distance: cleanValue(columns[indices.distance]),
-                            morningWeight: cleanValue(columns[indices.morningWeight]),
-                            eveningWeight: cleanValue(columns[indices.eveningWeight]),
-                            wakingHr: cleanValue(columns[indices.wakingHr]),
-                            practiceHr: cleanValue(columns[indices.practiceHr]),
-                            sleep: cleanValue(columns[indices.sleep]),
+                            distance: cleanValue(columns[indices.distance]), // 1行目の距離
+                            morningWeight: cleanValue(columns[indices.morningWeight]), // 1行目の朝体重
+                            eveningWeight: cleanValue(columns[indices.eveningWeight]), // 1行目の夕体重
+                            wakingHr: cleanValue(columns[indices.wakingHr]), // 1行目の起床時脈拍
+                            practiceHr: cleanValue(columns[indices.practiceHr]), // 1行目の本練脈拍
+                            sleep: cleanValue(columns[indices.sleep]), // 1行目の睡眠時間
                         });
                     }
-                    // スキップされた行 (i+1) は次のループでチェックされる (日付がなければ同様にスキップ)
+                    // i += 2 により、次の行 (lines[i+1]) は自動的にスキップされる
                 }
             }
-            console.log(`Parsed ${data.length} rows from Google Sheets.`); // デバッグ用ログ
             return data;
         }
 
@@ -1382,7 +1431,11 @@
 
             try {
                 if (!settings) {
-                    showError('「設定」ページで、入力方法と列設定を保存してください。');
+                    // ★ v63: 自動サインイン失敗時に handleTokenResponse がエラーを出すので、
+                    // ここではエラーを表示せず、手動サインインを待つ
+                    if (googleAuthStatus.textContent !== "Google認証準備完了") {
+                         showError('「設定」ページで、入力方法と列設定を保存してください。');
+                    }
                     baseData = [];
                 } else if (settings.dataSource === 'manual') {
                     // --- 手動データの場合 ---
@@ -1391,6 +1444,7 @@
                     if (!manualData) {
                         showError('「設定」ページで、手動入力データを貼り付けて保存してください。');
                         baseData = []; // baseData をリセット
+                        // 手動データが空でもマージ処理は実行（クイックログデータを表示するため）
                     } else {
                         baseData = parseManualData(manualData, settings.mapping); // baseData をセット
                     }
@@ -1399,7 +1453,9 @@
                     // --- Google連携の場合 ---
                     console.log("Loading data from: Google Sheets API");
                     if (!googleTokenResponse || !googleTokenResponse.access_token) {
-                        showError('「Google サインイン」ボタンを押して、スプレッドシートへのアクセスを許可してください。');
+                        // ★ v63: 自動サインイン処理が走るため、このエラーは handleTokenResponse に任せる
+                        // showError('「Google サインイン」ボタンを押して、スプレッドシートへのアクセスを許可してください。');
+                        console.warn("loadAndDisplayData called without access token. Waiting for auth.");
                         baseData = []; // baseData をリセット
                         return; // Google連携の場合はサインイン必須
                     }
@@ -1409,12 +1465,14 @@
                         return; // 設定不備
                     }
                     
+                    // GAPIが準備OKか最終確認
                     if (!gapiReady || !gapiSheetsReady || !gapi.client || !gapi.client.sheets) {
                         showError('Google Sheets API がまだ準備中です。数秒待ってから再試行してください。');
                         baseData = []; // baseData をリセット
                         return; // GAPI不備
                     }
 
+                    // 全シートのA-Z列（最大）のデータを要求
                     const ranges = settings.sheetNames.map(name => `'${name}'!A:Z`);
                     
                     const gapiCall = gapi.client.sheets.spreadsheets.values.batchGet({
@@ -1435,7 +1493,9 @@
 
             } catch (error) {
                 console.error("Failed to load and display data:", error);
+                // エラーオブジェクト全体を渡す
                 showError(error); 
+                // loadAndDisplayData が失敗したことを呼び出し元に伝える
                 throw error;
             }
         }
@@ -1456,12 +1516,14 @@
             }
 
             // 2. クイックログ (quickLogs) で上書き (マージ)
+            //    quickLogs は既に { 'MM/DD': { ... } } 形式
             for (const dateKey in quickLogs) {
                 const logEntry = quickLogs[dateKey];
                 const baseEntry = baseDataMap.get(dateKey) || { date: dateKey };
 
+                // クイックログのデータで上書き (null でない場合のみ)
                 const mergedEntry = {
-                    date: baseEntry.date || logEntry.date, 
+                    date: baseEntry.date || logEntry.date, // 元の日付形式 (MM/DD or YYYY/MM/DD) を維持
                     distance: (logEntry.distance !== null) ? logEntry.distance : baseEntry.distance,
                     morningWeight: (logEntry.morningWeight !== null) ? logEntry.morningWeight : baseEntry.morningWeight,
                     eveningWeight: (logEntry.eveningWeight !== null) ? logEntry.eveningWeight : baseEntry.eveningWeight,
@@ -1487,9 +1549,14 @@
 
             // 4. UI更新
             if (appData.length === 0) {
+                 // baseData も quickLogs も空の場合
                  if (baseData.length === 0 && Object.keys(quickLogs).length === 0) {
-                    showError('データを読み込めませんでした。設定ページを確認するか、ダッシュボードから手動でデータを入力してください。');
+                    // ★ v63: 自動サインイン試行中はエラーを表示しない
+                    if (googleAuthStatus.textContent !== "自動サインイン試行中...") {
+                        showError('データを読み込めませんでした。設定ページを確認するか、ダッシュボードから手動でデータを入力してください。');
+                    }
                  } else {
+                    // baseData にはデータがあったが、パース等に失敗した場合
                     showError('データはありますが、有効な日付形式の行が見つかりませんでした。列設定や日付形式（MM/DD）を確認してください。');
                  }
                  return;
@@ -1522,12 +1589,14 @@
             if (summaryBottomEl) summaryBottomEl.style.display = 'none'; 
             if (errorEl) errorEl.style.display = 'block';
             
+            // エラーオブジェクトを解析
             let message = "不明なエラーが発生しました。";
             if (typeof error === 'string') {
                 message = error;
             } else if (error.message) {
                 message = error.message;
             }
+            // GAPI/GSI 特有のエラー
             if (error.result && error.result.error) {
                 message = `Google API エラー: ${error.result.error.message} (オリジンの設定を確認してください)`;
             }
@@ -1583,7 +1652,6 @@
             return result;
         }
         
-        // ★ v63: 平均計算ロジックを「> 0km」に変更
         function calculateWeeklyAverage(data, key) {
             if (!data || data.length === 0) {
                 return null;
@@ -1610,8 +1678,7 @@
                 if (value !== null && value !== undefined && !isNaN(parseFloat(value))) {
                     const numValue = parseFloat(value);
                     if (key === 'distance') {
-                        // ★ v63: 10km以上 -> 0kmより大きい (休養日以外) に変更
-                        if (numValue > 0) { 
+                        if (numValue >= 10) { 
                             includedDays++;
                             return sum + numValue;
                         }
@@ -1948,7 +2015,6 @@
             return `${month}/${day} (${weekday})`;
         }
 
-        // ★ v63: 平均計算ロジックを「> 0km」に変更
         // 「日平均」走行距離の計算ロジック (「今日」基準)
         function calculateAverageDistance() {
             if (!appData || appData.length === 0) {
@@ -1978,20 +2044,19 @@
             
             let includedDays = 0;
             const totalDistance = recentData.reduce((sum, day) => {
-                const dist = day.distance; // appData はマージ・パース済み
-                // ★ v63: 10km以上 -> 0kmより大きい (休養日以外) に変更
-                if (dist !== null && dist !== undefined && dist > 0) { 
+                const dist = day.distance || 0;
+                if (dist >= 10) { 
                     includedDays++;
                     return sum + dist;
                 }
                 return sum;
             }, 0);
             
-            console.log(`[calcAvg] Total distance (>0km): ${totalDistance} km from ${includedDays} days.`);
+            console.log(`[calcAvg] Total distance (>=10km): ${totalDistance} km from ${includedDays} days.`);
             
             let dailyAvg = 0;
             if (includedDays > 0) {
-                dailyAvg = totalDistance / includedDays;
+                dailyAvg = totalDistance / includedDays; // 21 ではなく includedDays で割る
             }
             
             console.log(`[calcAvg] Daily Avg (Total / includedDays): ${dailyAvg.toFixed(1)} km/day`);
@@ -1999,7 +2064,6 @@
             return dailyAvg.toFixed(1);
         }
         
-        // ★ v63: 平均計算ロジックを「> 0km」に変更
         // レース日と期間を基準に平均を計算する (フォーム変更時)
         function calculateAverageDistanceOnFormChange(raceDateStr, durationStr) {
             if (!appData || appData.length === 0) {
@@ -2039,24 +2103,23 @@
 
             console.log(`[calcAvgForm] Found ${recentData.length} entries in the period.`);
             
-            // 4. 外れ値(0km)を除外して合計距離を計算
+            // 4. 外れ値(10km未満)を除外して合計距離を計算
             let includedDays = 0;
             const totalDistance = recentData.reduce((sum, day) => {
-                const dist = day.distance; // appData はマージ・パース済み
-                // ★ v63: 10km以上 -> 0kmより大きい (休養日以外) に変更
-                if (dist !== null && dist !== undefined && dist > 0) { 
+                const dist = day.distance || 0;
+                if (dist >= 10) { // 外れ値除外ルール
                     includedDays++;
                     return sum + dist;
                 }
                 return sum;
             }, 0);
             
-            console.log(`[calcAvgForm] Total distance (>0km): ${totalDistance} km from ${includedDays} days.`);
+            console.log(`[calcAvgForm] Total distance (>=10km): ${totalDistance} km from ${includedDays} days.`);
             
             // 5. 日平均を計算 (「外れ値を除外した日数」で割る)
             let dailyAvg = 0;
             if (includedDays > 0) {
-                dailyAvg = totalDistance / includedDays;
+                dailyAvg = totalDistance / includedDays; // 21 ではなく includedDays で割る
             }
             
             console.log(`[calcAvgForm] Daily Avg (Total / includedDays): ${dailyAvg.toFixed(1)} km/day`);
@@ -2563,7 +2626,7 @@
                     // tryInitGoogleClients は gapiReady/gisReady/gapiSheetsReady をチェック/設定する
                     await tryInitGoogleClients(); 
                     
-                    // TokenClient が正常に初期化されたらポーリングを停止
+                    // TokenClient が正常に初期化された、または手動入力モードの場合、ポーリングを停止
                     if (tokenClient || (appSettings && appSettings.dataSource === 'manual')) {
                         clearInterval(gapiPollInterval);
                     }
@@ -2571,11 +2634,13 @@
                 
                 // 読み込みロジック
                 if (settings && settings.dataSource === 'google') {
-                    // Google連携の場合は、まだデータをロードせず、サインインを待つ
-                    showError('「Google サインイン」ボタンを押して、スプレッドシートへのアクセスを許可してください。');
-                    // ローダーを隠す
-                    const loadingEl = document.getElementById('dashboard-loading');
-                    if (loadingEl) loadingEl.style.display = 'none';
+                    // Google連携の場合は、自動サインイン処理 (tryInitGoogleClients) が
+                    // handleTokenResponse を呼び出すのを待つ。
+                    // handleTokenResponse がロード処理 (loadAndDisplayData) をトリガーする。
+                    console.log("App initialized in Google Mode. Waiting for auto sign-in...");
+                    // ★ v63: 自動サインインが失敗した場合に備えて、ローダーは handleTokenResponse で隠す
+                    // const loadingEl = document.getElementById('dashboard-loading');
+                    // if (loadingEl) loadingEl.style.display = 'none';
                 } else {
                     // 手動データの場合はすぐにロード (設定がnullの場合もこちら)
                     await loadAndDisplayData(settings);
