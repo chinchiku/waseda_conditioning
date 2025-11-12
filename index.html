@@ -173,14 +173,12 @@
                             <div class="space-y-2 text-sm">
                                 <div>
                                     <label class="block text-xs font-semibold text-gray-600">チーム共用 Googleアカウント:</label>
-                                    <!-- ★★★ ここにチーム共有のアカウント名を記載 ★★★ -->
-                                    <code class="text-sm font-semibold text-red-700">team-shared-account@gmail.com</code>
+                                    <code class="text-sm font-semibold text-red-700">w.tyokyori1914@gmail.com</code>
                                     <p class="text-xs text-gray-500">（[設定]入力後、左下の「Google サインイン」ボタンを押す際、このアカウントでログインしてください）</p>
                                 </div>
                                 <div>
                                     <label class="block text-xs font-semibold text-gray-600">チーム共用 クライアントID:</label>
-                                    <!-- ★★★ ここにチーム共有のクライアントIDを記載 ★★★ -->
-                                    <code class="block text-xs font-semibold text-red-700 bg-gray-100 p-2 rounded break-all">1234567890-THIS-IS-A-DUMMY-ID.apps.googleusercontent.com</code>
+                                    <code class="block text-xs font-semibold text-red-700 bg-gray-100 p-2 rounded break-all">27661887787-0f4vc069dead946bkhnkumuncnb0t2s4.apps.googleusercontent.com</code>
                                     <p class="text-xs text-gray-500">（この文字列全体をコピーして、[設定]ページの「クライアントID」欄に貼り付けてください）</p>
                                 </div>
                             </div>
@@ -224,12 +222,37 @@
                             </li>
 
                             <li>
-                                <strong class="font-semibold text-gray-800">（参考）個人アカウントでGoogle連携を行いたい場合</strong>
-                                <ul class="list-disc list-inside ml-4 mt-2 space-y-1">
-                                    <li>技術的な設定に詳しい方は、ご自身の個人アカウントで専用のクライアントIDを取得することも可能です。</li>
-                                    <li>その場合、ご自身で「<strong class="font-semibold">Google Cloud Console</strong>」プロジェクトを作成し、「<strong class="font-semibold">Google Sheets API</strong>」を有効化してください。</li>
-                                    <li>「<strong class="font-semibold">OAuth 2.0 クライアント ID</strong>」を作成し、「ウェブ アプリケーション」タイプを選択します。</li>
-                                    <li>「<strong class="font-semibold">承認済みの JavaScript 生成元</strong>」と「<strong class="font-semibold">承認済みのリダイレクト URI</strong>」には、このアプリが動作しているURL（現在のブラウザのアドレスバーにあるURL）を正確に登録する必要があります。</li>
+                                <strong class="font-semibold text-gray-800">（参考）個人アカウントでGoogle連携を行いたい場合 (上級者向け)</strong>
+                                <p class="mt-1 mb-2">
+                                    技術的な設定に詳しい方は、チーム共用アカウントの代わりに、ご自身の個人Googleアカウントで連携することも可能です。その場合、ご自身でクライアントIDを取得する必要があります。詳細はご自身で検索していただく必要がありますが、以下のキーワードを参考にしてください。
+                                </p>
+                                <ul class="list-disc list-inside ml-4 mt-2 space-y-3">
+                                    <li>
+                                        <strong>1. Google Cloud Consoleでプロジェクト作成:</strong>
+                                        <ul class="list-['-_'] list-inside ml-4 mt-1 space-y-1 text-xs text-gray-600">
+                                            <li>「<strong class="font-semibold text-gray-800">Google Cloud Console</strong>」にアクセスし、新しいプロジェクトを作成します。</li>
+                                            <li>そのプロジェクトで「<strong class="font-semibold text-gray-800">Google Sheets API</strong>」を検索し、有効化します。</li>
+                                        </ul>
+                                    </li>
+                                    <li>
+                                        <strong>2. OAuth 2.0 クライアントIDの発行:</strong>
+                                        <ul class="list-['-_'] list-inside ml-4 mt-1 space-y-1 text-xs text-gray-600">
+                                            <li>APIとサービス > 認証情報 > 「<strong class="font-semibold text-gray-800">+ 認証情報を作成</strong>」から「<strong class="font-semibold text-gray-800">OAuth 2.0 クライアント ID</strong>」を選択します。</li>
+                                            <li>アプリケーションの種類は「<strong class="font-semibold text-gray-800">ウェブ アプリケーション</strong>」を選択します。</li>
+                                        </ul>
+                                    </li>
+                                    <li>
+                                        <strong>3. URIの設定 (重要):</strong>
+                                        <ul class="list-['-_'] list-inside ml-4 mt-1 space-y-1 text-xs text-gray-600">
+                                            <li>このアプリをローカルサーバーで実行している場合、以下のように設定します。</li>
+                                            <li>「<strong class="font-semibold text-gray-800">承認済みの JavaScript 生成元</strong>」に <code class="bg-gray-200 px-1 rounded">http://localhost:8000</code> を追加します。</li>
+                                            <li>「<strong class="font-semibold text-gray-800">承認済みのリダイレクト URI</strong>」に <code class="bg-gray-200 px-1 rounded">http://localhost:8000</code> を追加します。</li>
+                                            <li>(もし別のURLでホストしている場合は、そのURLを登録してください)</li>
+                                        </ul>
+                                    </li>
+                                    <li>
+                                        発行されたクライアントIDをコピーし、このアプリの「設定」ページに貼り付けて使用します。
+                                    </li>
                                 </ul>
                             </li>
                         </ol>
@@ -762,7 +785,14 @@
                     const dateObj = new Date(targetYear, month - 1, day);
                     if (isNaN(dateObj.getTime())) return null;
                     
-                    if (dateObj > today) {
+                    // The original logic incorrectly adjusted near-future dates.
+                    // This new logic only adjusts if the calculated date is significantly
+                    // in the future, which typically happens with academic year rollovers
+                    // (e.g., entering "Jan" in "Dec").
+                    const diffTime = dateObj.getTime() - today.getTime();
+                    const diffDays = diffTime / (1000 * 60 * 60 * 24);
+
+                    if (diffDays > 60) { // If more than ~2 months in the future, assume it's for the previous year.
                         dateObj.setFullYear(dateObj.getFullYear() - 1);
                     }
                     
@@ -978,8 +1008,8 @@
                     if (googleAuthButton) googleAuthButton.disabled = false;
                     updateAuthStatus(false, "Google認証準備完了"); // 手動サインインを促す
                     
-                    // ★ v63: 自動サインイン失敗時は「サインインしてください」というエラーを出す
-                    showError('「Google サインイン」ボタンを押して、スプレッドシートへのアクセスを許可してください。');
+                    // 自動サインイン失敗は「エラー」ではなく、単に「手動サインインが必要」な状態なので、
+                    // ここでエラー表示はしない。UIは「サインイン」を待つ状態になる。
                     const loadingEl = document.getElementById('dashboard-loading');
                     if (loadingEl) loadingEl.style.display = 'none';
 
@@ -1315,7 +1345,6 @@
         // データ取得・解析処理
         // ----------------------------------------
         
-        // 2行1組の結合セルに対応
         // Google Sheets API (gapi) からの応答をパース
         function parseGapiResponse(valueRanges, mapping) {
             if (!mapping || !mapping.date) {
@@ -1336,16 +1365,16 @@
             for (const sheetData of valueRanges) {
                 const lines = sheetData.values || [];
                 
-                // 2行1組で処理するため、インデックスを使ったループに変更
-                for (let i = 0; i < lines.length; i += 2) { 
-                    const columns = lines[i]; // 2行のうちの1行目 (結合セルの値が入っている行)
+                // 各行を処理する
+                for (let i = 0; i < lines.length; i++) { 
+                    const columns = lines[i];
                     
-                    if (!columns) continue; // lines[i] が存在しない場合 (例: 奇数行)
+                    if (!columns) continue;
 
-                    // 1行目の日付列を取得
+                    // 日付列を取得
                     const dateVal = columns[indices.date];
 
-                    // 1行目に日付があり、正規表現に一致する場合のみ処理
+                    // 日付があり、正規表現に一致する場合のみ処理
                     if (dateVal && dateRegex.test(dateVal)) {
                         const cleanValue = (val) => {
                             if (val === undefined || val === null) return null;
@@ -1358,15 +1387,14 @@
                         
                         data.push({
                             date: cleanDate, // 'MM/DD' または 'YYYY/MM/DD'
-                            distance: cleanValue(columns[indices.distance]), // 1行目の距離
-                            morningWeight: cleanValue(columns[indices.morningWeight]), // 1行目の朝体重
-                            eveningWeight: cleanValue(columns[indices.eveningWeight]), // 1行目の夕体重
-                            wakingHr: cleanValue(columns[indices.wakingHr]), // 1行目の起床時脈拍
-                            practiceHr: cleanValue(columns[indices.practiceHr]), // 1行目の本練脈拍
-                            sleep: cleanValue(columns[indices.sleep]), // 1行目の睡眠時間
+                            distance: cleanValue(columns[indices.distance]),
+                            morningWeight: cleanValue(columns[indices.morningWeight]),
+                            eveningWeight: cleanValue(columns[indices.eveningWeight]),
+                            wakingHr: cleanValue(columns[indices.wakingHr]),
+                            practiceHr: cleanValue(columns[indices.practiceHr]),
+                            sleep: cleanValue(columns[indices.sleep]),
                         });
                     }
-                    // i += 2 により、次の行 (lines[i+1]) は自動的にスキップされる
                 }
             }
             return data;
