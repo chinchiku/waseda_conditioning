@@ -1518,7 +1518,7 @@
                     
                     const response = await Promise.race([
                         gapiCall,
-                        new Promise((_, reject) => setTimeout(() => reject(new Error('Google Sheets API request timed out (10s)')), 10000))
+                        new Promise((_, reject) => setTimeout(() => reject(new Error('GoogleスプレッドシートAPIへのリクエストがタイムアウトしました（10秒）')), 10000))
                     ]);
                     
                     baseData = parseGapiResponse(response.result.valueRanges, settings.mapping); // baseData をセット
@@ -1713,15 +1713,10 @@
                 const value = day[key];
                 if (value !== null && value !== undefined && !isNaN(parseFloat(value))) {
                     const numValue = parseFloat(value);
-                    if (key === 'distance') {
-                        if (numValue >= 10) { 
-                            includedDays++;
-                            return sum + numValue;
-                        }
-                    } else {
-                        includedDays++;
-                        return sum + numValue;
-                    }
+                    // The condition to only include distances >= 10km has been removed.
+                    // Now all recorded values are included in the average.
+                    includedDays++;
+                    return sum + numValue;
                 }
                 return sum;
             }, 0);
@@ -2080,15 +2075,15 @@
             
             let includedDays = 0;
             const totalDistance = recentData.reduce((sum, day) => {
-                const dist = day.distance || 0;
-                if (dist >= 10) { 
+                // Only include days with a recorded distance value in the average.
+                if (day.distance !== null && day.distance !== undefined) {
                     includedDays++;
-                    return sum + dist;
+                    return sum + (day.distance || 0);
                 }
                 return sum;
             }, 0);
             
-            console.log(`[calcAvg] Total distance (>=10km): ${totalDistance} km from ${includedDays} days.`);
+            console.log(`[calcAvg] Total distance: ${totalDistance} km from ${includedDays} days.`);
             
             let dailyAvg = 0;
             if (includedDays > 0) {
@@ -2142,15 +2137,16 @@
             // 4. 外れ値(10km未満)を除外して合計距離を計算
             let includedDays = 0;
             const totalDistance = recentData.reduce((sum, day) => {
-                const dist = day.distance || 0;
-                if (dist >= 10) { // 外れ値除外ルール
+                // The outlier exclusion rule (>=10km) has been removed to include all distances.
+                // Only include days with a recorded distance value in the average.
+                if (day.distance !== null && day.distance !== undefined) {
                     includedDays++;
-                    return sum + dist;
+                    return sum + (day.distance || 0);
                 }
                 return sum;
             }, 0);
             
-            console.log(`[calcAvgForm] Total distance (>=10km): ${totalDistance} km from ${includedDays} days.`);
+            console.log(`[calcAvgForm] Total distance: ${totalDistance} km from ${includedDays} days.`);
             
             // 5. 日平均を計算 (「外れ値を除外した日数」で割る)
             let dailyAvg = 0;
@@ -2576,17 +2572,24 @@
 
             // ここでイベントリスナーをすべて登録
             try {
-                // ページ切り替え
-                navLinks.forEach(link => {
-                    link.addEventListener('click', (e) => {
+                // ページ切り替え (Event Delegation for robustness)
+                document.body.addEventListener('click', function(e) {
+                    const navLink = e.target.closest('.nav-link');
+                    if (navLink) {
                         e.preventDefault();
-                        const pageId = link.dataset.page;
-                        showPage(pageId);
+                        const pageId = navLink.dataset.page;
+                        if (pageId) {
+                            showPage(pageId);
+                        }
+                        
+                        // On mobile, hide the menu after clicking a link
                         const navContent = document.getElementById('nav-content');
                         if (window.innerWidth < 768) {
-                            if (navContent) navContent.classList.add('hidden');
+                            if (navContent) {
+                                navContent.classList.add('hidden');
+                            }
                         }
-                    });
+                    }
                 });
                 
                 if (mobileMenuButton) {
